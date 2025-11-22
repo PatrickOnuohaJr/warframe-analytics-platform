@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# SQL Server connection env file
+.env
+
+# VS Code settings
+.vscode/
+
+# Generated ETL files
+ETL/Processed/
+ETL/Raw/
+
+# Backup / resolve files
+*.resolved

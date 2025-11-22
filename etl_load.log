@@ -1,0 +1,6 @@
+2025-11-20 19:35:31,903 - INFO - Starting load process (generating SQL)...
+2025-11-20 19:35:31,931 - INFO - Generated 114 inserts for Warframes.
+2025-11-20 19:35:31,969 - INFO - Generated 595 inserts for Weapons.
+2025-11-20 19:35:32,012 - INFO - Generated 1751 inserts for Mods.
+2025-11-20 19:35:32,021 - INFO - Generated 162 inserts for Arcanes.
+2025-11-20 19:35:32,064 - INFO - SQL script saved to C:\Users\jideo\Warframe_Project\ETL\load_data.sql
