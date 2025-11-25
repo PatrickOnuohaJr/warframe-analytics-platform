@@ -74,3 +74,43 @@
 2025-11-20 19:38:37,009 - INFO - ========================================
 2025-11-20 19:38:37,009 - INFO -    ETL Pipeline Completed Successfully
 2025-11-20 19:38:37,009 - INFO - ========================================
+2025-11-22 03:29:08,582 - INFO - ========================================
+2025-11-22 03:29:08,582 - INFO -    Starting Warframe ETL Pipeline
+2025-11-22 03:29:08,583 - INFO - ========================================
+2025-11-22 03:29:08,583 - INFO - >>> Step 1: Extraction
+2025-11-22 03:29:08,583 - INFO - Starting extraction process...
+2025-11-22 03:29:08,583 - INFO - Fetching data from https://api.warframestat.us/warframes...
+2025-11-22 03:29:09,371 - INFO - Successfully fetched 119 items from warframes.
+2025-11-22 03:29:09,460 - INFO - Saved data to C:\Users\jideo\Warframe_Project\ETL\Raw\warframes.json
+2025-11-22 03:29:09,460 - INFO - Fetching data from https://api.warframestat.us/weapons...
+2025-11-22 03:29:10,288 - INFO - Successfully fetched 623 items from weapons.
+2025-11-22 03:29:10,460 - INFO - Saved data to C:\Users\jideo\Warframe_Project\ETL\Raw\weapons.json
+2025-11-22 03:29:10,460 - INFO - Fetching data from https://api.warframestat.us/mods...
+2025-11-22 03:29:11,252 - INFO - Successfully fetched 1751 items from mods.
+2025-11-22 03:29:11,448 - INFO - Saved data to C:\Users\jideo\Warframe_Project\ETL\Raw\mods.json
+2025-11-22 03:29:11,448 - INFO - Fetching Arcanes from 'items' endpoint...
+2025-11-22 03:29:11,449 - INFO - Fetching data from https://api.warframestat.us/items...
+2025-11-22 03:29:14,126 - INFO - Successfully fetched 16080 items from items.
+2025-11-22 03:29:14,143 - INFO - Saved data to C:\Users\jideo\Warframe_Project\ETL\Raw\arcanes.json
+2025-11-22 03:29:14,143 - INFO - Extraction process completed successfully.
+2025-11-22 03:29:14,178 - INFO - >>> Step 2: Transformation
+2025-11-22 03:29:14,178 - INFO - Starting transformation process...
+2025-11-22 03:29:14,214 - INFO - Transforming Warframes...
+2025-11-22 03:29:14,239 - INFO - Saved processed data to C:\Users\jideo\Warframe_Project\ETL\Processed\warframes.json
+2025-11-22 03:29:14,297 - INFO - Transforming Weapons...
+2025-11-22 03:29:14,350 - INFO - Saved processed data to C:\Users\jideo\Warframe_Project\ETL\Processed\weapons.json
+2025-11-22 03:29:14,405 - INFO - Transforming Mods...
+2025-11-22 03:29:14,465 - INFO - Saved processed data to C:\Users\jideo\Warframe_Project\ETL\Processed\mods.json
+2025-11-22 03:29:14,475 - INFO - Transforming Arcanes...
+2025-11-22 03:29:14,480 - INFO - Saved processed data to C:\Users\jideo\Warframe_Project\ETL\Processed\arcanes.json
+2025-11-22 03:29:14,480 - INFO - Transformation process completed.
+2025-11-22 03:29:14,493 - INFO - >>> Step 3: Loading (SQL Generation)
+2025-11-22 03:29:14,493 - INFO - Starting load process (generating SQL)...
+2025-11-22 03:29:14,520 - INFO - Generated 114 inserts for Warframes.
+2025-11-22 03:29:14,563 - INFO - Generated 595 inserts for Weapons.
+2025-11-22 03:29:14,609 - INFO - Generated 1751 inserts for Mods.
+2025-11-22 03:29:14,626 - INFO - Generated 162 inserts for Arcanes.
+2025-11-22 03:29:14,668 - INFO - SQL script saved to C:\Users\jideo\Warframe_Project\ETL\load_data.sql
+2025-11-22 03:29:14,672 - INFO - ========================================
+2025-11-22 03:29:14,672 - INFO -    ETL Pipeline Completed Successfully
+2025-11-22 03:29:14,672 - INFO - ========================================
