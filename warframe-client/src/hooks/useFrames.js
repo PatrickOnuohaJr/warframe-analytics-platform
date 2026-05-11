@@ -10,7 +10,7 @@ export default function useFrames() {
 
     const { data, error } = await wfUser
       .from('my_frames')
-      .select(`*, build_status(*)`)
+      .select('*, build_status(*), cultivation_color')
       .order('my_frame_id')
 
     if (error) {
