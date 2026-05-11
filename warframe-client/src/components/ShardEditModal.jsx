@@ -2,17 +2,29 @@ import { useState } from 'react'
 import { wfUser } from '../lib/supabase'
 import { SHARD_COLORS, SHARD_NAMES } from '../constants/shards'
 
+function getInitialShards(slots) {
+  return [1, 2, 3, 4, 5].map(i => ({
+    color: slots?.[`shard_${i}_color`] ?? null,
+    tauforged: slots?.[`shard_${i}_tauforged`] ?? false,
+  }))
+}
+
 export default function ShardEditModal({ frame, onClose, onSaved }) {
-  const slots = frame.shard_slots
+  const [mode, setMode] = useState('current')
   const [activeSlot, setActiveSlot] = useState(0)
   const [saving, setSaving] = useState(false)
 
-  const [shards, setShards] = useState(
-    [1, 2, 3, 4, 5].map(i => ({
-      color: slots?.[`shard_${i}_color`] ?? null,
-      tauforged: slots?.[`shard_${i}_tauforged`] ?? false,
-    }))
+  const [currentShards, setCurrentShards] = useState(
+    getInitialShards(frame.shard_slots)
   )
+
+  const [targetShards, setTargetShards] = useState(
+    getInitialShards(frame.target_shards)
+  )
+
+  const shards = mode === 'current' ? currentShards : targetShards
+  const setShards = mode === 'current' ? setCurrentShards : setTargetShards
+  const current = shards[activeSlot]
 
   function setColor(color) {
     setShards(prev =>
@@ -36,6 +48,15 @@ export default function ShardEditModal({ frame, onClose, onSaved }) {
     )
   }
 
+  function clearAllCurrent() {
+    setCurrentShards(
+      [1, 2, 3, 4, 5].map(() => ({
+        color: null,
+        tauforged: false,
+      }))
+    )
+  }
+
   async function save() {
     setSaving(true)
 
@@ -47,22 +68,30 @@ export default function ShardEditModal({ frame, onClose, onSaved }) {
       payload[`shard_${i + 1}_tier`] = null
     })
 
-    if (slots) {
+    const table =
+      mode === 'current'
+        ? 'archon_shard_slots'
+        : 'archon_shard_slots_target'
+
+    const existingSlots =
+      mode === 'current'
+        ? frame.shard_slots
+        : frame.target_shards
+
+    if (existingSlots) {
       await wfUser
-        .from('archon_shard_slots')
+        .from(table)
         .update(payload)
         .eq('my_frame_id', frame.my_frame_id)
     } else {
       await wfUser
-        .from('archon_shard_slots')
+        .from(table)
         .insert({ my_frame_id: frame.my_frame_id, ...payload })
     }
 
     setSaving(false)
     onSaved()
   }
-
-  const current = shards[activeSlot]
 
   return (
     <div
@@ -79,7 +108,10 @@ export default function ShardEditModal({ frame, onClose, onSaved }) {
             <p className="text-[10px] text-white/30 uppercase tracking-widest mb-0.5">
               Editing shards
             </p>
-            <h2 className="text-white font-semibold text-lg">{frame.warframe_name}</h2>
+
+            <h2 className="text-white font-semibold text-lg">
+              {frame.warframe_name}
+            </h2>
           </div>
 
           <button
@@ -90,8 +122,56 @@ export default function ShardEditModal({ frame, onClose, onSaved }) {
           </button>
         </div>
 
+        <div className="grid grid-cols-2 gap-2 mb-5">
+          <button
+            onClick={() => setMode('current')}
+            className="py-2 rounded-lg text-sm font-semibold transition-colors"
+            style={{
+              background:
+                mode === 'current'
+                  ? 'rgba(251,191,36,0.15)'
+                  : 'rgba(255,255,255,0.04)',
+
+              border:
+                mode === 'current'
+                  ? '1px solid rgba(251,191,36,0.4)'
+                  : '1px solid rgba(255,255,255,0.08)',
+
+              color:
+                mode === 'current'
+                  ? '#FBBF24'
+                  : 'rgba(255,255,255,0.4)',
+            }}
+          >
+            Now
+          </button>
+
+          <button
+            onClick={() => setMode('target')}
+            className="py-2 rounded-lg text-sm font-semibold transition-colors"
+            style={{
+              background:
+                mode === 'target'
+                  ? 'rgba(251,191,36,0.15)'
+                  : 'rgba(255,255,255,0.04)',
+
+              border:
+                mode === 'target'
+                  ? '1px solid rgba(251,191,36,0.4)'
+                  : '1px solid rgba(255,255,255,0.08)',
+
+              color:
+                mode === 'target'
+                  ? '#FBBF24'
+                  : 'rgba(255,255,255,0.4)',
+            }}
+          >
+            Goal
+          </button>
+        </div>
+
         <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3">
-          Select slot
+          Select slot — {mode === 'current' ? 'Now' : 'Goal'}
         </p>
 
         <div
@@ -111,16 +191,21 @@ export default function ShardEditModal({ frame, onClose, onSaved }) {
                   height: '24px',
                   borderRadius: '4px',
                   transform: 'rotate(-35deg)',
+
                   background: s.color
                     ? SHARD_COLORS[s.color]
                     : 'rgba(255,255,255,0.08)',
+
                   border:
                     i === activeSlot
                       ? '2px solid white'
                       : '1px solid rgba(255,255,255,0.1)',
-                  flexShrink: 0,
+
                   outline:
-                    i === activeSlot ? '2px solid rgba(255,255,255,0.3)' : 'none',
+                    i === activeSlot
+                      ? '2px solid rgba(255,255,255,0.3)'
+                      : 'none',
+
                   outlineOffset: '3px',
                 }}
               />
@@ -152,7 +237,10 @@ export default function ShardEditModal({ frame, onClose, onSaved }) {
               className="flex flex-col items-center gap-1.5 cursor-pointer p-2 rounded-lg transition-colors"
               style={{
                 background:
-                  current.color === name ? 'rgba(255,255,255,0.08)' : 'transparent',
+                  current.color === name
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'transparent',
+
                 border:
                   current.color === name
                     ? '1px solid rgba(255,255,255,0.2)'
@@ -187,16 +275,20 @@ export default function ShardEditModal({ frame, onClose, onSaved }) {
           }}
           onClick={toggleTau}
         >
-          <span className="text-sm text-white/60">Tauforged</span>
+          <span className="text-sm text-white/60">
+            Tauforged
+          </span>
 
           <div
             className="rounded-full transition-colors"
             style={{
               width: '32px',
               height: '18px',
+
               background: current.tauforged
                 ? '#FBBF24'
                 : 'rgba(255,255,255,0.15)',
+
               position: 'relative',
             }}
           >
@@ -215,30 +307,47 @@ export default function ShardEditModal({ frame, onClose, onSaved }) {
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={clearSlot}
-            className="flex-1 py-2 rounded-lg text-sm text-white/40 hover:text-white/60 transition-colors"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '0.5px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            Clear slot
-          </button>
+        <div className="flex flex-col gap-2">
+          {mode === 'current' && (
+            <button
+              onClick={clearAllCurrent}
+              className="w-full py-2 rounded-lg text-sm text-red-300/70 hover:text-red-200 transition-colors"
+              style={{
+                background: 'rgba(239,68,68,0.06)',
+                border: '0.5px solid rgba(239,68,68,0.18)',
+              }}
+            >
+              Clear All Now
+            </button>
+          )}
 
-          <button
-            onClick={save}
-            disabled={saving}
-            className="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
-            style={{
-              background: 'rgba(251,191,36,0.15)',
-              border: '0.5px solid rgba(251,191,36,0.4)',
-              color: '#FBBF24',
-            }}
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={clearSlot}
+              className="flex-1 py-2 rounded-lg text-sm text-white/40 hover:text-white/60 transition-colors"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '0.5px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              Clear slot
+            </button>
+
+            <button
+              onClick={save}
+              disabled={saving}
+              className="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
+              style={{
+                background: 'rgba(251,191,36,0.15)',
+                border: '0.5px solid rgba(251,191,36,0.4)',
+                color: '#FBBF24',
+              }}
+            >
+              {saving
+                ? 'Saving...'
+                : `Save ${mode === 'current' ? 'Now' : 'Goal'}`}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -12,18 +12,12 @@ function ShardRow({ label, shards, variant = 'current' }) {
   const isGoal = variant === 'goal'
 
   return (
-    <div
-      className={
-        isGoal
-          ? 'flex items-center justify-between gap-3 opacity-55'
-          : 'flex items-center justify-between gap-3'
-      }
-    >
+    <div className="flex items-center gap-3">
       <span
         className={
           isGoal
-            ? 'text-[8px] text-amber-300/45 uppercase tracking-widest w-12'
-            : 'text-[9px] text-white/25 uppercase tracking-widest w-12'
+            ? 'text-[8px] text-amber-300/35 uppercase tracking-widest w-11'
+            : 'text-[9px] text-white/30 uppercase tracking-widest w-11'
         }
       >
         {label}
@@ -32,10 +26,10 @@ function ShardRow({ label, shards, variant = 'current' }) {
       <div
         className={
           isGoal
-            ? 'flex gap-2 items-center flex-1 border-l border-amber-400/20 pl-3'
+            ? 'flex gap-2 items-center flex-1 border-l border-amber-400/15 pl-3'
             : 'flex gap-3 items-center flex-1 pl-1'
         }
-        style={{ height: isGoal ? '20px' : '24px' }}
+        style={{ height: isGoal ? '18px' : '24px' }}
       >
         {hasShards ? (
           shards.map((s, i) => (
@@ -44,10 +38,13 @@ function ShardRow({ label, shards, variant = 'current' }) {
               color={s.color}
               tauforged={s.tauforged}
               size={isGoal ? 'xs' : 'sm'}
+              muted={isGoal}
             />
           ))
         ) : (
-          <p className="text-[9px] text-white/15 uppercase tracking-widest">None</p>
+          <p className="text-[9px] text-white/15 uppercase tracking-widest">
+            None
+          </p>
         )}
       </div>
     </div>
