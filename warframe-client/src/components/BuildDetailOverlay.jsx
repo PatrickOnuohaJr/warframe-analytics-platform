@@ -50,7 +50,38 @@ function ShardLine({ label, shards, muted = false }) {
   )
 }
 
-export default function BuildDetailOverlay({ frame, onClose, onEdit }) {
+function ActionButton({ children, color, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group relative overflow-hidden px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-300"
+      style={{
+        color,
+        background: `${color}10`,
+        borderColor: `${color}30`,
+        boxShadow: `0 0 18px ${color}12`,
+      }}
+    >
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{
+          background: `linear-gradient(135deg, ${color}22, transparent)`,
+        }}
+      />
+
+      <span className="relative z-10 tracking-wide uppercase">
+        {children}
+      </span>
+    </button>
+  )
+}
+
+export default function BuildDetailOverlay({
+  frame,
+  onClose,
+  onEditArsenal,
+  onEditShards,
+}) {
   const color = frame.cultivation_color ?? '#FBBF24'
   const school = frame.cultivation_school ?? 'Unknown School'
   const art = frame.cultivation_art ?? 'Cultivation identity pending'
@@ -70,22 +101,26 @@ export default function BuildDetailOverlay({ frame, onClose, onEdit }) {
         <div className="flex justify-between items-start mb-10">
           <button
             onClick={onClose}
-            className="text-white/40 hover:text-white text-sm uppercase tracking-widest"
+            className="text-white/35 hover:text-white text-sm uppercase tracking-[0.25em] transition-colors"
           >
-            ← Back
+            ← Return to Codex
           </button>
 
-          <button
-            onClick={onEdit}
-            className="px-4 py-2 rounded-lg text-sm font-semibold border"
-            style={{
-              color,
-              background: `${color}14`,
-              borderColor: `${color}44`,
-            }}
-          >
-            Edit Loadout
-          </button>
+          <div className="flex gap-3">
+            <ActionButton
+              color={color}
+              onClick={onEditArsenal}
+            >
+              Edit Arsenal
+            </ActionButton>
+
+            <ActionButton
+              color={color}
+              onClick={onEditShards}
+            >
+              Edit Archon Shards
+            </ActionButton>
+          </div>
         </div>
 
         <section
@@ -118,7 +153,7 @@ export default function BuildDetailOverlay({ frame, onClose, onEdit }) {
             {frame.build_title ?? 'Untitled Build'}
           </p>
 
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-3 items-center flex-wrap">
             {frame.tier && (
               <span
                 className="text-sm font-black px-3 py-1 rounded-lg border"

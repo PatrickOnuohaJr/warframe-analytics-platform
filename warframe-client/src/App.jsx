@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import FrameCard from './components/FrameCard'
 import ShardEditModal from './components/ShardEditModal'
 import BuildDetailOverlay from './components/BuildDetailOverlay'
 import useFrames from './hooks/useFrames'
+import useWeapons from './hooks/useWeapons'
 
 function getSchools(frames) {
   return [
@@ -28,9 +29,24 @@ function getSchoolColor(frames, selectedSchool) {
 
 export default function App() {
   const { frames, loading, refetchFrames } = useFrames()
+  const { weapons, loadingWeapons } = useWeapons()
+
   const [editingFrame, setEditingFrame] = useState(null)
+  const [editingInitialTab, setEditingInitialTab] = useState('loadout')
   const [detailFrame, setDetailFrame] = useState(null)
   const [selectedSchool, setSelectedSchool] = useState('All Schools')
+
+  useEffect(() => {
+    if (!detailFrame) return
+
+    const updatedDetailFrame = frames.find(
+      frame => frame.my_frame_id === detailFrame.my_frame_id
+    )
+
+    if (updatedDetailFrame) {
+      setDetailFrame(updatedDetailFrame)
+    }
+  }, [frames])
 
   const schools = getSchools(frames)
   const schoolColor = getSchoolColor(frames, selectedSchool)
@@ -70,6 +86,11 @@ export default function App() {
 
         <p className="text-white/30 text-sm mb-5">
           {filteredFrames.length} / {frames.length} builds
+          {loadingWeapons && (
+            <span className="ml-2 text-white/20">
+              — loading weapons
+            </span>
+          )}
           {selectedSchool !== 'All Schools' && (
             <span style={{ color: schoolColor }}>
               {' '}— {selectedSchool}
@@ -128,9 +149,13 @@ export default function App() {
         <BuildDetailOverlay
           frame={detailFrame}
           onClose={() => setDetailFrame(null)}
-          onEdit={() => {
+          onEditArsenal={() => {
+            setEditingInitialTab('loadout')
             setEditingFrame(detailFrame)
-            setDetailFrame(null)
+          }}
+          onEditShards={() => {
+            setEditingInitialTab('shards')
+            setEditingFrame(detailFrame)
           }}
         />
       )}
@@ -139,6 +164,8 @@ export default function App() {
         <ShardEditModal
           frame={editingFrame}
           frames={frames}
+          weapons={weapons}
+          initialTab={editingInitialTab}
           onClose={() => setEditingFrame(null)}
           onSaved={() => {
             setEditingFrame(null)

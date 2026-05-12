@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { wfUser } from '../lib/supabase'
 import { SHARD_COLORS, SHARD_NAMES } from '../constants/shards'
 
@@ -27,13 +27,161 @@ function cleanValue(value) {
   return value.trim()
 }
 
+function TabButton({ active, color, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className="py-2 rounded-lg text-sm font-semibold transition-colors"
+      style={{
+        background: active ? `${color}18` : 'rgba(255,255,255,0.04)',
+        border: active
+          ? `1px solid ${color}55`
+          : '1px solid rgba(255,255,255,0.08)',
+        color: active ? color : 'rgba(255,255,255,0.4)',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function WeaponInput({
+  label,
+  value,
+  onChange,
+  weapons,
+  slot,
+  placeholder,
+}) {
+  const [focused, setFocused] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState(0)
+
+  const filteredWeapons = useMemo(() => {
+    const query = value.trim().toLowerCase()
+
+    return weapons
+      .filter(weapon => weapon.slot === slot)
+      .filter(weapon => {
+        if (!query) return true
+        return weapon.name.toLowerCase().includes(query)
+      })
+      .sort((a, b) => {
+        const aName = a.name.toLowerCase()
+        const bName = b.name.toLowerCase()
+
+        if (query) {
+          const aStarts = aName.startsWith(query)
+          const bStarts = bName.startsWith(query)
+
+          if (aStarts && !bStarts) return -1
+          if (!aStarts && bStarts) return 1
+        }
+
+        return a.name.localeCompare(b.name)
+      })
+      .slice(0, 8)
+  }, [weapons, slot, value])
+
+  function selectWeapon(weapon) {
+    onChange(weapon.name)
+    setFocused(false)
+    setHighlightedIndex(0)
+  }
+
+  function handleKeyDown(e) {
+    if (!focused || filteredWeapons.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlightedIndex(prev =>
+        prev >= filteredWeapons.length - 1 ? 0 : prev + 1
+      )
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightedIndex(prev =>
+        prev <= 0 ? filteredWeapons.length - 1 : prev - 1
+      )
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      selectWeapon(filteredWeapons[highlightedIndex])
+    }
+
+    if (e.key === 'Escape') {
+      setFocused(false)
+    }
+  }
+
+  return (
+    <div className="relative">
+      <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
+        {label}
+      </label>
+
+      <input
+        value={value}
+        onChange={e => {
+          onChange(e.target.value)
+          setHighlightedIndex(0)
+        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setTimeout(() => setFocused(false), 120)
+        }}
+        onKeyDown={handleKeyDown}
+        className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
+        placeholder={placeholder}
+      />
+
+      {focused && filteredWeapons.length > 0 && (
+        <div className="absolute left-0 right-0 top-full mt-1 bg-[#0d0d0d] border border-white/10 rounded-lg overflow-hidden z-[80] max-h-56 overflow-y-auto shadow-xl">
+          {filteredWeapons.map((weapon, index) => {
+            const highlighted = index === highlightedIndex
+
+            return (
+              <button
+                key={weapon.weapon_id}
+                type="button"
+                onMouseDown={() => selectWeapon(weapon)}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                className="w-full text-left px-3 py-2 transition-colors"
+                style={{
+                  background: highlighted
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'transparent',
+                }}
+              >
+                <p className="text-sm text-white/80">{weapon.name}</p>
+                <p className="text-[10px] text-white/30 uppercase tracking-widest">
+                  {weapon.weapon_type ?? weapon.category ?? slot}
+                  {weapon.mastery_rank !== null &&
+                  weapon.mastery_rank !== undefined
+                    ? ` • MR ${weapon.mastery_rank}`
+                    : ''}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ShardEditModal({
   frame,
   frames,
+  weapons,
+  initialTab = 'loadout',
   onClose,
   onSaved,
 }) {
-  const [activeEditorTab, setActiveEditorTab] = useState('loadout')
+  const color = frame.cultivation_color ?? '#FBBF24'
+
+  const [activeEditorTab, setActiveEditorTab] = useState(initialTab)
   const [mode, setMode] = useState('current')
   const [activeSlot, setActiveSlot] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -81,9 +229,9 @@ export default function ShardEditModal({
     f => String(f.my_frame_id) === String(selectedTargetFrame)
   )
 
-  function setColor(color) {
+  function setColor(colorName) {
     setShards(prev =>
-      prev.map((s, i) => (i === activeSlot ? { ...s, color } : s))
+      prev.map((s, i) => (i === activeSlot ? { ...s, color: colorName } : s))
     )
   }
 
@@ -243,18 +391,28 @@ export default function ShardEditModal({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50"
-      style={{ background: 'rgba(0,0,0,0.75)' }}
+      className="fixed inset-0 flex items-center justify-center z-[60]"
+      style={{ background: 'rgba(0,0,0,0.82)' }}
       onClick={onClose}
     >
       <div
-        className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className="border rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+        style={{
+          background: `linear-gradient(135deg, ${color}10, #111 22%, #161616 100%)`,
+          borderColor: `${color}44`,
+          boxShadow: `0 0 40px ${color}16`,
+        }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-[10px] text-white/30 uppercase tracking-widest mb-0.5">
-              Editing loadout
+            <p
+              className="text-[10px] uppercase tracking-widest mb-0.5 font-bold"
+              style={{ color }}
+            >
+              {activeEditorTab === 'loadout'
+                ? 'Editing Arsenal'
+                : 'Editing Archon Shards'}
             </p>
 
             <h2 className="text-white font-semibold text-lg">
@@ -262,10 +420,7 @@ export default function ShardEditModal({
             </h2>
 
             {frame.cultivation_school && (
-              <p
-                className="text-[10px] uppercase tracking-widest mt-1"
-                style={{ color: frame.cultivation_color ?? '#FBBF24' }}
-              >
+              <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">
                 {frame.cultivation_school}
               </p>
             )}
@@ -280,47 +435,21 @@ export default function ShardEditModal({
         </div>
 
         <div className="grid grid-cols-2 gap-2 mb-5">
-          <button
+          <TabButton
+            active={activeEditorTab === 'loadout'}
+            color={color}
             onClick={() => setActiveEditorTab('loadout')}
-            className="py-2 rounded-lg text-sm font-semibold transition-colors"
-            style={{
-              background:
-                activeEditorTab === 'loadout'
-                  ? 'rgba(251,191,36,0.15)'
-                  : 'rgba(255,255,255,0.04)',
-              border:
-                activeEditorTab === 'loadout'
-                  ? '1px solid rgba(251,191,36,0.4)'
-                  : '1px solid rgba(255,255,255,0.08)',
-              color:
-                activeEditorTab === 'loadout'
-                  ? '#FBBF24'
-                  : 'rgba(255,255,255,0.4)',
-            }}
           >
-            Loadout
-          </button>
+            Arsenal
+          </TabButton>
 
-          <button
+          <TabButton
+            active={activeEditorTab === 'shards'}
+            color={color}
             onClick={() => setActiveEditorTab('shards')}
-            className="py-2 rounded-lg text-sm font-semibold transition-colors"
-            style={{
-              background:
-                activeEditorTab === 'shards'
-                  ? 'rgba(251,191,36,0.15)'
-                  : 'rgba(255,255,255,0.04)',
-              border:
-                activeEditorTab === 'shards'
-                  ? '1px solid rgba(251,191,36,0.4)'
-                  : '1px solid rgba(255,255,255,0.08)',
-              color:
-                activeEditorTab === 'shards'
-                  ? '#FBBF24'
-                  : 'rgba(255,255,255,0.4)',
-            }}
           >
-            Shards
-          </button>
+            Archon Shards
+          </TabButton>
         </div>
 
         {activeEditorTab === 'loadout' && (
@@ -355,68 +484,55 @@ export default function ShardEditModal({
               </select>
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              <div>
-                <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
-                  Primary Weapon
-                </label>
-                <input
-                  value={primaryWeapon}
-                  onChange={e => setPrimaryWeapon(e.target.value)}
-                  className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
-                  placeholder="Torid Incarnon"
-                />
-              </div>
+            <WeaponInput
+              label="Primary Weapon"
+              value={primaryWeapon}
+              onChange={setPrimaryWeapon}
+              weapons={weapons}
+              slot="Primary"
+              placeholder="Torid Incarnon"
+            />
 
-              <div>
-                <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
-                  Secondary Weapon
-                </label>
-                <input
-                  value={secondaryWeapon}
-                  onChange={e => setSecondaryWeapon(e.target.value)}
-                  className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
-                  placeholder="Laetum"
-                />
-              </div>
+            <WeaponInput
+              label="Secondary Weapon"
+              value={secondaryWeapon}
+              onChange={setSecondaryWeapon}
+              weapons={weapons}
+              slot="Secondary"
+              placeholder="Laetum"
+            />
 
-              <div>
-                <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
-                  Melee Weapon
-                </label>
-                <input
-                  value={meleeWeapon}
-                  onChange={e => setMeleeWeapon(e.target.value)}
-                  className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
-                  placeholder="Praedos"
-                />
-              </div>
+            <WeaponInput
+              label="Melee Weapon"
+              value={meleeWeapon}
+              onChange={setMeleeWeapon}
+              weapons={weapons}
+              slot="Melee"
+              placeholder="Praedos"
+            />
+
+            <div>
+              <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
+                Arcane 1
+              </label>
+              <input
+                value={arcane1}
+                onChange={e => setArcane1(e.target.value)}
+                className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
+                placeholder="Arcane Reaper"
+              />
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              <div>
-                <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
-                  Arcane 1
-                </label>
-                <input
-                  value={arcane1}
-                  onChange={e => setArcane1(e.target.value)}
-                  className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
-                  placeholder="Arcane Reaper"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
-                  Arcane 2
-                </label>
-                <input
-                  value={arcane2}
-                  onChange={e => setArcane2(e.target.value)}
-                  className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
-                  placeholder="Molt Augmented"
-                />
-              </div>
+            <div>
+              <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
+                Arcane 2
+              </label>
+              <input
+                value={arcane2}
+                onChange={e => setArcane2(e.target.value)}
+                className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
+                placeholder="Molt Augmented"
+              />
             </div>
 
             <button
@@ -424,12 +540,12 @@ export default function ShardEditModal({
               disabled={saving}
               className="w-full py-2 rounded-lg text-sm font-semibold transition-colors"
               style={{
-                background: 'rgba(251,191,36,0.15)',
-                border: '0.5px solid rgba(251,191,36,0.4)',
-                color: '#FBBF24',
+                background: `${color}18`,
+                border: `0.5px solid ${color}55`,
+                color,
               }}
             >
-              {saving ? 'Saving...' : 'Save Loadout'}
+              {saving ? 'Saving...' : 'Save Arsenal'}
             </button>
           </div>
         )}
@@ -437,47 +553,21 @@ export default function ShardEditModal({
         {activeEditorTab === 'shards' && (
           <>
             <div className="grid grid-cols-2 gap-2 mb-5">
-              <button
+              <TabButton
+                active={mode === 'current'}
+                color={color}
                 onClick={() => setMode('current')}
-                className="py-2 rounded-lg text-sm font-semibold transition-colors"
-                style={{
-                  background:
-                    mode === 'current'
-                      ? 'rgba(251,191,36,0.15)'
-                      : 'rgba(255,255,255,0.04)',
-                  border:
-                    mode === 'current'
-                      ? '1px solid rgba(251,191,36,0.4)'
-                      : '1px solid rgba(255,255,255,0.08)',
-                  color:
-                    mode === 'current'
-                      ? '#FBBF24'
-                      : 'rgba(255,255,255,0.4)',
-                }}
               >
                 Now
-              </button>
+              </TabButton>
 
-              <button
+              <TabButton
+                active={mode === 'target'}
+                color={color}
                 onClick={() => setMode('target')}
-                className="py-2 rounded-lg text-sm font-semibold transition-colors"
-                style={{
-                  background:
-                    mode === 'target'
-                      ? 'rgba(251,191,36,0.15)'
-                      : 'rgba(255,255,255,0.04)',
-                  border:
-                    mode === 'target'
-                      ? '1px solid rgba(251,191,36,0.4)'
-                      : '1px solid rgba(255,255,255,0.08)',
-                  color:
-                    mode === 'target'
-                      ? '#FBBF24'
-                      : 'rgba(255,255,255,0.4)',
-                }}
               >
                 Goal
-              </button>
+              </TabButton>
             </div>
 
             <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3">
@@ -510,7 +600,7 @@ export default function ShardEditModal({
                           : '1px solid rgba(255,255,255,0.1)',
                       outline:
                         i === activeSlot
-                          ? '2px solid rgba(255,255,255,0.3)'
+                          ? `2px solid ${color}66`
                           : 'none',
                       outlineOffset: '3px',
                     }}
@@ -521,7 +611,7 @@ export default function ShardEditModal({
                     style={{
                       color:
                         i === activeSlot
-                          ? 'rgba(255,255,255,0.6)'
+                          ? 'rgba(255,255,255,0.65)'
                           : 'rgba(255,255,255,0.2)',
                     }}
                   >
@@ -562,10 +652,7 @@ export default function ShardEditModal({
                     }}
                   />
 
-                  <span
-                    className="text-[8px] uppercase tracking-wide"
-                    style={{ color: 'rgba(255,255,255,0.3)' }}
-                  >
+                  <span className="text-[8px] uppercase tracking-wide text-white/30">
                     {name}
                   </span>
                 </div>
@@ -580,9 +667,7 @@ export default function ShardEditModal({
               }}
               onClick={toggleTau}
             >
-              <span className="text-sm text-white/60">
-                Tauforged
-              </span>
+              <span className="text-sm text-white/60">Tauforged</span>
 
               <div
                 className="rounded-full transition-colors"
@@ -590,7 +675,7 @@ export default function ShardEditModal({
                   width: '32px',
                   height: '18px',
                   background: current.tauforged
-                    ? '#FBBF24'
+                    ? color
                     : 'rgba(255,255,255,0.15)',
                   position: 'relative',
                 }}
@@ -615,10 +700,13 @@ export default function ShardEditModal({
                 className="rounded-xl p-3 mb-4"
                 style={{
                   background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  border: `1px solid ${color}30`,
                 }}
               >
-                <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3">
+                <p
+                  className="text-[10px] uppercase tracking-widest mb-3 font-bold"
+                  style={{ color }}
+                >
                   Copy Goal To Another Frame
                 </p>
 
@@ -663,9 +751,9 @@ export default function ShardEditModal({
 
                 {targetFrameObject && (
                   <p className="text-xs text-white/40 mb-3">
-                    Copy <span className="text-amber-300">{frame.warframe_name}</span>
+                    Copy <span style={{ color }}>{frame.warframe_name}</span>
                     {"'s"} Goal setup to{' '}
-                    <span className="text-amber-300">
+                    <span style={{ color }}>
                       {targetFrameObject.warframe_name}
                     </span>
                     ?
@@ -689,9 +777,9 @@ export default function ShardEditModal({
                     disabled={saving || !selectedTargetFrame}
                     className="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
                     style={{
-                      background: 'rgba(16,185,129,0.08)',
-                      border: '0.5px solid rgba(16,185,129,0.25)',
-                      color: '#34D399',
+                      background: `${color}14`,
+                      border: `0.5px solid ${color}55`,
+                      color,
                       opacity: selectedTargetFrame ? 1 : 0.4,
                     }}
                   >
@@ -762,9 +850,9 @@ export default function ShardEditModal({
                   disabled={saving}
                   className="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
                   style={{
-                    background: 'rgba(251,191,36,0.15)',
-                    border: '0.5px solid rgba(251,191,36,0.4)',
-                    color: '#FBBF24',
+                    background: `${color}18`,
+                    border: `0.5px solid ${color}55`,
+                    color,
                   }}
                 >
                   {saving
