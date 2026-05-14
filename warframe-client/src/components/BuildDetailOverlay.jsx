@@ -1,9 +1,11 @@
 import ShardChip from './ShardChip'
+import { getTauBonusText } from '../constants/shardBonuses'
 
 function getShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
     color: slots?.[`shard_${i}_color`] ?? null,
     tauforged: slots?.[`shard_${i}_tauforged`] ?? false,
+    bonus: slots?.[`shard_${i}_bonus`] ?? '',
   }))
 }
 
@@ -28,6 +30,55 @@ function getSchoolIcon(schoolLabel = '') {
   return '✦'
 }
 
+function formatShardLabel(shard) {
+  if (!shard.color) return null
+
+  const shardColor =
+    shard.color.charAt(0).toUpperCase() +
+    shard.color.slice(1)
+
+  const bonus = shard.tauforged
+    ? getTauBonusText(shard.bonus)
+    : shard.bonus
+
+  return `${shard.tauforged ? 'Tauforged ' : ''}${shardColor}${bonus ? ` — ${bonus}` : ''}`
+}
+
+function countFusionShards(shards) {
+  const fusion = ['emerald', 'topaz', 'violet']
+
+  return shards.filter(
+    s => s.color && fusion.includes(s.color.toLowerCase())
+  ).length
+}
+
+function getConstitutionLabel(shards) {
+  const fusionCount = countFusionShards(shards)
+
+  if (fusionCount >= 5) return 'Apex Variant Constitution'
+  if (fusionCount >= 2) return 'Variant Constitution'
+
+  return null
+}
+
+function WeaponValue({ name, incarnon }) {
+  if (!name) {
+    return <p className="text-white/75">—</p>
+  }
+
+  return (
+    <p className="text-white/75 flex items-center gap-2 flex-wrap">
+      <span>{name}</span>
+
+      {incarnon && (
+        <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded border text-amber-300 border-amber-300/35 bg-amber-300/10">
+          Incarnon
+        </span>
+      )}
+    </p>
+  )
+}
+
 function ShardLine({ label, shards, muted = false }) {
   return (
     <div>
@@ -35,7 +86,7 @@ function ShardLine({ label, shards, muted = false }) {
         {label}
       </p>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-4 items-center mb-3">
         {shards.map((shard, index) => (
           <ShardChip
             key={index}
@@ -43,36 +94,27 @@ function ShardLine({ label, shards, muted = false }) {
             tauforged={shard.tauforged}
             size="lg"
             muted={muted}
+            tooltip={formatShardLabel(shard)}
           />
         ))}
       </div>
+
+      <div className="space-y-1">
+        {shards.map((shard, index) => {
+          const label = formatShardLabel(shard)
+          if (!label) return null
+
+          return (
+            <p
+              key={index}
+              className="text-[11px] text-white/40 leading-relaxed"
+            >
+              Slot {index + 1}: {label}
+            </p>
+          )
+        })}
+      </div>
     </div>
-  )
-}
-
-function ActionButton({ children, color, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="group relative overflow-hidden px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-300"
-      style={{
-        color,
-        background: `${color}10`,
-        borderColor: `${color}30`,
-        boxShadow: `0 0 18px ${color}12`,
-      }}
-    >
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{
-          background: `linear-gradient(135deg, ${color}22, transparent)`,
-        }}
-      />
-
-      <span className="relative z-10 tracking-wide uppercase">
-        {children}
-      </span>
-    </button>
   )
 }
 
@@ -90,6 +132,9 @@ export default function BuildDetailOverlay({
   const currentShards = getShards(frame.shard_slots)
   const targetShards = getShards(frame.target_shards)
 
+  const currentConstitution = getConstitutionLabel(currentShards)
+  const targetConstitution = getConstitutionLabel(targetShards)
+
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto text-white backdrop-blur-xl"
@@ -105,22 +150,6 @@ export default function BuildDetailOverlay({
           >
             ← Return to Codex
           </button>
-
-          <div className="flex gap-3">
-            <ActionButton
-              color={color}
-              onClick={onEditArsenal}
-            >
-              Edit Arsenal
-            </ActionButton>
-
-            <ActionButton
-              color={color}
-              onClick={onEditShards}
-            >
-              Edit Archon Shards
-            </ActionButton>
-          </div>
         </div>
 
         <section
@@ -167,6 +196,29 @@ export default function BuildDetailOverlay({
               </span>
             )}
 
+            {currentConstitution && (
+              <span
+                className="text-xs uppercase tracking-widest px-3 py-1 rounded-lg border"
+                style={{
+                  color,
+                  background:
+                    currentConstitution === 'Apex Variant Constitution'
+                      ? `linear-gradient(135deg, ${color}22, rgba(255,255,255,0.08))`
+                      : `${color}14`,
+                  borderColor:
+                    currentConstitution === 'Apex Variant Constitution'
+                      ? `${color}AA`
+                      : `${color}55`,
+                  boxShadow:
+                    currentConstitution === 'Apex Variant Constitution'
+                      ? `0 0 20px ${color}33`
+                      : 'none',
+                }}
+              >
+                {currentConstitution}
+              </span>
+            )}
+
             <span className="text-xs text-white/35 uppercase tracking-widest">
               {art}
             </span>
@@ -174,34 +226,52 @@ export default function BuildDetailOverlay({
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section className="bg-black/70 border border-white/10 rounded-2xl p-6">
-            <h2
-              className="text-sm font-bold uppercase tracking-widest mb-5"
-              style={{ color }}
-            >
-              Arsenal
-            </h2>
+          <section
+            onClick={onEditArsenal}
+            className="bg-black/70 border border-white/10 rounded-2xl p-6 cursor-pointer transition-all hover:border-white/20 hover:bg-black/80"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2
+                className="text-sm font-bold uppercase tracking-widest"
+                style={{ color }}
+              >
+                Arsenal
+              </h2>
+
+              <span className="text-[10px] text-white/25 uppercase tracking-widest">
+                Click to Edit
+              </span>
+            </div>
 
             <div className="space-y-4 text-sm">
               <div>
                 <p className="text-white/25 uppercase tracking-widest text-[10px]">
                   Primary
                 </p>
-                <p className="text-white/75">{frame.primary_weapon ?? '—'}</p>
+                <WeaponValue
+                  name={frame.primary_weapon}
+                  incarnon={frame.primary_is_incarnon}
+                />
               </div>
 
               <div>
                 <p className="text-white/25 uppercase tracking-widest text-[10px]">
                   Secondary
                 </p>
-                <p className="text-white/75">{frame.secondary_weapon ?? '—'}</p>
+                <WeaponValue
+                  name={frame.secondary_weapon}
+                  incarnon={frame.secondary_is_incarnon}
+                />
               </div>
 
               <div>
                 <p className="text-white/25 uppercase tracking-widest text-[10px]">
                   Melee
                 </p>
-                <p className="text-white/75">{frame.melee_weapon ?? '—'}</p>
+                <WeaponValue
+                  name={frame.melee_weapon}
+                  incarnon={frame.melee_is_incarnon}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2">
@@ -219,20 +289,61 @@ export default function BuildDetailOverlay({
                   <p className="text-white/75">{frame.arcane_2 ?? '—'}</p>
                 </div>
               </div>
+
+              <div>
+                <p className="text-white/25 uppercase tracking-widest text-[10px]">
+                  Melee Arcane
+                </p>
+                <p className="text-white/75">
+                  {frame.melee_arcane ?? '—'}
+                </p>
+              </div>
             </div>
           </section>
 
-          <section className="bg-black/70 border border-white/10 rounded-2xl p-6">
-            <h2
-              className="text-sm font-bold uppercase tracking-widest mb-5"
-              style={{ color }}
-            >
-              Archon Shards
-            </h2>
+          <section
+            onClick={onEditShards}
+            className="bg-black/70 border border-white/10 rounded-2xl p-6 cursor-pointer transition-all hover:border-white/20 hover:bg-black/80"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2
+                className="text-sm font-bold uppercase tracking-widest"
+                style={{ color }}
+              >
+                Archon Shards
+              </h2>
+
+              <span className="text-[10px] text-white/25 uppercase tracking-widest">
+                Click to Edit
+              </span>
+            </div>
 
             <div className="space-y-8">
-              <ShardLine label="Now" shards={currentShards} />
-              <ShardLine label="Goal" shards={targetShards} muted />
+              <div>
+                <ShardLine label="Now" shards={currentShards} />
+
+                {currentConstitution && (
+                  <p
+                    className="mt-3 text-xs uppercase tracking-widest"
+                    style={{ color }}
+                  >
+                    Constitution: {currentConstitution}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <ShardLine label="Goal" shards={targetShards} muted />
+
+                {targetConstitution && (
+                  <p
+                    className="mt-3 text-xs uppercase tracking-widest"
+                    style={{ color }}
+                  >
+                    Goal Constitution: {targetConstitution}
+                  </p>
+                )}
+              </div>
             </div>
           </section>
 

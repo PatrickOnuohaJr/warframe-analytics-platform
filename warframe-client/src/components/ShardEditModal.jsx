@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
 import { wfUser } from '../lib/supabase'
 import { SHARD_COLORS, SHARD_NAMES } from '../constants/shards'
+import { SHARD_BONUSES, getTauBonusText } from '../constants/shardBonuses'
+import useArcanes from '../hooks/useArcanes';
 
 function getInitialShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
     color: slots?.[`shard_${i}_color`] ?? null,
     tauforged: slots?.[`shard_${i}_tauforged`] ?? false,
+    bonus: slots?.[`shard_${i}_bonus`] ?? '',
   }))
 }
 
@@ -16,6 +19,7 @@ function buildShardPayload(shards) {
     payload[`shard_${i + 1}_color`] = s.color
     payload[`shard_${i + 1}_tauforged`] = s.tauforged
     payload[`shard_${i + 1}_tier`] = null
+    payload[`shard_${i + 1}_bonus`] = s.bonus || null
   })
 
   return payload
@@ -25,6 +29,10 @@ function cleanValue(value) {
   if (!value) return null
   if (value.trim().toLowerCase() === 'nan') return null
   return value.trim()
+}
+
+function getColorKey(color) {
+  return color ? String(color).toLowerCase() : ''
 }
 
 function TabButton({ active, color, onClick, children }) {
@@ -45,14 +53,7 @@ function TabButton({ active, color, onClick, children }) {
   )
 }
 
-function WeaponInput({
-  label,
-  value,
-  onChange,
-  weapons,
-  slot,
-  placeholder,
-}) {
+function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }) {
   const [focused, setFocused] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(0)
 
@@ -60,7 +61,11 @@ function WeaponInput({
     const query = value.trim().toLowerCase()
 
     return weapons
-      .filter(weapon => weapon.slot === slot)
+      .filter(item => {
+  const itemSlot = item.slot ?? item.arcane_type
+  return itemSlot === slot
+})
+      .filter(weapon => weapon.weapon_type !== 'Incarnon Genesis')
       .filter(weapon => {
         if (!query) return true
         return weapon.name.toLowerCase().includes(query)
@@ -143,7 +148,7 @@ function WeaponInput({
 
             return (
               <button
-                key={weapon.weapon_id}
+                key={weapon.weapon_id ?? weapon.arcane_id}
                 type="button"
                 onMouseDown={() => selectWeapon(weapon)}
                 onMouseEnter={() => setHighlightedIndex(index)}
@@ -156,7 +161,7 @@ function WeaponInput({
               >
                 <p className="text-sm text-white/80">{weapon.name}</p>
                 <p className="text-[10px] text-white/30 uppercase tracking-widest">
-                  {weapon.weapon_type ?? weapon.category ?? slot}
+                  {weapon.weapon_type ?? weapon.arcane_type ?? weapon.category ?? slot}
                   {weapon.mastery_rank !== null &&
                   weapon.mastery_rank !== undefined
                     ? ` • MR ${weapon.mastery_rank}`
@@ -174,12 +179,13 @@ function WeaponInput({
 export default function ShardEditModal({
   frame,
   frames,
-  weapons,
+  weapons = [],
   initialTab = 'loadout',
   onClose,
   onSaved,
 }) {
   const color = frame.cultivation_color ?? '#FBBF24'
+  const { arcanes } = useArcanes()
 
   const [activeEditorTab, setActiveEditorTab] = useState(initialTab)
   const [mode, setMode] = useState('current')
@@ -198,6 +204,17 @@ export default function ShardEditModal({
   const [arcane1, setArcane1] = useState(frame.arcane_1 ?? '')
   const [arcane2, setArcane2] = useState(frame.arcane_2 ?? '')
 
+  const [primaryIsIncarnon, setPrimaryIsIncarnon] = useState(
+    frame.primary_is_incarnon ?? false
+  )
+  const [secondaryIsIncarnon, setSecondaryIsIncarnon] = useState(
+    frame.secondary_is_incarnon ?? false
+  )
+  const [meleeIsIncarnon, setMeleeIsIncarnon] = useState(
+    frame.melee_is_incarnon ?? false
+  )
+  const [meleeArcane, setMeleeArcane] = useState(frame.melee_arcane ?? '')
+
   const [currentShards, setCurrentShards] = useState(
     getInitialShards(frame.shard_slots)
   )
@@ -209,6 +226,8 @@ export default function ShardEditModal({
   const shards = mode === 'current' ? currentShards : targetShards
   const setShards = mode === 'current' ? setCurrentShards : setTargetShards
   const current = shards[activeSlot]
+  const currentColorKey = getColorKey(current.color)
+  const currentBonusOptions = SHARD_BONUSES[currentColorKey] ?? []
 
   const schools = [
     'All Schools',
@@ -229,24 +248,32 @@ export default function ShardEditModal({
     f => String(f.my_frame_id) === String(selectedTargetFrame)
   )
 
+  function updateActiveShard(field, value) {
+    setShards(prev =>
+      prev.map((s, i) =>
+        i === activeSlot ? { ...s, [field]: value } : s
+      )
+    )
+  }
+
   function setColor(colorName) {
     setShards(prev =>
-      prev.map((s, i) => (i === activeSlot ? { ...s, color: colorName } : s))
+      prev.map((s, i) =>
+        i === activeSlot ? { ...s, color: colorName, bonus: '' } : s
+      )
     )
   }
 
   function toggleTau() {
-    setShards(prev =>
-      prev.map((s, i) =>
-        i === activeSlot ? { ...s, tauforged: !s.tauforged } : s
-      )
-    )
+    updateActiveShard('tauforged', !current.tauforged)
   }
 
   function clearSlot() {
     setShards(prev =>
       prev.map((s, i) =>
-        i === activeSlot ? { color: null, tauforged: false } : s
+        i === activeSlot
+          ? { color: null, tauforged: false, bonus: '' }
+          : s
       )
     )
   }
@@ -256,6 +283,17 @@ export default function ShardEditModal({
       [1, 2, 3, 4, 5].map(() => ({
         color: null,
         tauforged: false,
+        bonus: '',
+      }))
+    )
+  }
+
+  function clearAllTarget() {
+    setTargetShards(
+      [1, 2, 3, 4, 5].map(() => ({
+        color: null,
+        tauforged: false,
+        bonus: '',
       }))
     )
   }
@@ -271,6 +309,10 @@ export default function ShardEditModal({
       melee_weapon: cleanValue(meleeWeapon),
       arcane_1: cleanValue(arcane1),
       arcane_2: cleanValue(arcane2),
+      primary_is_incarnon: primaryIsIncarnon,
+      secondary_is_incarnon: secondaryIsIncarnon,
+      melee_is_incarnon: meleeIsIncarnon,
+      melee_arcane: cleanValue(meleeArcane),
     }
 
     await wfUser
@@ -490,8 +532,17 @@ export default function ShardEditModal({
               onChange={setPrimaryWeapon}
               weapons={weapons}
               slot="Primary"
-              placeholder="Torid Incarnon"
+              placeholder="Torid"
             />
+
+            <label className="flex items-center gap-2 mt-2 text-xs text-white/60">
+              <input
+                type="checkbox"
+                checked={primaryIsIncarnon}
+                onChange={e => setPrimaryIsIncarnon(e.target.checked)}
+              />
+              Incarnon Adapter Installed
+            </label>
 
             <WeaponInput
               label="Secondary Weapon"
@@ -502,6 +553,15 @@ export default function ShardEditModal({
               placeholder="Laetum"
             />
 
+            <label className="flex items-center gap-2 mt-2 text-xs text-white/60">
+              <input
+                type="checkbox"
+                checked={secondaryIsIncarnon}
+                onChange={e => setSecondaryIsIncarnon(e.target.checked)}
+              />
+              Incarnon Adapter Installed
+            </label>
+
             <WeaponInput
               label="Melee Weapon"
               value={meleeWeapon}
@@ -511,29 +571,41 @@ export default function ShardEditModal({
               placeholder="Praedos"
             />
 
-            <div>
-              <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
-                Arcane 1
-              </label>
+            <label className="flex items-center gap-2 mt-2 text-xs text-white/60">
               <input
-                value={arcane1}
-                onChange={e => setArcane1(e.target.value)}
-                className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
-                placeholder="Arcane Reaper"
+                type="checkbox"
+                checked={meleeIsIncarnon}
+                onChange={e => setMeleeIsIncarnon(e.target.checked)}
               />
-            </div>
+              Incarnon Adapter Installed
+            </label>
 
-            <div>
-              <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
-                Arcane 2
-              </label>
-              <input
-                value={arcane2}
-                onChange={e => setArcane2(e.target.value)}
-                className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
-                placeholder="Molt Augmented"
-              />
-            </div>
+            <WeaponInput
+  label="Arcane 1"
+  value={arcane1}
+  onChange={setArcane1}
+  weapons={arcanes}
+  slot="Warframe"
+  placeholder="Arcane Reaper"
+/>
+
+            <WeaponInput
+  label="Arcane 2"
+  value={arcane2}
+  onChange={setArcane2}
+  weapons={arcanes}
+  slot="Warframe"
+  placeholder="Molt Augmented"
+/>
+
+            <WeaponInput
+  label="Melee Arcane"
+  value={meleeArcane}
+  onChange={setMeleeArcane}
+  weapons={arcanes}
+  slot="Melee"
+  placeholder="Melee Influence"
+/>
 
             <button
               onClick={saveLoadout}
@@ -584,6 +656,11 @@ export default function ShardEditModal({
                   onClick={() => setActiveSlot(i)}
                   className="flex flex-col items-center gap-2 cursor-pointer"
                   style={{ paddingBottom: '4px' }}
+                  title={
+                    s.color
+                      ? `${s.tauforged ? 'Tauforged ' : ''}${s.color}${s.bonus ? ` — ${s.tauforged ? getTauBonusText(s.bonus) : s.bonus}` : ''}`
+                      : 'Empty shard slot'
+                  }
                 >
                   <div
                     style={{
@@ -658,6 +735,28 @@ export default function ShardEditModal({
                 </div>
               ))}
             </div>
+
+            {current.color && (
+              <div className="mb-4">
+                <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
+                  Bonus / Purpose
+                </label>
+
+                <select
+                  value={current.bonus ?? ''}
+                  onChange={e => updateActiveShard('bonus', e.target.value)}
+                  className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
+                >
+                  <option value="">Select shard bonus...</option>
+
+                  {currentBonusOptions.map(bonus => (
+                    <option key={bonus.base} value={bonus.base}>
+                      {current.tauforged ? bonus.tau : bonus.base}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div
               className="flex items-center justify-between p-3 rounded-lg mb-4 cursor-pointer"
@@ -819,18 +918,31 @@ export default function ShardEditModal({
               )}
 
               {mode === 'target' && (
-                <button
-                  onClick={() => setShowCopyMenu(prev => !prev)}
-                  disabled={saving}
-                  className="w-full py-2 rounded-lg text-sm font-semibold transition-colors"
-                  style={{
-                    background: 'rgba(59,130,246,0.08)',
-                    border: '0.5px solid rgba(59,130,246,0.25)',
-                    color: '#60A5FA',
-                  }}
-                >
-                  Copy Goal To Another Frame
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowCopyMenu(prev => !prev)}
+                    disabled={saving}
+                    className="w-full py-2 rounded-lg text-sm font-semibold transition-colors"
+                    style={{
+                      background: 'rgba(59,130,246,0.08)',
+                      border: '0.5px solid rgba(59,130,246,0.25)',
+                      color: '#60A5FA',
+                    }}
+                  >
+                    Copy Goal To Another Frame
+                  </button>
+
+                  <button
+                    onClick={clearAllTarget}
+                    className="w-full py-2 rounded-lg text-sm text-red-300/70 hover:text-red-200 transition-colors"
+                    style={{
+                      background: 'rgba(239,68,68,0.06)',
+                      border: '0.5px solid rgba(239,68,68,0.18)',
+                    }}
+                  >
+                    Clear All Goal
+                  </button>
+                </>
               )}
 
               <div className="flex gap-2">
