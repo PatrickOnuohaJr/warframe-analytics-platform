@@ -195,6 +195,7 @@ export default function ShardEditModal({
   const [showCopyMenu, setShowCopyMenu] = useState(false)
   const [selectedSchool, setSelectedSchool] = useState('All Schools')
   const [selectedTargetFrame, setSelectedTargetFrame] = useState('')
+  const [arcaneCopyTarget, setArcaneCopyTarget] = useState('')
 
   const [buildTitle, setBuildTitle] = useState(frame.build_title ?? '')
   const [tier, setTier] = useState(frame.tier ?? '')
@@ -430,7 +431,35 @@ export default function ShardEditModal({
     setSaving(false)
     onSaved()
   }
+  async function copyArcaneSetup() {
+    if (!arcaneCopyTarget) {
+      alert('Select a target Warframe first.')
+      return
+  }
 
+  setSaving(true)
+
+  const payload = {
+    arcane_1: cleanValue(arcane1),
+    arcane_2: cleanValue(arcane2),
+  }
+
+  const { error } = await wfUser
+    .from('my_frames')
+    .update(payload)
+    .eq('my_frame_id', arcaneCopyTarget)
+
+  setSaving(false)
+
+  if (error) {
+    console.error(error)
+    alert('Failed to copy arcane setup.')
+    return
+  }
+
+  alert('Arcane setup copied successfully.')
+  onSaved()
+}
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-[60]"
@@ -597,7 +626,51 @@ export default function ShardEditModal({
   slot="Warframe"
   placeholder="Molt Augmented"
 />
+      <div
+      className="rounded-xl p-3"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: `1px solid ${color}30`,
+      }}
+    >
+      <p
+        className="text-[10px] uppercase tracking-widest mb-2 font-bold"
+        style={{ color }}
+      >
+        Copy Arcane Setup
+      </p>
 
+      <select
+        value={arcaneCopyTarget}
+        onChange={e => setArcaneCopyTarget(e.target.value)}
+        className="w-full bg-[#111] text-white/70 text-sm rounded-lg px-3 py-2 border border-white/10 mb-3"
+      >
+        <option value="">Select target Warframe...</option>
+
+        {filteredFrames
+          .filter(f => f.my_frame_id !== frame.my_frame_id)
+          .map(f => (
+            <option key={f.my_frame_id} value={f.my_frame_id}>
+              {f.warframe_name}
+            </option>
+          ))}
+      </select>
+
+      <button
+        type="button"
+        onClick={copyArcaneSetup}
+        disabled={!arcaneCopyTarget || saving}
+        className="w-full py-2 rounded-lg text-sm font-semibold transition-colors"
+        style={{
+          background: `${color}14`,
+          border: `0.5px solid ${color}55`,
+          color,
+          opacity: arcaneCopyTarget ? 1 : 0.4,
+        }}
+      >
+        Copy Arcane 1 + Arcane 2
+      </button>
+    </div>
             <WeaponInput
   label="Melee Arcane"
   value={meleeArcane}

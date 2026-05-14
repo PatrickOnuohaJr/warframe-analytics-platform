@@ -21,3 +21,6 @@ ETL/Raw/
 
 # Backup / resolve files
 *.resolved
+
+# Excel files
+Stress Test F1.xlsx

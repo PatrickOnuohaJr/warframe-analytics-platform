@@ -7,6 +7,20 @@ function getShards(slots) {
   }))
 }
 
+function getConstitutionBadge(slots) {
+  const fusion = ['emerald', 'topaz', 'violet']
+  const shards = getShards(slots)
+
+  const fusionCount = shards.filter(
+    s => s.color && fusion.includes(s.color.toLowerCase())
+  ).length
+
+  if (fusionCount >= 5) return 'APEX VARIANT'
+  if (fusionCount >= 2) return 'VARIANT CONSTITUTION'
+
+  return null
+}
+
 function getSchool(frame) {
   return frame.cultivation_school ?? 'Unknown School'
 }
@@ -85,6 +99,7 @@ export default function FrameCard({ frame, onEdit }) {
   const targetShards = getShards(frame.target_shards)
 
   const fullTau = currentShards.every(s => s.color && s.tauforged)
+  const constitutionBadge = getConstitutionBadge(frame.shard_slots)
   const hasTarget = targetShards.some(s => s.color)
 
   const cultivationColor = frame.cultivation_color ?? '#FBBF24'
@@ -186,20 +201,33 @@ export default function FrameCard({ frame, onEdit }) {
         )}
       </div>
 
+      <div className="flex gap-2 flex-wrap">
       {fullTau && (
-        <div>
-          <span
-            className="text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-widest"
-            style={{
-              background: 'rgba(251,191,36,0.1)',
-              color: '#FBBF24',
-              borderColor: 'rgba(251,191,36,0.3)',
-            }}
-          >
-            Full Tau
-          </span>
-        </div>
+        <span
+          className="text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-widest"
+          style={{
+            background: 'rgba(251,191,36,0.1)',
+            color: '#FBBF24',
+            borderColor: 'rgba(251,191,36,0.3)',
+          }}
+        >
+          Full Tau
+        </span>
       )}
+
+      {constitutionBadge && (
+        <span
+          className="text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-widest"
+          style={{
+            background: `${cultivationColor}14`,
+            color: cultivationColor,
+            borderColor: `${cultivationColor}55`,
+          }}
+        >
+          {constitutionBadge}
+        </span>
+      )}
+    </div>
 
       <div
         className="rounded-lg px-3 py-2 border mt-auto"
