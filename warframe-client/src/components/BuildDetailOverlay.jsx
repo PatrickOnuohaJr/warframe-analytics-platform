@@ -127,6 +127,7 @@ export default function BuildDetailOverlay({
   const color = frame.cultivation_color ?? '#FBBF24'
   const school = frame.cultivation_school ?? 'Unknown School'
   const art = frame.cultivation_art ?? 'Cultivation identity pending'
+  const doctrine = frame.cultivation_doctrine ?? null
   const icon = getSchoolIcon(school)
 
   const currentShards = getShards(frame.shard_slots)
@@ -355,11 +356,12 @@ export default function BuildDetailOverlay({
               Cultivation Doctrine
             </h2>
 
-            <p className="text-white/55 leading-relaxed">
-              {art}. This build belongs to the {school}, using its loadout,
-              shard path, and combat identity as a specialized doctrine within
-              Warframe Jarvis.
-            </p>
+           <p className="text-white/55 leading-relaxed">
+              {doctrine
+              ? doctrine
+              : `${art}. This build belongs to the ${school}, using its loadout, shard path, and combat identity as a specialized doctrine within Warframe Jarvis.`
+              }
+          </p>
           </section>
         </div>
       </div>
