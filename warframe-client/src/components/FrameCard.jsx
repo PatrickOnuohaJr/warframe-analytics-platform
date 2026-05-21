@@ -71,7 +71,7 @@ function ShardRow({ label, shards, variant = 'current' }) {
         className={
           isGoal
             ? 'text-[9px] text-[#A08840] uppercase tracking-widest w-11 font-semibold'
-            : 'text-[9px] text-[#4F4A42] uppercase tracking-widest w-11'
+            : 'text-[9px] text-[#9C9890] uppercase tracking-widest w-11'
         }
       >
         {label}
@@ -122,7 +122,7 @@ export default function FrameCard({ frame, onEdit }) {
 
   return (
     <div
-      className="group relative overflow-hidden bg-[#A39E96] border border-[#6F6A62] rounded-xl p-4 pl-16 hover:border-amber-400/40 transition-colors flex flex-col gap-3 cursor-pointer text-[#1C1917]"
+      className="group relative overflow-hidden bg-[#3A342C] border border-[#6F6A62] rounded-xl p-4 pl-16 hover:border-amber-400/40 transition-colors flex flex-col gap-3 cursor-pointer text-[#E8E4DC]"
       style={{
         borderLeft: hasCultivationColor
           ? `3px solid ${cultivationColor}`
@@ -138,7 +138,7 @@ export default function FrameCard({ frame, onEdit }) {
           className="absolute left-0 top-0 bottom-0 w-12 flex flex-col items-center"
           style={{
             background: `${cultivationColor}26`,
-            color: '#1C1917',
+            color: '#E8E4DC',
           }}
         >
           <div
@@ -170,13 +170,13 @@ export default function FrameCard({ frame, onEdit }) {
           <p
             className="text-[10px] uppercase tracking-widest mb-0.5 font-semibold"
             style={{
-              color: hasCultivationColor ? cultivationColor : '#4F4A42',
+              color: hasCultivationColor ? cultivationColor : '#9C9890',
             }}
           >
             {frame.build_title ?? '—'}
           </p>
 
-          <h2 className="text-[#1C1917] font-semibold text-sm">
+          <h2 className="text-[#E8E4DC] font-semibold text-sm">
             {frame.warframe_name}
           </h2>
         </div>
@@ -199,7 +199,7 @@ export default function FrameCard({ frame, onEdit }) {
         )}
       </div>
 
-      <div className="text-xs text-[#6B6560] space-y-0.5">
+      <div className="text-xs text-[#B8B3AC] space-y-0.5">
         {frame.primary_weapon && <p>{frame.primary_weapon}</p>}
         {frame.secondary_weapon && <p>{frame.secondary_weapon}</p>}
         {frame.melee_weapon && <p>{frame.melee_weapon}</p>}
@@ -245,7 +245,7 @@ export default function FrameCard({ frame, onEdit }) {
         style={{
           background: hasCultivationColor
             ? `${cultivationColor}10`
-            : '#858078',
+            : '#4A443B',
           borderColor: hasCultivationColor
             ? `${cultivationColor}40`
             : '#6F6A62',
@@ -254,19 +254,19 @@ export default function FrameCard({ frame, onEdit }) {
         <p
           className="text-[9px] font-bold uppercase tracking-widest"
           style={{
-            color: hasCultivationColor ? cultivationColor : '#4F4A42',
+            color: hasCultivationColor ? cultivationColor : '#9C9890',
           }}
         >
           {schoolLabel}
         </p>
 
-        <p className="text-[10px] text-[#6B6560] mt-1">
+        <p className="text-[10px] text-[#B8B3AC] mt-1">
           {cultivationArt}
         </p>
       </div>
 
       {(frame.arcane_1 || frame.arcane_2) && (
-        <div className="flex gap-2 text-[10px] text-[#6B6560] uppercase tracking-wide">
+        <div className="flex gap-2 text-[10px] text-[#B8B3AC] uppercase tracking-wide">
           {frame.arcane_1 && <span>{frame.arcane_1}</span>}
           {frame.arcane_2 && <span>/ {frame.arcane_2}</span>}
         </div>

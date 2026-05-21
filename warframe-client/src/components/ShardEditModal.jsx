@@ -41,10 +41,10 @@ function TabButton({ active, color, onClick, children }) {
       onClick={onClick}
       className="py-2 rounded-lg text-sm font-semibold transition-colors"
       style={{
-        background: active ? `${color}18` : 'rgba(255,255,255,0.04)',
+        background: active ? `${color}18` : '#3A342C',
         border: active
           ? `1px solid ${color}55`
-          : '1px solid rgba(255,255,255,0.08)',
+          : '1px solid #6F6A62',
         color: active ? color : 'rgba(255,255,255,0.4)',
       }}
     >
@@ -122,7 +122,7 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
 
   return (
     <div className="relative">
-      <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
+      <label className="block text-[10px] text-[#9C9890] uppercase tracking-widest mb-1">
         {label}
       </label>
 
@@ -137,7 +137,7 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
           setTimeout(() => setFocused(false), 120)
         }}
         onKeyDown={handleKeyDown}
-        className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
+        className="w-full bg-[#4A443B] text-[#E8E4DC] text-sm rounded-lg px-3 py-2 border border-white/10"
         placeholder={placeholder}
       />
 
@@ -155,12 +155,12 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
                 className="w-full text-left px-3 py-2 transition-colors"
                 style={{
                   background: highlighted
-                    ? 'rgba(255,255,255,0.08)'
+                    ? '#6F6A62'
                     : 'transparent',
                 }}
               >
-                <p className="text-sm text-white/80">{weapon.name}</p>
-                <p className="text-[10px] text-white/30 uppercase tracking-widest">
+                <p className="text-sm text-[#E8E4DC]">{weapon.name}</p>
+                <p className="text-[10px] text-[#9C9890] uppercase tracking-widest">
                   {weapon.weapon_type ?? weapon.arcane_type ?? weapon.category ?? slot}
                   {weapon.mastery_rank !== null &&
                   weapon.mastery_rank !== undefined
@@ -469,7 +469,7 @@ export default function ShardEditModal({
       <div
         className="border rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
         style={{
-          background: `linear-gradient(135deg, ${color}10, #111 22%, #161616 100%)`,
+          background: `linear-gradient(135deg, ${color}10, #4A443B 22%, #161616 100%)`,
           borderColor: `${color}44`,
           boxShadow: `0 0 40px ${color}16`,
         }}
@@ -486,12 +486,12 @@ export default function ShardEditModal({
                 : 'Editing Archon Shards'}
             </p>
 
-            <h2 className="text-white font-semibold text-lg">
+            <h2 className="text-[#E8E4DC] font-semibold text-lg">
               {frame.warframe_name}
             </h2>
 
             {frame.cultivation_school && (
-              <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">
+              <p className="text-[10px] text-[#9C9890] uppercase tracking-widest mt-1">
                 {frame.cultivation_school}
               </p>
             )}
@@ -499,7 +499,7 @@ export default function ShardEditModal({
 
           <button
             onClick={onClose}
-            className="text-white/30 hover:text-white text-xl leading-none"
+            className="text-[#9C9890] hover:text-[#E8E4DC] text-xl leading-none"
           >
             ✕
           </button>
@@ -526,25 +526,25 @@ export default function ShardEditModal({
         {activeEditorTab === 'loadout' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
+              <label className="block text-[10px] text-[#9C9890] uppercase tracking-widest mb-1">
                 Build Title
               </label>
               <input
                 value={buildTitle}
                 onChange={e => setBuildTitle(e.target.value)}
-                className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
+                className="w-full bg-[#4A443B] text-[#E8E4DC] text-sm rounded-lg px-3 py-2 border border-white/10"
                 placeholder="Blood Angel"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
+              <label className="block text-[10px] text-[#9C9890] uppercase tracking-widest mb-1">
                 Tier
               </label>
               <select
                 value={tier}
                 onChange={e => setTier(e.target.value)}
-                className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
+                className="w-full bg-[#4A443B] text-[#E8E4DC] text-sm rounded-lg px-3 py-2 border border-white/10"
               >
                 <option value="">No tier</option>
                 <option value="S">S</option>
@@ -564,7 +564,7 @@ export default function ShardEditModal({
               placeholder="Torid"
             />
 
-            <label className="flex items-center gap-2 mt-2 text-xs text-white/60">
+            <label className="flex items-center gap-2 mt-2 text-xs text-[#E8E4DC]/60">
               <input
                 type="checkbox"
                 checked={primaryIsIncarnon}
@@ -582,7 +582,7 @@ export default function ShardEditModal({
               placeholder="Laetum"
             />
 
-            <label className="flex items-center gap-2 mt-2 text-xs text-white/60">
+            <label className="flex items-center gap-2 mt-2 text-xs text-[#E8E4DC]/60">
               <input
                 type="checkbox"
                 checked={secondaryIsIncarnon}
@@ -600,7 +600,7 @@ export default function ShardEditModal({
               placeholder="Praedos"
             />
 
-            <label className="flex items-center gap-2 mt-2 text-xs text-white/60">
+            <label className="flex items-center gap-2 mt-2 text-xs text-[#E8E4DC]/60">
               <input
                 type="checkbox"
                 checked={meleeIsIncarnon}
@@ -629,7 +629,7 @@ export default function ShardEditModal({
       <div
       className="rounded-xl p-3"
       style={{
-        background: 'rgba(255,255,255,0.04)',
+        background: '#3A342C',
         border: `1px solid ${color}30`,
       }}
     >
@@ -643,7 +643,7 @@ export default function ShardEditModal({
       <select
         value={arcaneCopyTarget}
         onChange={e => setArcaneCopyTarget(e.target.value)}
-        className="w-full bg-[#111] text-white/70 text-sm rounded-lg px-3 py-2 border border-white/10 mb-3"
+        className="w-full bg-[#4A443B] text-[#E8E4DC] text-sm rounded-lg px-3 py-2 border border-white/10 mb-3"
       >
         <option value="">Select target Warframe...</option>
 
@@ -715,7 +715,7 @@ export default function ShardEditModal({
               </TabButton>
             </div>
 
-            <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3">
+            <p className="text-[10px] text-[#9C9890] uppercase tracking-widest mb-3">
               Select slot — {mode === 'current' ? 'Now' : 'Goal'}
             </p>
 
@@ -743,7 +743,7 @@ export default function ShardEditModal({
                       transform: 'rotate(-35deg)',
                       background: s.color
                         ? SHARD_COLORS[s.color]
-                        : 'rgba(255,255,255,0.08)',
+                        : '#6F6A62',
                       border:
                         i === activeSlot
                           ? '2px solid white'
@@ -771,7 +771,7 @@ export default function ShardEditModal({
               ))}
             </div>
 
-            <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3">
+            <p className="text-[10px] text-[#9C9890] uppercase tracking-widest mb-3">
               Color — slot {activeSlot + 1}
             </p>
 
@@ -784,7 +784,7 @@ export default function ShardEditModal({
                   style={{
                     background:
                       current.color === name
-                        ? 'rgba(255,255,255,0.08)'
+                        ? '#6F6A62'
                         : 'transparent',
                     border:
                       current.color === name
@@ -802,7 +802,7 @@ export default function ShardEditModal({
                     }}
                   />
 
-                  <span className="text-[8px] uppercase tracking-wide text-white/30">
+                  <span className="text-[8px] uppercase tracking-wide text-[#9C9890]">
                     {name}
                   </span>
                 </div>
@@ -811,14 +811,14 @@ export default function ShardEditModal({
 
             {current.color && (
               <div className="mb-4">
-                <label className="block text-[10px] text-white/30 uppercase tracking-widest mb-1">
+                <label className="block text-[10px] text-[#9C9890] uppercase tracking-widest mb-1">
                   Bonus / Purpose
                 </label>
 
                 <select
                   value={current.bonus ?? ''}
                   onChange={e => updateActiveShard('bonus', e.target.value)}
-                  className="w-full bg-[#111] text-white/80 text-sm rounded-lg px-3 py-2 border border-white/10"
+                  className="w-full bg-[#4A443B] text-[#E8E4DC] text-sm rounded-lg px-3 py-2 border border-white/10"
                 >
                   <option value="">Select shard bonus...</option>
 
@@ -834,12 +834,12 @@ export default function ShardEditModal({
             <div
               className="flex items-center justify-between p-3 rounded-lg mb-4 cursor-pointer"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '0.5px solid rgba(255,255,255,0.08)',
+                background: '#3A342C',
+                border: '0.5px solid #6F6A62',
               }}
               onClick={toggleTau}
             >
-              <span className="text-sm text-white/60">Tauforged</span>
+              <span className="text-sm text-[#E8E4DC]/60">Tauforged</span>
 
               <div
                 className="rounded-full transition-colors"
@@ -871,7 +871,7 @@ export default function ShardEditModal({
               <div
                 className="rounded-xl p-3 mb-4"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
+                  background: '#3A342C',
                   border: `1px solid ${color}30`,
                 }}
               >
@@ -882,7 +882,7 @@ export default function ShardEditModal({
                   Copy Goal To Another Frame
                 </p>
 
-                <label className="block text-[9px] text-white/25 uppercase tracking-widest mb-1">
+                <label className="block text-[9px] text-[#E8E4DC]/25 uppercase tracking-widest mb-1">
                   School
                 </label>
 
@@ -892,7 +892,7 @@ export default function ShardEditModal({
                     setSelectedSchool(e.target.value)
                     setSelectedTargetFrame('')
                   }}
-                  className="w-full mb-3 bg-[#111] text-white/70 text-sm rounded-lg px-3 py-2 border border-white/10"
+                  className="w-full mb-3 bg-[#4A443B] text-[#E8E4DC] text-sm rounded-lg px-3 py-2 border border-white/10"
                 >
                   {schools.map(school => (
                     <option key={school} value={school}>
@@ -901,14 +901,14 @@ export default function ShardEditModal({
                   ))}
                 </select>
 
-                <label className="block text-[9px] text-white/25 uppercase tracking-widest mb-1">
+                <label className="block text-[9px] text-[#E8E4DC]/25 uppercase tracking-widest mb-1">
                   Target Frame
                 </label>
 
                 <select
                   value={selectedTargetFrame}
                   onChange={e => setSelectedTargetFrame(e.target.value)}
-                  className="w-full mb-3 bg-[#111] text-white/70 text-sm rounded-lg px-3 py-2 border border-white/10"
+                  className="w-full mb-3 bg-[#4A443B] text-[#E8E4DC] text-sm rounded-lg px-3 py-2 border border-white/10"
                 >
                   <option value="">Select frame...</option>
 
@@ -922,7 +922,7 @@ export default function ShardEditModal({
                 </select>
 
                 {targetFrameObject && (
-                  <p className="text-xs text-white/40 mb-3">
+                  <p className="text-xs text-[#B8B3AC] mb-3">
                     Copy <span style={{ color }}>{frame.warframe_name}</span>
                     {"'s"} Goal setup to{' '}
                     <span style={{ color }}>
@@ -935,10 +935,10 @@ export default function ShardEditModal({
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowCopyMenu(false)}
-                    className="flex-1 py-2 rounded-lg text-sm text-white/40 hover:text-white/60 transition-colors"
+                    className="flex-1 py-2 rounded-lg text-sm text-[#B8B3AC] hover:text-[#E8E4DC]/60 transition-colors"
                     style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '0.5px solid rgba(255,255,255,0.08)',
+                      background: '#3A342C',
+                      border: '0.5px solid #6F6A62',
                     }}
                   >
                     Cancel
@@ -1021,10 +1021,10 @@ export default function ShardEditModal({
               <div className="flex gap-2">
                 <button
                   onClick={clearSlot}
-                  className="flex-1 py-2 rounded-lg text-sm text-white/40 hover:text-white/60 transition-colors"
+                  className="flex-1 py-2 rounded-lg text-sm text-[#B8B3AC] hover:text-[#E8E4DC]/60 transition-colors"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '0.5px solid rgba(255,255,255,0.08)',
+                    background: '#3A342C',
+                    border: '0.5px solid #6F6A62',
                   }}
                 >
                   Clear slot

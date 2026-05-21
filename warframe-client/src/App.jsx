@@ -5,12 +5,12 @@ import BuildDetailOverlay from './components/BuildDetailOverlay'
 import useFrames from './hooks/useFrames'
 import useWeapons from './hooks/useWeapons'
 
-const PAGE_BG = '#8F8A82'
-const PANEL_BG = '#858078'
+const PAGE_BG = '#2F2A23'
+const PANEL_BG = '#4A443B'
 const BORDER = '#6F6A62'
-const INK = '#1C1917'
-const MUTED = '#6B6560'
-const AGED_INK = '#4F4A42'
+const INK = '#E8E4DC'
+const MUTED = '#B8B3AC'
+const AGED_INK = '#9C9890'
 const GOLD = '#FBBF24'
 
 function getSchools(frames) {

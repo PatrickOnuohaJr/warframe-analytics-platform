@@ -72,11 +72,11 @@ function getConstitutionLabel(shards) {
 
 function WeaponValue({ name, incarnon }) {
   if (!name) {
-    return <p className="text-[#4B5563]">—</p>
+    return <p className="text-[#E8E4DC]">—</p>
   }
 
   return (
-    <p className="text-[#4B5563] flex items-center gap-2 flex-wrap">
+    <p className="text-[#E8E4DC] flex items-center gap-2 flex-wrap">
       <span>{name}</span>
 
       {incarnon && (
@@ -91,7 +91,7 @@ function WeaponValue({ name, incarnon }) {
 function ShardLine({ label, shards, muted = false }) {
   return (
     <div>
-      <p className="text-[10px] text-[#4F4A42] uppercase tracking-widest mb-3">
+      <p className="text-[10px] text-[#9C9890] uppercase tracking-widest mb-3">
         {label}
       </p>
 
@@ -116,7 +116,7 @@ function ShardLine({ label, shards, muted = false }) {
           return (
             <p
               key={index}
-              className="text-[11px] text-[#6B6560] leading-relaxed"
+              className="text-[11px] text-[#B8B3AC] leading-relaxed"
             >
               Slot {index + 1}: {label}
             </p>
@@ -147,16 +147,16 @@ export default function BuildDetailOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto text-[#1C1917] backdrop-blur-xl"
+      className="fixed inset-0 z-50 overflow-y-auto text-[#E8E4DC] backdrop-blur-xl"
       style={{
-        background: `radial-gradient(circle at top left, ${color}18, #8F8A82 32%, #8F8A82 100%)`,
+        background: `radial-gradient(circle at top left, ${color}18, #2F2A23 32%, #2F2A23 100%)`,
       }}
     >
       <div className="min-h-screen p-8">
         <div className="flex justify-between items-start mb-10">
           <button
             onClick={onClose}
-            className="text-[#4F4A42] hover:text-[#1C1917] text-sm uppercase tracking-[0.25em] transition-colors"
+            className="text-[#9C9890] hover:text-[#E8E4DC] text-sm uppercase tracking-[0.25em] transition-colors"
           >
             ← Return to Codex
           </button>
@@ -165,7 +165,7 @@ export default function BuildDetailOverlay({
         <section
           className="rounded-3xl border p-8 mb-6 overflow-hidden relative"
           style={{
-            background: `linear-gradient(135deg, ${color}18, #A39E96)`,
+            background: `linear-gradient(135deg, ${color}18, #3A342C)`,
             borderColor: `${color}55`,
             boxShadow: `0 0 60px ${color}12`,
           }}
@@ -184,7 +184,7 @@ export default function BuildDetailOverlay({
             {school}
           </p>
 
-          <h1 className="text-5xl font-black uppercase tracking-widest mb-3 text-[#1C1917]">
+          <h1 className="text-5xl font-black uppercase tracking-widest mb-3 text-[#E8E4DC]">
             {frame.warframe_name}
           </h1>
 
@@ -229,7 +229,7 @@ export default function BuildDetailOverlay({
               </span>
             )}
 
-            <span className="text-xs text-[#4F4A42] uppercase tracking-widest">
+            <span className="text-xs text-[#9C9890] uppercase tracking-widest">
               {art}
             </span>
           </div>
@@ -238,7 +238,7 @@ export default function BuildDetailOverlay({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section
             onClick={onEditArsenal}
-            className="bg-[#A39E96] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#6F6A62] hover:bg-[#E2DDD5]"
+            className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#6F6A62] hover:bg-[#E2DDD5]"
           >
             <div className="flex items-center justify-between mb-5">
               <h2
@@ -248,14 +248,14 @@ export default function BuildDetailOverlay({
                 Arsenal
               </h2>
 
-              <span className="text-[10px] text-[#5F5A52] uppercase tracking-widest">
+              <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">
                 Click to Edit
               </span>
             </div>
 
             <div className="space-y-4 text-sm">
               <div>
-                <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">
                   Primary
                 </p>
                 <WeaponValue
@@ -265,7 +265,7 @@ export default function BuildDetailOverlay({
               </div>
 
               <div>
-                <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">
                   Secondary
                 </p>
                 <WeaponValue
@@ -275,7 +275,7 @@ export default function BuildDetailOverlay({
               </div>
 
               <div>
-                <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">
                   Melee
                 </p>
                 <WeaponValue
@@ -286,25 +286,25 @@ export default function BuildDetailOverlay({
 
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div>
-                  <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
+                  <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">
                     Arcane 1
                   </p>
-                  <p className="text-[#4B5563]">{frame.arcane_1 ?? '—'}</p>
+                  <p className="text-[#E8E4DC]">{frame.arcane_1 ?? '—'}</p>
                 </div>
 
                 <div>
-                  <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
+                  <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">
                     Arcane 2
                   </p>
-                  <p className="text-[#4B5563]">{frame.arcane_2 ?? '—'}</p>
+                  <p className="text-[#E8E4DC]">{frame.arcane_2 ?? '—'}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">
                   Melee Arcane
                 </p>
-                <p className="text-[#4B5563]">
+                <p className="text-[#E8E4DC]">
                   {frame.melee_arcane ?? '—'}
                 </p>
               </div>
@@ -313,7 +313,7 @@ export default function BuildDetailOverlay({
 
           <section
             onClick={onEditShards}
-            className="bg-[#A39E96] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#6F6A62] hover:bg-[#E2DDD5]"
+            className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#8C8880] hover:bg-[#443D34]"
           >
             <div className="flex items-center justify-between mb-5">
               <h2
@@ -323,7 +323,7 @@ export default function BuildDetailOverlay({
                 Archon Shards
               </h2>
 
-              <span className="text-[10px] text-[#5F5A52] uppercase tracking-widest">
+              <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">
                 Click to Edit
               </span>
             </div>
@@ -357,7 +357,7 @@ export default function BuildDetailOverlay({
             </div>
           </section>
 
-          <section className="lg:col-span-2 bg-[#A39E96] border border-[#6F6A62] rounded-2xl p-6">
+          <section className="lg:col-span-2 bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6">
             <h2
               className="text-sm font-bold uppercase tracking-widest mb-3"
               style={{ color }}
@@ -365,7 +365,7 @@ export default function BuildDetailOverlay({
               Cultivation Doctrine
             </h2>
 
-            <p className="text-[#6B6560] leading-relaxed">
+            <p className="text-[#B8B3AC] leading-relaxed">
               {doctrine
                 ? doctrine
                 : `${art}. This build belongs to the ${school}, using its loadout, shard path, and combat identity as a specialized doctrine within Warframe Jarvis.`
