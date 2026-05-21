@@ -1,6 +1,11 @@
 import { SHARD_COLORS } from '../constants/shards'
 
-export default function ShardChip({ color, tauforged, size = 'sm', muted = false }) {
+export default function ShardChip({
+  color,
+  tauforged,
+  size = 'sm',
+  muted = false,
+}) {
   const dimensions = {
     xs: { w: '8px', h: '14px' },
     sm: { w: '10px', h: '18px' },
@@ -8,7 +13,8 @@ export default function ShardChip({ color, tauforged, size = 'sm', muted = false
     lg: { w: '14px', h: '24px' },
   }
 
-  const { w, h } = dimensions[size] ?? dimensions.sm
+  const { w, h } =
+    dimensions[size] ?? dimensions.sm
 
   if (!color) {
     return (
@@ -18,8 +24,11 @@ export default function ShardChip({ color, tauforged, size = 'sm', muted = false
           height: h,
           borderRadius: '3px',
           transform: 'rotate(-35deg)',
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.08)',
+
+          // Manuscript empty shard
+          background: '#D0CBC3',
+          border: '1px solid #6F6A62',
+
           opacity: muted ? 0.45 : 1,
           flexShrink: 0,
         }}
@@ -34,9 +43,26 @@ export default function ShardChip({ color, tauforged, size = 'sm', muted = false
         height: h,
         borderRadius: '3px',
         transform: 'rotate(-35deg)',
-        background: SHARD_COLORS[color] ?? '#ffffff22',
-        opacity: muted ? 0.45 : 1,
-        filter: tauforged && !muted ? 'drop-shadow(0 0 4px rgba(251,191,36,0.45))' : 'none',
+
+        background:
+          SHARD_COLORS[color] ??
+          '#ffffff',
+
+        opacity:
+          muted
+            ? 0.45
+            : 1,
+
+        filter:
+          tauforged && !muted
+            ? 'drop-shadow(0 0 6px rgba(251,191,36,0.55))'
+            : 'none',
+
+        boxShadow:
+          tauforged
+            ? '0 0 10px rgba(251,191,36,0.18)'
+            : 'none',
+
         flexShrink: 0,
       }}
       title={`${tauforged ? 'Tauforged ' : ''}${color}`}

@@ -5,6 +5,14 @@ import BuildDetailOverlay from './components/BuildDetailOverlay'
 import useFrames from './hooks/useFrames'
 import useWeapons from './hooks/useWeapons'
 
+const PAGE_BG = '#8F8A82'
+const PANEL_BG = '#858078'
+const BORDER = '#6F6A62'
+const INK = '#1C1917'
+const MUTED = '#6B6560'
+const AGED_INK = '#4F4A42'
+const GOLD = '#FBBF24'
+
 function getSchools(frames) {
   return [
     'All Schools',
@@ -18,13 +26,15 @@ function getSchools(frames) {
 }
 
 function getSchoolColor(frames, selectedSchool) {
-  if (selectedSchool === 'All Schools') return '#FBBF24'
+  if (selectedSchool === 'All Schools') return GOLD
 
   const schoolFrame = frames.find(
-    frame => frame.cultivation_school === selectedSchool && frame.cultivation_color
+    frame =>
+      frame.cultivation_school === selectedSchool &&
+      frame.cultivation_color
   )
 
-  return schoolFrame?.cultivation_color ?? '#FBBF24'
+  return schoolFrame?.cultivation_color ?? GOLD
 }
 
 export default function App() {
@@ -39,12 +49,12 @@ export default function App() {
   useEffect(() => {
     if (!detailFrame) return
 
-    const updatedDetailFrame = frames.find(
-      frame => frame.my_frame_id === detailFrame.my_frame_id
+    const updated = frames.find(
+      f => f.my_frame_id === detailFrame.my_frame_id
     )
 
-    if (updatedDetailFrame) {
-      setDetailFrame(updatedDetailFrame)
+    if (updated) {
+      setDetailFrame(updated)
     }
   }, [frames])
 
@@ -54,13 +64,21 @@ export default function App() {
   const filteredFrames =
     selectedSchool === 'All Schools'
       ? frames
-      : frames.filter(frame => frame.cultivation_school === selectedSchool)
+      : frames.filter(
+          f => f.cultivation_school === selectedSchool
+        )
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
-        <p className="text-amber-400 text-lg tracking-widest uppercase">
-          Loading...
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{
+          background: PAGE_BG,
+          color: GOLD,
+        }}
+      >
+        <p className="text-lg font-bold uppercase tracking-[0.3em]">
+          Loading Codex...
         </p>
       </div>
     )
@@ -68,29 +86,48 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen text-white p-8 transition-colors"
+      className="min-h-screen p-8 transition-all"
       style={{
+        color: INK,
         background:
           selectedSchool === 'All Schools'
-            ? '#0f0f0f'
-            : `radial-gradient(circle at top left, ${schoolColor}22, #0f0f0f 35%, #0f0f0f 100%)`,
+            ? PAGE_BG
+            : `
+              radial-gradient(
+                circle at top left,
+                ${schoolColor}22,
+                ${PAGE_BG} 35%,
+                ${PAGE_BG}
+              )
+            `,
       }}
     >
       <div className="mb-8">
+
         <h1
-          className="text-3xl font-bold tracking-widest uppercase mb-2"
-          style={{ color: schoolColor }}
+          className="text-3xl font-bold tracking-[0.35em] uppercase mb-2"
+          style={{
+            color:
+              selectedSchool === 'All Schools'
+                ? GOLD
+                : schoolColor,
+          }}
         >
           Warframe Jarvis
         </h1>
 
-        <p className="text-white/30 text-sm mb-5">
+        <p
+          className="text-sm mb-6"
+          style={{ color: MUTED }}
+        >
           {filteredFrames.length} / {frames.length} builds
+
           {loadingWeapons && (
-            <span className="ml-2 text-white/20">
+            <span className="ml-2 opacity-70">
               — loading weapons
             </span>
           )}
+
           {selectedSchool !== 'All Schools' && (
             <span style={{ color: schoolColor }}>
               {' '}— {selectedSchool}
@@ -99,39 +136,77 @@ export default function App() {
         </p>
 
         <div className="flex flex-wrap gap-2">
+
           {schools.map(school => {
-            const isActive = school === selectedSchool
-            const frameForSchool = frames.find(
-              frame => frame.cultivation_school === school && frame.cultivation_color
-            )
+            const active =
+              selectedSchool === school
+
+            const frame =
+              frames.find(
+                f =>
+                  f.cultivation_school === school &&
+                  f.cultivation_color
+              )
 
             const color =
               school === 'All Schools'
-                ? '#FBBF24'
-                : frameForSchool?.cultivation_color ?? '#6B7280'
+                ? GOLD
+                : frame?.cultivation_color ?? MUTED
 
-            const schoolCount =
+            const count =
               school === 'All Schools'
                 ? frames.length
-                : frames.filter(frame => frame.cultivation_school === school).length
+                : frames.filter(
+                    f =>
+                      f.cultivation_school === school
+                  ).length
 
             return (
               <button
                 key={school}
-                onClick={() => setSelectedSchool(school)}
-                className="rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-widest border transition-all"
+                onClick={() =>
+                  setSelectedSchool(school)
+                }
+                className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em] transition-all"
                 style={{
-                  background: isActive ? `${color}22` : 'rgba(255,255,255,0.03)',
-                  borderColor: isActive ? `${color}88` : 'rgba(255,255,255,0.08)',
-                  color: isActive ? color : 'rgba(255,255,255,0.35)',
-                  boxShadow: isActive ? `0 0 18px ${color}18` : 'none',
+                  background:
+                    active
+                      ? `${color}22`
+                      : PANEL_BG,
+
+                  color:
+                    active
+                      ? color
+                      : MUTED,
+
+                  borderColor:
+                    active
+                      ? `${color}88`
+                      : BORDER,
+
+                  boxShadow:
+                    active
+                      ? `0 0 18px ${color}18`
+                      : 'none',
                 }}
               >
                 {school}
-                <span className="ml-2 opacity-50">{schoolCount}</span>
+
+                <span
+                  className="ml-2"
+                  style={{
+                    color:
+                      active
+                        ? color
+                        : AGED_INK,
+                  }}
+                >
+                  {count}
+                </span>
               </button>
             )
           })}
+
         </div>
       </div>
 
@@ -140,7 +215,9 @@ export default function App() {
           <FrameCard
             key={frame.my_frame_id}
             frame={frame}
-            onEdit={() => setDetailFrame(frame)}
+            onEdit={() =>
+              setDetailFrame(frame)
+            }
           />
         ))}
       </div>
@@ -148,14 +225,24 @@ export default function App() {
       {detailFrame && (
         <BuildDetailOverlay
           frame={detailFrame}
-          onClose={() => setDetailFrame(null)}
+          onClose={() =>
+            setDetailFrame(null)
+          }
           onEditArsenal={() => {
-            setEditingInitialTab('loadout')
-            setEditingFrame(detailFrame)
+            setEditingInitialTab(
+              'loadout'
+            )
+            setEditingFrame(
+              detailFrame
+            )
           }}
           onEditShards={() => {
-            setEditingInitialTab('shards')
-            setEditingFrame(detailFrame)
+            setEditingInitialTab(
+              'shards'
+            )
+            setEditingFrame(
+              detailFrame
+            )
           }}
         />
       )}
@@ -165,8 +252,12 @@ export default function App() {
           frame={editingFrame}
           frames={frames}
           weapons={weapons}
-          initialTab={editingInitialTab}
-          onClose={() => setEditingFrame(null)}
+          initialTab={
+            editingInitialTab
+          }
+          onClose={() =>
+            setEditingFrame(null)
+          }
           onSaved={() => {
             setEditingFrame(null)
             refetchFrames()

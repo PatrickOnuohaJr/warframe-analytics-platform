@@ -44,34 +44,43 @@ function formatShardLabel(shard) {
   return `${shard.tauforged ? 'Tauforged ' : ''}${shardColor}${bonus ? ` — ${bonus}` : ''}`
 }
 
-function countFusionShards(shards) {
-  const fusion = ['emerald', 'topaz', 'violet']
-
-  return shards.filter(
-    s => s.color && fusion.includes(s.color.toLowerCase())
-  ).length
-}
-
 function getConstitutionLabel(shards) {
-  const fusionCount = countFusionShards(shards)
+  const fusionColors = ['emerald', 'topaz', 'violet']
 
-  if (fusionCount >= 5) return 'Apex Variant Constitution'
-  if (fusionCount >= 2) return 'Variant Constitution'
+  const fusionShards = shards.filter(
+    s => s.color && fusionColors.includes(s.color.toLowerCase())
+  )
 
-  return null
+  const fusionCount = fusionShards.length
+
+  if (fusionCount < 2) return null
+
+  const counts = fusionShards.reduce((acc, shard) => {
+    const color = shard.color.toLowerCase()
+    acc[color] = (acc[color] || 0) + 1
+    return acc
+  }, {})
+
+  if (counts.emerald === 5) return 'UNDYING PLAGUE PHYSIQUE'
+  if (counts.topaz === 5) return 'HIGH NOON SOLAR PHYSIQUE'
+  if (counts.violet === 5) return 'STORM VOID PHYSIQUE'
+
+  if (fusionCount >= 5) return 'APEX VARIANT CONSTITUTION'
+
+  return 'VARIANT CONSTITUTION'
 }
 
 function WeaponValue({ name, incarnon }) {
   if (!name) {
-    return <p className="text-white/75">—</p>
+    return <p className="text-[#4B5563]">—</p>
   }
 
   return (
-    <p className="text-white/75 flex items-center gap-2 flex-wrap">
+    <p className="text-[#4B5563] flex items-center gap-2 flex-wrap">
       <span>{name}</span>
 
       {incarnon && (
-        <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded border text-amber-300 border-amber-300/35 bg-amber-300/10">
+        <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded border text-amber-700 border-amber-700/35 bg-amber-600/10">
           Incarnon
         </span>
       )}
@@ -82,7 +91,7 @@ function WeaponValue({ name, incarnon }) {
 function ShardLine({ label, shards, muted = false }) {
   return (
     <div>
-      <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3">
+      <p className="text-[10px] text-[#4F4A42] uppercase tracking-widest mb-3">
         {label}
       </p>
 
@@ -107,7 +116,7 @@ function ShardLine({ label, shards, muted = false }) {
           return (
             <p
               key={index}
-              className="text-[11px] text-white/40 leading-relaxed"
+              className="text-[11px] text-[#6B6560] leading-relaxed"
             >
               Slot {index + 1}: {label}
             </p>
@@ -138,16 +147,16 @@ export default function BuildDetailOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto text-white backdrop-blur-xl"
+      className="fixed inset-0 z-50 overflow-y-auto text-[#1C1917] backdrop-blur-xl"
       style={{
-        background: `radial-gradient(circle at top left, ${color}26, rgba(0,0,0,0.98) 30%, rgba(0,0,0,1) 100%)`,
+        background: `radial-gradient(circle at top left, ${color}18, #8F8A82 32%, #8F8A82 100%)`,
       }}
     >
       <div className="min-h-screen p-8">
         <div className="flex justify-between items-start mb-10">
           <button
             onClick={onClose}
-            className="text-white/35 hover:text-white text-sm uppercase tracking-[0.25em] transition-colors"
+            className="text-[#4F4A42] hover:text-[#1C1917] text-sm uppercase tracking-[0.25em] transition-colors"
           >
             ← Return to Codex
           </button>
@@ -156,8 +165,8 @@ export default function BuildDetailOverlay({
         <section
           className="rounded-3xl border p-8 mb-6 overflow-hidden relative"
           style={{
-            background: `linear-gradient(135deg, ${color}18, rgba(10,10,10,0.92))`,
-            borderColor: `${color}44`,
+            background: `linear-gradient(135deg, ${color}18, #A39E96)`,
+            borderColor: `${color}55`,
             boxShadow: `0 0 60px ${color}12`,
           }}
         >
@@ -175,11 +184,11 @@ export default function BuildDetailOverlay({
             {school}
           </p>
 
-          <h1 className="text-5xl font-black uppercase tracking-widest mb-3">
+          <h1 className="text-5xl font-black uppercase tracking-widest mb-3 text-[#1C1917]">
             {frame.warframe_name}
           </h1>
 
-          <p className="text-white/50 text-lg mb-6">
+          <p className="text-[#78716C] text-lg mb-6">
             {frame.build_title ?? 'Untitled Build'}
           </p>
 
@@ -203,15 +212,15 @@ export default function BuildDetailOverlay({
                 style={{
                   color,
                   background:
-                    currentConstitution === 'Apex Variant Constitution'
-                      ? `linear-gradient(135deg, ${color}22, rgba(255,255,255,0.08))`
+                    currentConstitution === 'APEX VARIANT CONSTITUTION'
+                      ? `linear-gradient(135deg, ${color}22, rgba(255,255,255,0.35))`
                       : `${color}14`,
                   borderColor:
-                    currentConstitution === 'Apex Variant Constitution'
+                    currentConstitution === 'APEX VARIANT CONSTITUTION'
                       ? `${color}AA`
                       : `${color}55`,
                   boxShadow:
-                    currentConstitution === 'Apex Variant Constitution'
+                    currentConstitution === 'APEX VARIANT CONSTITUTION'
                       ? `0 0 20px ${color}33`
                       : 'none',
                 }}
@@ -220,7 +229,7 @@ export default function BuildDetailOverlay({
               </span>
             )}
 
-            <span className="text-xs text-white/35 uppercase tracking-widest">
+            <span className="text-xs text-[#4F4A42] uppercase tracking-widest">
               {art}
             </span>
           </div>
@@ -229,7 +238,7 @@ export default function BuildDetailOverlay({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section
             onClick={onEditArsenal}
-            className="bg-black/70 border border-white/10 rounded-2xl p-6 cursor-pointer transition-all hover:border-white/20 hover:bg-black/80"
+            className="bg-[#A39E96] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#6F6A62] hover:bg-[#E2DDD5]"
           >
             <div className="flex items-center justify-between mb-5">
               <h2
@@ -239,14 +248,14 @@ export default function BuildDetailOverlay({
                 Arsenal
               </h2>
 
-              <span className="text-[10px] text-white/25 uppercase tracking-widest">
+              <span className="text-[10px] text-[#5F5A52] uppercase tracking-widest">
                 Click to Edit
               </span>
             </div>
 
             <div className="space-y-4 text-sm">
               <div>
-                <p className="text-white/25 uppercase tracking-widest text-[10px]">
+                <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
                   Primary
                 </p>
                 <WeaponValue
@@ -256,7 +265,7 @@ export default function BuildDetailOverlay({
               </div>
 
               <div>
-                <p className="text-white/25 uppercase tracking-widest text-[10px]">
+                <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
                   Secondary
                 </p>
                 <WeaponValue
@@ -266,7 +275,7 @@ export default function BuildDetailOverlay({
               </div>
 
               <div>
-                <p className="text-white/25 uppercase tracking-widest text-[10px]">
+                <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
                   Melee
                 </p>
                 <WeaponValue
@@ -277,25 +286,25 @@ export default function BuildDetailOverlay({
 
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div>
-                  <p className="text-white/25 uppercase tracking-widest text-[10px]">
+                  <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
                     Arcane 1
                   </p>
-                  <p className="text-white/75">{frame.arcane_1 ?? '—'}</p>
+                  <p className="text-[#4B5563]">{frame.arcane_1 ?? '—'}</p>
                 </div>
 
                 <div>
-                  <p className="text-white/25 uppercase tracking-widest text-[10px]">
+                  <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
                     Arcane 2
                   </p>
-                  <p className="text-white/75">{frame.arcane_2 ?? '—'}</p>
+                  <p className="text-[#4B5563]">{frame.arcane_2 ?? '—'}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-white/25 uppercase tracking-widest text-[10px]">
+                <p className="text-[#5F5A52] uppercase tracking-widest text-[10px]">
                   Melee Arcane
                 </p>
-                <p className="text-white/75">
+                <p className="text-[#4B5563]">
                   {frame.melee_arcane ?? '—'}
                 </p>
               </div>
@@ -304,7 +313,7 @@ export default function BuildDetailOverlay({
 
           <section
             onClick={onEditShards}
-            className="bg-black/70 border border-white/10 rounded-2xl p-6 cursor-pointer transition-all hover:border-white/20 hover:bg-black/80"
+            className="bg-[#A39E96] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#6F6A62] hover:bg-[#E2DDD5]"
           >
             <div className="flex items-center justify-between mb-5">
               <h2
@@ -314,7 +323,7 @@ export default function BuildDetailOverlay({
                 Archon Shards
               </h2>
 
-              <span className="text-[10px] text-white/25 uppercase tracking-widest">
+              <span className="text-[10px] text-[#5F5A52] uppercase tracking-widest">
                 Click to Edit
               </span>
             </div>
@@ -348,7 +357,7 @@ export default function BuildDetailOverlay({
             </div>
           </section>
 
-          <section className="lg:col-span-2 bg-black/70 border border-white/10 rounded-2xl p-6">
+          <section className="lg:col-span-2 bg-[#A39E96] border border-[#6F6A62] rounded-2xl p-6">
             <h2
               className="text-sm font-bold uppercase tracking-widest mb-3"
               style={{ color }}
@@ -356,12 +365,12 @@ export default function BuildDetailOverlay({
               Cultivation Doctrine
             </h2>
 
-           <p className="text-white/55 leading-relaxed">
+            <p className="text-[#6B6560] leading-relaxed">
               {doctrine
-              ? doctrine
-              : `${art}. This build belongs to the ${school}, using its loadout, shard path, and combat identity as a specialized doctrine within Warframe Jarvis.`
+                ? doctrine
+                : `${art}. This build belongs to the ${school}, using its loadout, shard path, and combat identity as a specialized doctrine within Warframe Jarvis.`
               }
-          </p>
+            </p>
           </section>
         </div>
       </div>
