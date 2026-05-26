@@ -364,7 +364,7 @@ export default function ShardEditModal({
     }
 
     const confirmed = window.confirm(
-      `Copy ${frame.warframe_name}'s Goal shard setup to Now?`
+      `Copy ${frame.display_name || frame.warframe_name}'s Goal shard setup to Now?`
     )
 
     if (!confirmed) return
@@ -404,7 +404,7 @@ export default function ShardEditModal({
     }
 
     const confirmed = window.confirm(
-      `Copy ${frame.warframe_name}'s Goal shard setup to ${targetFrameObject.warframe_name}?`
+      `Copy ${frame.display_name || frame.warframe_name}'s Goal shard setup to ${targetFrameObject.warframe_name}?`
     )
 
     if (!confirmed) return
@@ -487,7 +487,7 @@ export default function ShardEditModal({
             </p>
 
             <h2 className="text-[#E8E4DC] font-semibold text-lg">
-              {frame.warframe_name}
+              {frame.display_name || frame.warframe_name}
             </h2>
 
             {frame.cultivation_school && (
@@ -923,7 +923,7 @@ export default function ShardEditModal({
 
                 {targetFrameObject && (
                   <p className="text-xs text-[#B8B3AC] mb-3">
-                    Copy <span style={{ color }}>{frame.warframe_name}</span>
+                    Copy <span style={{ color }}>{frame.display_name || frame.warframe_name}</span>
                     {"'s"} Goal setup to{' '}
                     <span style={{ color }}>
                       {targetFrameObject.warframe_name}

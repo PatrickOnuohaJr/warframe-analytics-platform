@@ -177,7 +177,7 @@ export default function FrameCard({ frame, onEdit }) {
           </p>
 
           <h2 className="text-[#E8E4DC] font-semibold text-sm">
-            {frame.warframe_name}
+            {frame.display_name || frame.warframe_name}
           </h2>
         </div>
 

@@ -185,7 +185,7 @@ export default function BuildDetailOverlay({
           </p>
 
           <h1 className="text-5xl font-black uppercase tracking-widest mb-3 text-[#E8E4DC]">
-            {frame.warframe_name}
+            {frame.display_name || frame.warframe_name}
           </h1>
 
           <p className="text-[#78716C] text-lg mb-6">
@@ -238,7 +238,7 @@ export default function BuildDetailOverlay({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section
             onClick={onEditArsenal}
-            className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#6F6A62] hover:bg-[#E2DDD5]"
+            className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#8C8880] hover:bg-[#443D34]"
           >
             <div className="flex items-center justify-between mb-5">
               <h2

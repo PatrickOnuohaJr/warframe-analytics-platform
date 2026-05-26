@@ -74,7 +74,7 @@ CULTIVATION_DATA = {
         "art": "Monkey Sage Dao of the Five Immortalities",
     },
     "Excalibur Umbra": {
-        "color": "#1A1A1A",
+        "color": "#2F2A23",
         "school": "Heavenly Mandate Pantheon",
         "art": "Umbral Ronin Dao of the Filial Sword",
     },
