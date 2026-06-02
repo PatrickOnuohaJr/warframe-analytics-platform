@@ -4,6 +4,8 @@ import ShardEditModal from './components/ShardEditModal'
 import BuildDetailOverlay from './components/BuildDetailOverlay'
 import useFrames from './hooks/useFrames'
 import useWeapons from './hooks/useWeapons'
+import ArcanesPage from './pages/ArcanesPage'
+
 
 const PAGE_BG = '#2F2A23'
 const PANEL_BG = '#4A443B'
@@ -45,6 +47,7 @@ export default function App() {
   const [editingInitialTab, setEditingInitialTab] = useState('loadout')
   const [detailFrame, setDetailFrame] = useState(null)
   const [selectedSchool, setSelectedSchool] = useState('All Schools')
+  const [activePage, setActivePage] = useState('loadouts')
 
   useEffect(() => {
     if (!detailFrame) return
@@ -135,6 +138,54 @@ export default function App() {
           )}
         </p>
 
+
+          <div className="flex gap-2 mb-6">
+
+            <button
+              onClick={() => setActivePage('loadouts')}
+              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+              style={{
+                background:
+                  activePage === 'loadouts'
+                    ? `${GOLD}22`
+                    : PANEL_BG,
+                color:
+                  activePage === 'loadouts'
+                    ? GOLD
+                    : MUTED,
+                borderColor:
+                  activePage === 'loadouts'
+                    ? `${GOLD}88`
+                    : BORDER,
+              }}
+            >
+              Loadouts
+            </button>
+
+            <button
+              onClick={() => setActivePage('arcanes')}
+              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+              style={{
+                background:
+                  activePage === 'arcanes'
+                    ? `${GOLD}22`
+                    : PANEL_BG,
+                color:
+                  activePage === 'arcanes'
+                    ? GOLD
+                    : MUTED,
+                borderColor:
+                  activePage === 'arcanes'
+                    ? `${GOLD}88`
+                    : BORDER,
+              }}
+            >
+              Arcanes
+            </button>
+
+          </div>
+
+      {activePage === 'loadouts' && (      
         <div className="flex flex-wrap gap-2">
 
           {schools.map(school => {
@@ -207,20 +258,23 @@ export default function App() {
             )
           })}
 
-        </div>
+      </div>
+    )}
       </div>
 
+      {activePage === 'loadouts' ? (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredFrames.map(frame => (
           <FrameCard
             key={frame.my_frame_id}
             frame={frame}
-            onEdit={() =>
-              setDetailFrame(frame)
-            }
+            onEdit={() => setDetailFrame(frame)}
           />
         ))}
       </div>
+    ) : (
+      <ArcanesPage />
+)}
 
       {detailFrame && (
         <BuildDetailOverlay

@@ -53,6 +53,53 @@ function TabButton({ active, color, onClick, children }) {
   )
 }
 
+function IncarnonToggle({ checked, onChange, color }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full mt-2 px-3 py-2 rounded-lg text-left transition-all"
+      style={{
+        background: checked
+          ? `linear-gradient(135deg, ${color}22, #2f2a23)`
+          : '#2A2722',
+        border: checked
+          ? `1px solid ${color}88`
+          : '1px solid rgba(255,255,255,0.08)',
+        boxShadow: checked ? `0 0 18px ${color}22` : 'none',
+      }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p
+            className="text-[10px] uppercase tracking-widest font-bold"
+            style={{ color: checked ? color : 'rgba(255,255,255,0.35)' }}
+          >
+            Incarnon Adapter
+          </p>
+
+          <p className="text-xs text-[#E8E4DC]/55 mt-0.5">
+            {checked ? 'Installed' : 'Not installed'}
+          </p>
+        </div>
+
+        <div
+          className="px-2 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold"
+          style={{
+            background: checked ? `${color}24` : 'rgba(255,255,255,0.05)',
+            border: checked
+              ? `1px solid ${color}66`
+              : '1px solid rgba(255,255,255,0.08)',
+            color: checked ? color : 'rgba(255,255,255,0.28)',
+          }}
+        >
+          {checked ? 'Active' : 'Off'}
+        </div>
+      </div>
+    </button>
+  )
+}
+
 function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }) {
   const [focused, setFocused] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(0)
@@ -62,9 +109,9 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
 
     return weapons
       .filter(item => {
-  const itemSlot = item.slot ?? item.arcane_type
-  return itemSlot === slot
-})
+        const itemSlot = item.slot ?? item.arcane_type ?? item.category
+        return String(itemSlot).toLowerCase() === String(slot).toLowerCase()
+      })
       .filter(weapon => weapon.weapon_type !== 'Incarnon Genesis')
       .filter(weapon => {
         if (!query) return true
@@ -554,7 +601,7 @@ export default function ShardEditModal({
                 <option value="D">D</option>
               </select>
             </div>
-
+              
             <WeaponInput
               label="Primary Weapon"
               value={primaryWeapon}
@@ -564,14 +611,11 @@ export default function ShardEditModal({
               placeholder="Torid"
             />
 
-            <label className="flex items-center gap-2 mt-2 text-xs text-[#E8E4DC]/60">
-              <input
-                type="checkbox"
-                checked={primaryIsIncarnon}
-                onChange={e => setPrimaryIsIncarnon(e.target.checked)}
-              />
-              Incarnon Adapter Installed
-            </label>
+            <IncarnonToggle
+              checked={primaryIsIncarnon}
+              onChange={setPrimaryIsIncarnon}
+              color={color}
+            />
 
             <WeaponInput
               label="Secondary Weapon"
@@ -582,14 +626,11 @@ export default function ShardEditModal({
               placeholder="Laetum"
             />
 
-            <label className="flex items-center gap-2 mt-2 text-xs text-[#E8E4DC]/60">
-              <input
-                type="checkbox"
-                checked={secondaryIsIncarnon}
-                onChange={e => setSecondaryIsIncarnon(e.target.checked)}
-              />
-              Incarnon Adapter Installed
-            </label>
+            <IncarnonToggle
+              checked={secondaryIsIncarnon}
+              onChange={setSecondaryIsIncarnon}
+              color={color}
+            />
 
             <WeaponInput
               label="Melee Weapon"
@@ -600,32 +641,29 @@ export default function ShardEditModal({
               placeholder="Praedos"
             />
 
-            <label className="flex items-center gap-2 mt-2 text-xs text-[#E8E4DC]/60">
-              <input
-                type="checkbox"
-                checked={meleeIsIncarnon}
-                onChange={e => setMeleeIsIncarnon(e.target.checked)}
-              />
-              Incarnon Adapter Installed
-            </label>
+            <IncarnonToggle
+              checked={meleeIsIncarnon}
+              onChange={setMeleeIsIncarnon}
+              color={color}
+            />
 
             <WeaponInput
-  label="Arcane 1"
-  value={arcane1}
-  onChange={setArcane1}
-  weapons={arcanes}
-  slot="Warframe"
-  placeholder="Arcane Reaper"
-/>
+              label="Arcane 1"
+              value={arcane1}
+              onChange={setArcane1}
+              weapons={arcanes}
+              slot="Warframe"
+              placeholder="Arcane Reaper"
+            />
 
             <WeaponInput
-  label="Arcane 2"
-  value={arcane2}
-  onChange={setArcane2}
-  weapons={arcanes}
-  slot="Warframe"
-  placeholder="Molt Augmented"
-/>
+              label="Arcane 2"
+              value={arcane2}
+              onChange={setArcane2}
+              weapons={arcanes}
+              slot="Warframe"
+              placeholder="Molt Augmented"
+            />
       <div
       className="rounded-xl p-3"
       style={{
@@ -672,13 +710,13 @@ export default function ShardEditModal({
       </button>
     </div>
             <WeaponInput
-  label="Melee Arcane"
-  value={meleeArcane}
-  onChange={setMeleeArcane}
-  weapons={arcanes}
-  slot="Melee"
-  placeholder="Melee Influence"
-/>
+                label="Melee Arcane"
+                value={meleeArcane}
+                onChange={setMeleeArcane}
+                weapons={arcanes}
+                slot="Melee"
+                placeholder="Melee Influence"
+              />
 
             <button
               onClick={saveLoadout}
