@@ -14,6 +14,7 @@ export default function ArcanesPage() {
   const [selectedType, setSelectedType] = useState('All')
   const [selectedArcane, setSelectedArcane] = useState(null)
   const [ownedInput, setOwnedInput] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState(null)
   const rankCopyMilestones =
   selectedArcane?.max_rank === 3
     ? [
@@ -46,6 +47,33 @@ const filteredArcanes = arcanes.filter(arcane => {
   return matchesSearch && matchesType
 })
 
+const getCategoryProgress = (category) => {
+  if (!category.total || category.total === 0) {
+    return 0
+  }
+
+  return Math.round((category.completed / category.total) * 100)
+}
+
+const closestToComplete = [...arcanes]
+  .filter(
+    arcane =>
+      arcane.is_owned &&
+      !arcane.is_completed
+  )
+  .sort(
+    (a, b) =>
+      a.copies_remaining - b.copies_remaining
+  )
+  .slice(0, 15)
+
+  const categoryArcanes = selectedCategory
+  ? arcanes.filter(
+      arcane => arcane.arcane_type === selectedCategory
+    )
+  : []
+
+
 if (loading) {
   return <div>Loading Arcane Collection...</div>
 }
@@ -56,26 +84,55 @@ if (loading) {
       <h1 className="text-3xl font-bold mb-6">
         Arcane Collection
       </h1>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="rounded-lg border p-4">
+   
+    <div className="flex gap-6 mb-8 items-start">
+      <div className="grid grid-cols-2 gap-4 w-[340px] shrink-0">
+        <div className="rounded-lg border p-4 h-[110px]">
           <div className="text-sm opacity-70">Total</div>
           <div className="text-3xl font-bold">{summary?.total_arcanes ?? 0}</div>
         </div>
 
-        <div className="rounded-lg border p-4">
+        <div className="rounded-lg border p-4 h-[110px]">
           <div className="text-sm opacity-70">Owned</div>
           <div className="text-3xl font-bold">{summary?.owned_arcanes ?? 0}</div>
         </div>
 
-        <div className="rounded-lg border p-4">
+        <div className="rounded-lg border p-4 h-[110px]">
           <div className="text-sm opacity-70">Completed</div>
           <div className="text-3xl font-bold">{summary?.completed_arcanes ?? 0}</div>
         </div>
 
-        <div className="rounded-lg border p-4">
+        <div className="rounded-lg border p-4 h-[110px]">
           <div className="text-sm opacity-70">Missing</div>
           <div className="text-3xl font-bold">{summary?.missing_arcanes ?? 0}</div>
+        </div>
+    </div>  
+  
+    <div className="rounded-lg border p-4 flex-1 min-w-[650px]">
+          <h2 className="text-xl font-bold mb-4">
+            Closest To Completion
+          </h2>
+
+          {closestToComplete.length === 0 ? (
+            <div className="opacity-70">
+              No partially completed arcanes.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-2">
+              {closestToComplete.map(arcane => (
+                <div
+                  key={arcane.arcane_id}
+                  className="flex justify-between border-b pb-2 gap-4"
+                >
+                  <span>{arcane.name}</span>
+
+                  <span className="text-[#FBBF24]">
+                    Need {arcane.copies_remaining}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -88,7 +145,8 @@ if (loading) {
     {categories.map(category => (
       <div
         key={category.arcane_type}
-        className="rounded-lg border p-4"
+        onClick={() => setSelectedCategory(category.arcane_type)}
+        className="rounded-lg border p-4 cursor-pointer transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
       >
         <div className="text-lg font-bold mb-2">
           {category.arcane_type}
@@ -116,135 +174,105 @@ if (loading) {
           <span>Missing</span>
           <span>{category.missing}</span>
         </div>
+
+        <div className="mt-4">
+          <div className="flex justify-between text-xs opacity-70 mb-1">
+            <span>Completion</span>
+            <span>{getCategoryProgress(category)}%</span>
+          </div>
+
+          <div className="h-3 rounded-full bg-black/30 overflow-hidden">
+            <div
+              className="h-full bg-[#FBBF24] transition-all"
+              style={{
+                width: `${getCategoryProgress(category)}%`,
+              }}
+            />
+          </div>
+        </div>
+
       </div>
     ))}
   </div>
 </div>
 
-<div className="rounded-lg border p-4 mt-6">
-  <h2 className="text-xl font-bold mb-4">
-    Arcane Catalog
-  </h2>
-
-<input
-  type="text"
-  placeholder="Search arcanes..."
-  className="w-full rounded-lg border p-3 mb-4 bg-transparent"
-  value={search}
-  onChange={(e) => {
-  setSearch(e.target.value)
-  setSelectedArcane(null)
-}}
-/>
-
-    <div className="flex flex-wrap gap-2 mb-4">
-  {arcaneTypes.map(type => (
-    <button
-      key={type}
-      onClick={() => {
-        setSelectedType(type)
-        setSelectedArcane(null)
-      }}
-      className="rounded-lg border px-3 py-2 text-xs font-bold uppercase tracking-[0.2em]"
+      {selectedCategory && (
+  <div
+    className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-6"
+    onClick={() => setSelectedCategory(null)}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="w-full max-w-6xl max-h-[85vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl shadow-yellow-900/30"
       style={{
-        borderColor:
-          selectedType === type ? '#FBBF24' : '#6F6A62',
-        color:
-          selectedType === type ? '#FBBF24' : '#E8E4DC',
+        borderColor: '#FBBF24',
+        background:
+          'radial-gradient(circle at top left, #443D34 0%, #2F2A23 45%, #1F1C18 100%)',
       }}
     >
-      {type}
-    </button>
-  ))}
-</div>
-
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-    {filteredArcanes.map(arcane => {
-    const owned = arcane.owned_copies ?? 0
-    const needed = arcane.copies_remaining ?? 0
-    const totalRequired = owned + needed
-    const progress =
-      totalRequired > 0
-        ? Math.min(100, Math.round((owned / totalRequired) * 100))
-        : arcane.is_completed
-        ? 100
-        : 0
-
-    return (
-      <div
-        key={arcane.arcane_id}
-        onClick={() => {
-          setSelectedArcane(arcane)
-          setOwnedInput(arcane.owned_copies ?? 0)
-        }}
-        className={`rounded-lg border p-4 cursor-pointer transition-all ${
-          selectedArcane?.arcane_id === arcane.arcane_id
-            ? 'border-[#FBBF24] bg-[#443D34]'
-            : 'border-[#6F6A62]'
-        } hover:border-[#C9A66B] hover:bg-[#443D34]`}
-      >
+      <div className="flex justify-between items-start mb-6">
         <div>
-          <div className="font-semibold">
-            {arcane.name}
-          </div>
-
-          <div className="text-sm opacity-70">
-            {arcane.arcane_type}
-          </div>
+          <h2 className="text-3xl font-bold">
+            {selectedCategory} Arcanes
+          </h2>
+          <p className="text-sm opacity-70">
+            {categoryArcanes.length} arcanes
+          </p>
         </div>
 
-        <div className="grid grid-cols-4 gap-3 text-sm mt-2">
-          <span>
-            Owned: {arcane.owned_copies ?? 0}
-          </span>
-
-          <span>
-            Needed: {arcane.copies_remaining ?? '—'}
-          </span>
-
-          <span>
-            Rank: R{arcane.derived_rank ?? 0}
-          </span>
-
-          <div className="mt-3">
-            <div className="h-3 rounded-full bg-black/20 overflow-hidden">
-              <div
-                className={`h-full transition-all ${
-                  arcane.is_completed
-                    ? 'bg-green-400'
-                    : arcane.is_owned
-                    ? 'bg-[#FBBF24]'
-                    : 'bg-red-400'
-                }`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-
-            <div className="text-xs opacity-70 mt-1">
-              {owned} / {totalRequired} ({progress}%)
-            </div>
-          </div>
-
-          <span
-            className={
-              arcane.is_completed
-                ? 'text-green-400'
-                : arcane.is_owned
-                ? 'text-yellow-400'
-                : 'text-red-400'
-            }
-          >
-            {arcane.is_completed
-              ? 'Complete'
-              : arcane.is_owned
-              ? 'Partial'
-              : 'Missing'}
-          </span>
-        </div>
+        <button
+          onClick={() => setSelectedCategory(null)}
+          className="rounded-lg border px-3 py-1 text-sm transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
+        >
+          Close
+        </button>
       </div>
-        )
-      })}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {categoryArcanes.map(arcane => (
+          <div
+            key={arcane.arcane_id}
+            onClick={() => {
+              setSelectedArcane(arcane)
+              setOwnedInput(arcane.owned_copies ?? 0)
+            }}
+            className="rounded-lg border p-4 cursor-pointer transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
+          >
+            <div className="font-bold">
+              {arcane.name}
+            </div>
+
+            <div className="text-sm opacity-70 mb-3">
+              {arcane.arcane_type}
+            </div>
+
+            <div className="grid grid-cols-4 gap-3 text-sm">
+              <span>Owned: {arcane.owned_copies ?? 0}</span>
+              <span>Need: {arcane.copies_remaining ?? '—'}</span>
+              <span>R{arcane.derived_rank ?? 0}</span>
+              <span
+                className={
+                  arcane.is_completed
+                    ? 'text-green-400'
+                    : arcane.is_owned
+                    ? 'text-yellow-400'
+                    : 'text-red-400'
+                }
+              >
+                {arcane.is_completed
+                  ? 'Complete'
+                  : arcane.is_owned
+                  ? 'Partial'
+                  : 'Missing'}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
+)}
+  
   {selectedArcane && (
   <div
     className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
@@ -410,7 +438,6 @@ if (loading) {
   </div>
   </div>
 )}
-</div>
 </div>
 )
 }
