@@ -203,6 +203,7 @@ if (loading) {
   >
     <div
       onClick={(e) => e.stopPropagation()}
+      id="arcane-category-modal"
       className="w-full max-w-6xl max-h-[85vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl shadow-yellow-900/30"
       style={{
         borderColor: '#FBBF24',
@@ -417,12 +418,24 @@ if (loading) {
     <div className="flex gap-3 mt-4">
   <button
     onClick={async () => {
-      await saveArcaneOwnership(
-        selectedArcane.arcane_id,
-        Number(ownedInput || 0)
-      )
-      setSelectedArcane(null)
-    }}
+  const modalScroll = document.getElementById('arcane-category-modal')
+  const modalScrollTop = modalScroll?.scrollTop ?? 0
+
+  await saveArcaneOwnership(
+    selectedArcane.arcane_id,
+    Number(ownedInput || 0)
+  )
+
+  setSelectedArcane(null)
+
+  setTimeout(() => {
+    const refreshedModalScroll = document.getElementById('arcane-category-modal')
+
+    if (refreshedModalScroll) {
+      refreshedModalScroll.scrollTop = modalScrollTop
+    }
+  }, 0)
+}}
     className="rounded-lg border px-4 py-2 text-sm font-bold uppercase tracking-[0.2em]"
   >
     Save Ownership
