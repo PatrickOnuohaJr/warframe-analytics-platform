@@ -23,6 +23,11 @@ export default function useFrames() {
       .from('warframes')
       .select('warframe_id, name')
 
+    const { data: abilityData } = await wfBase
+      .from('warframe_abilities')
+      .select('*')
+      .order('ability_slot')  
+
     const { data: shardData } = await wfUser
       .from('archon_shard_slots')
       .select('*')
@@ -36,6 +41,16 @@ export default function useFrames() {
       wfMap[w.warframe_id] = w.name
     })
 
+    const abilityMap = {}
+
+    abilityData?.forEach(a => {
+      if (!abilityMap[a.warframe_id]) {
+        abilityMap[a.warframe_id] = []
+      }
+
+      abilityMap[a.warframe_id].push(a)
+    })
+
     const shardMap = {}
     shardData?.forEach(s => {
       shardMap[s.my_frame_id] = s
@@ -46,14 +61,31 @@ export default function useFrames() {
       targetShardMap[s.my_frame_id] = s
     })
 
+    const { data: abilityConfigData } = await wfUser
+    .from('ability_configs')
+    .select('*')
+
+
+    const abilityConfigMap = {}
+
+    abilityConfigData?.forEach(config => {
+      if (!abilityConfigMap[config.my_frame_id]) {
+        abilityConfigMap[config.my_frame_id] = []
+      }
+
+      abilityConfigMap[config.my_frame_id].push(config)
+    })
+
     const enriched = data.map(f => ({
       ...f,
       warframe_name: wfMap[f.warframe_id] ?? `Frame ${f.warframe_id}`,
+      abilities: abilityMap[f.warframe_id] ?? [],
       melee_weapon: f.melee_weapon === 'nan' ? null : f.melee_weapon,
       primary_weapon: f.primary_weapon === 'nan' ? null : f.primary_weapon,
       secondary_weapon: f.secondary_weapon === 'nan' ? null : f.secondary_weapon,
       shard_slots: shardMap[f.my_frame_id] ?? null,
       target_shards: targetShardMap[f.my_frame_id] ?? null,
+      ability_configs: abilityConfigMap[f.my_frame_id] ?? [],
     }))
 
     setFrames(enriched)

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import ShardChip from './ShardChip'
 import { getTauBonusText } from '../constants/shardBonuses'
 
@@ -131,6 +132,7 @@ export default function BuildDetailOverlay({
   frame,
   onClose,
   onEditArsenal,
+  onEditAbilities,
   onEditShards,
 }) {
   const color = frame.cultivation_color ?? '#FBBF24'
@@ -138,12 +140,16 @@ export default function BuildDetailOverlay({
   const art = frame.cultivation_art ?? 'Cultivation identity pending'
   const doctrine = frame.cultivation_doctrine ?? null
   const icon = getSchoolIcon(school)
-
   const currentShards = getShards(frame.shard_slots)
   const targetShards = getShards(frame.target_shards)
-
   const currentConstitution = getConstitutionLabel(currentShards)
   const targetConstitution = getConstitutionLabel(targetShards)
+  const [activeAbilityConfig, setActiveAbilityConfig] = useState('A')
+
+  const selectedConfig =
+  frame?.ability_configs?.find(
+    c => c.config_slot === activeAbilityConfig
+  ) ?? null
 
   return (
     <div
@@ -235,7 +241,7 @@ export default function BuildDetailOverlay({
           </div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <section
             onClick={onEditArsenal}
             className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#8C8880] hover:bg-[#443D34]"
@@ -356,6 +362,59 @@ export default function BuildDetailOverlay({
               </div>
             </div>
           </section>
+
+          <section
+            onClick={onEditAbilities}
+            className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#8C8880] hover:bg-[#443D34]"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2
+                className="text-sm font-bold uppercase tracking-widest"
+                style={{ color }}
+              >
+                Abilities
+              </h2>
+
+              <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">
+                Click to View
+              </span>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">
+                  Base Kit
+                </p>
+                <div className="space-y-1 font-semibold">
+                  {frame.abilities?.length > 0 ? (
+                    frame.abilities.map(ability => (
+                      <p key={ability.ability_slot}>
+                        {ability.ability_slot}. {ability.ability_name}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-[#B8B3AC]">No ability data yet</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">
+                  Helminth
+                </p>
+                <p className="mt-2 font-semibold">
+                  {selectedConfig?.subsumed_ability || 'No subsume'}
+                </p>
+
+                <p className="text-sm opacity-70">
+                  {selectedConfig?.subsumed_slot
+                    ? `Replaced Slot ${selectedConfig.subsumed_slot}`
+                    : ''}
+                </p>
+              </div>
+            </div>
+          </section>
+
 
           <section className="lg:col-span-2 bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6">
             <h2

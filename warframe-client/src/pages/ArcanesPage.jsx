@@ -15,6 +15,7 @@ export default function ArcanesPage() {
   const [selectedArcane, setSelectedArcane] = useState(null)
   const [ownedInput, setOwnedInput] = useState('')
   const [selectedCategory, setSelectedCategory] = useState(null)
+  const [showMissingModal, setShowMissingModal] = useState(false)
   const rankCopyMilestones =
   selectedArcane?.max_rank === 3
     ? [
@@ -55,6 +56,14 @@ const getCategoryProgress = (category) => {
   return Math.round((category.completed / category.total) * 100)
 }
 
+const collectionScore =
+  summary?.total_arcanes
+    ? Math.round((summary.completed_arcanes / summary.total_arcanes) * 100)
+    : 0
+
+const missingArcanes = arcanes.filter(
+  arcane => !arcane.is_owned && !arcane.is_completed
+)    
 const closestToComplete = [...arcanes]
   .filter(
     arcane =>
@@ -102,10 +111,19 @@ if (loading) {
           <div className="text-3xl font-bold">{summary?.completed_arcanes ?? 0}</div>
         </div>
 
-        <div className="rounded-lg border p-4 h-[110px]">
+        <div
+          onClick={() => setShowMissingModal(true)}
+          className="rounded-lg border p-4 h-[110px] cursor-pointer transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
+        >
           <div className="text-sm opacity-70">Missing</div>
           <div className="text-3xl font-bold">{summary?.missing_arcanes ?? 0}</div>
         </div>
+
+        <div className="rounded-lg border p-4 h-[110px]">
+          <div className="text-sm opacity-70">Collection Score</div>
+          <div className="text-3xl font-bold">{collectionScore}%</div>
+        </div>
+
     </div>  
   
     <div className="rounded-lg border p-4 flex-1 min-w-[650px]">
@@ -195,6 +213,67 @@ if (loading) {
     ))}
   </div>
 </div>
+
+    {showMissingModal && (
+  <div
+    className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-6"
+    onClick={() => setShowMissingModal(false)}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="w-full max-w-6xl max-h-[85vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl shadow-yellow-900/30"
+      style={{
+        borderColor: '#FBBF24',
+        background:
+          'radial-gradient(circle at top left, #443D34 0%, #2F2A23 45%, #1F1C18 100%)',
+      }}
+    >
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h2 className="text-3xl font-bold">
+            Missing Arcanes
+          </h2>
+          <p className="text-sm opacity-70">
+            {missingArcanes.length} missing
+          </p>
+        </div>
+
+        <button
+          onClick={() => setShowMissingModal(false)}
+          className="rounded-lg border px-3 py-1 text-sm transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {missingArcanes.map(arcane => (
+          <div
+            key={arcane.arcane_id}
+            onClick={() => {
+              setSelectedArcane(arcane)
+              setOwnedInput(arcane.owned_copies ?? 0)
+            }}
+            className="rounded-lg border p-4 cursor-pointer transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
+          >
+            <div className="font-bold">
+              {arcane.name}
+            </div>
+
+            <div className="text-sm opacity-70 mb-3">
+              {arcane.arcane_type}
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span>Needed: {arcane.copies_remaining ?? '—'}</span>
+              <span className="text-red-400">Missing</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
 
       {selectedCategory && (
   <div

@@ -42,12 +42,24 @@ function getSchoolColor(frames, selectedSchool) {
 export default function App() {
   const { frames, loading, refetchFrames } = useFrames()
   const { weapons, loadingWeapons } = useWeapons()
-
+  const [abilitiesFrame, setAbilitiesFrame] = useState(null)
   const [editingFrame, setEditingFrame] = useState(null)
   const [editingInitialTab, setEditingInitialTab] = useState('loadout')
   const [detailFrame, setDetailFrame] = useState(null)
   const [selectedSchool, setSelectedSchool] = useState('All Schools')
   const [activePage, setActivePage] = useState('loadouts')
+  const [subsumedAbility, setSubsumedAbility] = useState('')
+  const [subsumedSlot, setSubsumedSlot] = useState('')
+  const [activeAbilityConfig, setActiveAbilityConfig] = useState('A')
+
+
+  const selectedConfig =
+  abilitiesFrame?.ability_configs?.find(
+    c => c.config_slot === activeAbilityConfig
+  ) ?? null
+
+  console.log('ACTIVE CONFIG:', activeAbilityConfig)
+  console.log('SELECTED CONFIG:', selectedConfig)
 
   useEffect(() => {
     if (!detailFrame) return
@@ -290,6 +302,13 @@ export default function App() {
               detailFrame
             )
           }}
+
+          onEditAbilities={() => {
+            console.log('ABILITY CONFIGS:', detailFrame.ability_configs)
+            setAbilitiesFrame(detailFrame)
+            setSubsumedAbility(detailFrame.subsumed_ability || '')
+            setSubsumedSlot(detailFrame.subsumed_slot || '')
+          }}
           onEditShards={() => {
             setEditingInitialTab(
               'shards'
@@ -301,6 +320,75 @@ export default function App() {
         />
       )}
 
+    {abilitiesFrame && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6">
+        <div className="w-full max-w-3xl rounded-2xl border border-[#FBBF24] bg-[#2F2A23] p-6">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h2 className="text-3xl font-bold">
+                {abilitiesFrame.warframe_name} Abilities
+              </h2>
+              <p className="text-sm opacity-70">
+                Base kit and Helminth configuration
+              </p>
+
+              <div className="flex gap-2 mb-4">
+                {abilitiesFrame.ability_configs?.map(config => (
+                  <button
+                    key={config.config_id}
+                    onClick={() => {
+                      console.log('CONFIG CLICKED:', config.config_slot)
+                      setActiveAbilityConfig(config.config_slot)
+                    }}
+                    className={`rounded-lg border px-4 py-2 text-sm ${
+                      activeAbilityConfig === config.config_slot
+                        ? 'border-[#FBBF24] bg-[#443D34]'
+                        : ''
+                    }`}
+                  >
+                    {config.config_slot}
+                  </button>
+                ))}
+              </div>
+
+            </div>
+
+            <button
+              onClick={() => setAbilitiesFrame(null)}
+              className="rounded-lg border px-3 py-1 text-sm"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="space-y-2">
+              {abilitiesFrame.abilities?.map(ability => (
+                <div key={ability.ability_slot} className="rounded-lg border p-3">
+                  {ability.ability_slot}. {ability.ability_name}
+                </div>
+              ))}
+
+              <div className="mt-6 rounded-lg border p-4">
+                <p className="text-xs uppercase tracking-widest opacity-70">
+                  Helminth
+                </p>
+
+                <p className="mt-2 font-semibold">
+                  {abilitiesFrame.subsumed_ability || 'No subsume'}
+                </p>
+
+                <p className="text-sm opacity-70">
+                  {abilitiesFrame.subsumed_slot
+                    ? `Replaced Slot ${abilitiesFrame.subsumed_slot}`
+                    : ''}
+                </p>
+              </div>
+            </div>
+        </div>
+      </div>
+    )}
+
+    
       {editingFrame && (
         <ShardEditModal
           frame={editingFrame}
