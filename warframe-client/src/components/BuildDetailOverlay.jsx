@@ -146,10 +146,11 @@ export default function BuildDetailOverlay({
   const targetConstitution = getConstitutionLabel(targetShards)
   const [activeAbilityConfig, setActiveAbilityConfig] = useState('A')
 
-  const selectedConfig =
-  frame?.ability_configs?.find(
-    c => c.config_slot === activeAbilityConfig
-  ) ?? null
+   const selectedConfig =
+    frame?.ability_configs?.find(
+      c => c.config_slot === activeAbilityConfig
+    ) ?? null
+
 
   return (
     <div
