@@ -6,6 +6,7 @@ import BuildDetailOverlay from './components/BuildDetailOverlay'
 import useFrames from './hooks/useFrames'
 import useWeapons from './hooks/useWeapons'
 import ArcanesPage from './pages/ArcanesPage'
+import ArchonShardsPage from './pages/ArchonShardsPage'
 
 
 const PAGE_BG = '#2F2A23'
@@ -40,6 +41,25 @@ function getSchoolColor(frames, selectedSchool) {
   return schoolFrame?.cultivation_color ?? GOLD
 }
 
+function getShards(slots) {
+  return [1, 2, 3, 4, 5].map(i => ({
+    color: slots?.[`shard_${i}_color`] ?? null,
+    tauforged: slots?.[`shard_${i}_tauforged`] ?? false,
+  }))
+}
+
+function getShardBucket(frame) {
+  const current = getShards(frame.shard_slots)
+  const target = getShards(frame.target_shards)
+
+  const hasNow = current.some(s => s.color)
+  const hasGoal = target.some(s => s.color)
+
+  if (hasGoal && hasNow) return 'confirmed'
+  if (hasGoal && !hasNow) return 'pending'
+  return 'untouched'
+}
+
 export default function App() {
   const { frames, loading, refetchFrames } = useFrames()
   const { weapons, loadingWeapons } = useWeapons()
@@ -55,6 +75,7 @@ export default function App() {
   const [selectedAbilitySlot, setSelectedAbilitySlot] = useState(null)
   const [showHelminthPicker, setShowHelminthPicker] = useState(false)
   const [helminthSearch, setHelminthSearch] = useState('')
+  const [shardFilter, setShardFilter] = useState('all')
 
 
 
@@ -156,12 +177,17 @@ export default function App() {
   const schools = getSchools(frames)
   const schoolColor = getSchoolColor(frames, selectedSchool)
 
-  const filteredFrames =
+  const schoolFiltered =
     selectedSchool === 'All Schools'
       ? frames
       : frames.filter(
           f => f.cultivation_school === selectedSchool
         )
+
+  const filteredFrames =
+    shardFilter === 'all'
+      ? schoolFiltered
+      : schoolFiltered.filter(f => getShardBucket(f) === shardFilter)
   
 
   const selectedAbilityConfig =
@@ -282,7 +308,47 @@ export default function App() {
               Arcanes
             </button>
 
-          </div>
+            <button
+              onClick={() => setActivePage('archon-shards')}
+              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+              style={{
+                background:
+                  activePage === 'archon-shards'
+                    ? `${GOLD}22`
+                    : PANEL_BG,
+                color:
+                  activePage === 'archon-shards'
+                    ? GOLD
+                    : MUTED,
+                borderColor:
+                  activePage === 'archon-shards'
+                    ? `${GOLD}88`
+                    : BORDER,
+              }}
+            >
+              Archon Shards
+            </button>
+            </div>
+          {activePage === 'loadouts' && (
+            <div className="mb-4">
+              <select
+                value={shardFilter}
+                onChange={(e) => setShardFilter(e.target.value)}
+                className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em] outline-none"
+                style={{
+                  background: PANEL_BG,
+                  color: shardFilter === 'all' ? MUTED : GOLD,
+                  borderColor: shardFilter === 'all' ? BORDER : `${GOLD}88`,
+                }}
+              >
+                <option value="all">All Shards</option>
+                <option value="confirmed">Goal Complete</option>
+                <option value="pending">Goal Pending</option>
+                <option value="untouched">No Goal Set</option>
+              </select>
+            </div>
+          )}
+          
 
       {activePage === 'loadouts' && (      
         <div className="flex flex-wrap gap-2">
@@ -371,8 +437,10 @@ export default function App() {
           />
         ))}
       </div>
-    ) : (
+    ) : activePage === 'arcanes' ? (
       <ArcanesPage />
+    ) : (
+      <ArchonShardsPage />
 )}
 
       {detailFrame && (
