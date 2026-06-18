@@ -14,9 +14,9 @@ function getConstitutionBadge(slots) {
   const fusionShards = shards.filter(
     s => s.color && fusionColors.includes(s.color.toLowerCase())
   )
-
+  const crimsonCount = shards.filter(s => s.color?.toLowerCase() === 'crimson').length
+  const azureCount = shards.filter(s => s.color?.toLowerCase() === 'azure').length
   const fusionCount = fusionShards.length
-  if (fusionCount < 2) return null
 
   const counts = fusionShards.reduce((acc, shard) => {
     const color = shard.color.toLowerCase()
@@ -24,12 +24,18 @@ function getConstitutionBadge(slots) {
     return acc
   }, {})
 
+  // Fusion physiques take priority
   if (counts.emerald === 5) return 'UNDYING PLAGUE PHYSIQUE'
-  if (counts.topaz === 5) return 'HIGH NOON SOLAR PHYSIQUE'
-  if (counts.violet === 5) return 'STORM VOID PHYSIQUE'
+  if (counts.topaz === 5) return 'SOLAR CROWN PHYSIQUE'
+  if (counts.violet === 5) return 'IMMORTAL THUNDER PHYSIQUE'
   if (fusionCount >= 5) return 'APEX VARIANT CONSTITUTION'
+  if (fusionCount >= 2) return 'VARIANT CONSTITUTION'
 
-  return 'VARIANT CONSTITUTION'
+  // Base shard physiques
+  if (crimsonCount >= 3) return 'SOVEREIGN FORCE PHYSIQUE'
+  if (azureCount >= 3) return 'UNYIELDING HEAVEN PHYSIQUE'
+
+  return null
 }
 
 function getSchool(frame) {

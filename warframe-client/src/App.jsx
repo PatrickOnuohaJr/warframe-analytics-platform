@@ -52,12 +52,46 @@ function getShardBucket(frame) {
   const current = getShards(frame.shard_slots)
   const target = getShards(frame.target_shards)
 
-  const hasNow = current.some(s => s.color)
   const hasGoal = target.some(s => s.color)
+  if (!hasGoal) return 'conceptual'
 
-  if (hasGoal && hasNow) return 'confirmed'
-  if (hasGoal && !hasNow) return 'pending'
-  return 'untouched'
+  const fullySlotted = target.every((goalShard, i) => {
+    if (!goalShard.color) return true
+    return (
+      current[i]?.color?.toLowerCase() === goalShard.color?.toLowerCase() &&
+      current[i]?.tauforged === true
+    )
+  })
+
+  return fullySlotted ? 'slotted' : 'planned'
+}
+
+function getFramePhysique(slots) {
+  const shards = getShards(slots)
+  const fusionColors = ['emerald', 'topaz', 'violet']
+
+  const fusionShards = shards.filter(
+    s => s.color && fusionColors.includes(s.color.toLowerCase())
+  )
+  const crimsonCount = shards.filter(s => s.color?.toLowerCase() === 'crimson').length
+  const azureCount = shards.filter(s => s.color?.toLowerCase() === 'azure').length
+  const fusionCount = fusionShards.length
+
+  const counts = fusionShards.reduce((acc, shard) => {
+    const color = shard.color.toLowerCase()
+    acc[color] = (acc[color] || 0) + 1
+    return acc
+  }, {})
+
+  if (counts.emerald === 5) return 'UNDYING PLAGUE PHYSIQUE'
+  if (counts.topaz === 5) return 'SOLAR CROWN PHYSIQUE'
+  if (counts.violet === 5) return 'IMMORTAL THUNDER PHYSIQUE'
+  if (fusionCount >= 5) return 'APEX VARIANT CONSTITUTION'
+  if (fusionCount >= 2) return 'VARIANT CONSTITUTION'
+  if (crimsonCount >= 3) return 'SOVEREIGN FORCE PHYSIQUE'
+  if (azureCount >= 3) return 'UNYIELDING HEAVEN PHYSIQUE'
+
+  return null
 }
 
 export default function App() {
@@ -76,9 +110,13 @@ export default function App() {
   const [showHelminthPicker, setShowHelminthPicker] = useState(false)
   const [helminthSearch, setHelminthSearch] = useState('')
   const [shardFilter, setShardFilter] = useState('all')
+  const [physiqueFilter, setPhysiqueFilter] = useState('all')
 
 
-
+    function handleShardFilterChange(value) {
+      setShardFilter(value)
+      setPhysiqueFilter('all')
+    }
     async function saveHelminthConfig(helminthName) {
     if (!abilitiesFrame || !selectedAbilitySlot) return
 
@@ -177,17 +215,25 @@ export default function App() {
   const schools = getSchools(frames)
   const schoolColor = getSchoolColor(frames, selectedSchool)
 
-  const schoolFiltered =
-    selectedSchool === 'All Schools'
-      ? frames
-      : frames.filter(
-          f => f.cultivation_school === selectedSchool
-        )
+ const schoolFiltered =
+  selectedSchool === 'All Schools'
+    ? frames
+    : frames.filter(f => f.cultivation_school === selectedSchool)
 
-  const filteredFrames =
-    shardFilter === 'all'
-      ? schoolFiltered
-      : schoolFiltered.filter(f => getShardBucket(f) === shardFilter)
+const bucketFiltered =
+  shardFilter === 'all'
+    ? schoolFiltered
+    : schoolFiltered.filter(f => getShardBucket(f) === shardFilter)
+
+const filteredFrames =
+  physiqueFilter === 'all'
+    ? bucketFiltered
+    : bucketFiltered.filter(f => {
+        const slots = shardFilter === 'planned'
+          ? f.target_shards
+          : f.shard_slots
+        return getFramePhysique(slots) === physiqueFilter
+      })
   
 
   const selectedAbilityConfig =
@@ -333,21 +379,46 @@ export default function App() {
             <div className="mb-4">
               <select
                 value={shardFilter}
-                onChange={(e) => setShardFilter(e.target.value)}
+                onChange={(e) => handleShardFilterChange(e.target.value)}
                 className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em] outline-none"
                 style={{
                   background: PANEL_BG,
                   color: shardFilter === 'all' ? MUTED : GOLD,
                   borderColor: shardFilter === 'all' ? BORDER : `${GOLD}88`,
                 }}
-              >
-                <option value="all">All Shards</option>
-                <option value="confirmed">Goal Complete</option>
-                <option value="pending">Goal Pending</option>
-                <option value="untouched">No Goal Set</option>
-              </select>
-            </div>
-          )}
+              >    
+              <option value="all">All Frames</option>
+              <option value="slotted">Fully Slotted</option>
+              <option value="planned">Planned</option>
+              <option value="conceptual">Conceptual</option>
+            </select>
+          </div>
+        )}
+      
+
+              {(shardFilter === 'slotted' || shardFilter === 'planned') && (
+                <div className="mb-4">
+                  <select
+                    value={physiqueFilter}
+                    onChange={(e) => setPhysiqueFilter(e.target.value)}
+                    className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em] outline-none"
+                    style={{
+                      background: PANEL_BG,
+                      color: physiqueFilter === 'all' ? MUTED : GOLD,
+                      borderColor: physiqueFilter === 'all' ? BORDER : `${GOLD}88`,
+                    }}
+                  >
+                    <option value="all">All Physiques</option>
+                    <option value="SOVEREIGN FORCE PHYSIQUE">Sovereign Force</option>
+                    <option value="UNYIELDING HEAVEN PHYSIQUE">Unyielding Heaven</option>
+                    <option value="VARIANT CONSTITUTION">Variant Constitution</option>
+                    <option value="APEX VARIANT CONSTITUTION">Apex Variant Constitution</option>
+                    <option value="UNDYING PLAGUE PHYSIQUE">Undying Plague</option>
+                    <option value="SOLAR CROWN PHYSIQUE">Solar Crown</option>
+                    <option value="IMMORTAL THUNDER PHYSIQUE">Immortal Thunder</option>
+                  </select>
+                </div>
+              )}
           
 
       {activePage === 'loadouts' && (      
