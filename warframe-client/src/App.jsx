@@ -7,6 +7,7 @@ import useFrames from './hooks/useFrames'
 import useWeapons from './hooks/useWeapons'
 import ArcanesPage from './pages/ArcanesPage'
 import ArchonShardsPage from './pages/ArchonShardsPage'
+import HomePage from './pages/HomePage'
 
 
 const PAGE_BG = '#2F2A23'
@@ -102,7 +103,7 @@ export default function App() {
   const [editingInitialTab, setEditingInitialTab] = useState('loadout')
   const [detailFrame, setDetailFrame] = useState(null)
   const [selectedSchool, setSelectedSchool] = useState('All Schools')
-  const [activePage, setActivePage] = useState('loadouts')
+  const [activePage, setActivePage] = useState('home')
   const [subsumedAbility, setSubsumedAbility] = useState('')
   const [subsumedSlot, setSubsumedSlot] = useState('')
   const [activeAbilityConfig, setActiveAbilityConfig] = useState('A')
@@ -313,24 +314,27 @@ const filteredFrames =
           <div className="flex gap-2 mb-6">
 
             <button
-              onClick={() => setActivePage('loadouts')}
+              onClick={() => setActivePage('home')}
               className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
               style={{
-                background:
-                  activePage === 'loadouts'
-                    ? `${GOLD}22`
-                    : PANEL_BG,
-                color:
-                  activePage === 'loadouts'
-                    ? GOLD
-                    : MUTED,
-                borderColor:
-                  activePage === 'loadouts'
-                    ? `${GOLD}88`
-                    : BORDER,
+                background: activePage === 'home' ? `${GOLD}22` : PANEL_BG,
+                color: activePage === 'home' ? GOLD : MUTED,
+                borderColor: activePage === 'home' ? `${GOLD}88` : BORDER,
               }}
             >
-              Loadouts
+              Home
+            </button>
+
+            <button
+              onClick={() => setActivePage('codex')}
+              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+              style={{
+                background: activePage === 'codex' ? `${GOLD}22` : PANEL_BG,
+                color: activePage === 'codex' ? GOLD : MUTED,
+                borderColor: activePage === 'codex' ? `${GOLD}88` : BORDER,
+              }}
+            >
+              Codex
             </button>
 
             <button
@@ -375,7 +379,7 @@ const filteredFrames =
               Archon Shards
             </button>
             </div>
-          {activePage === 'loadouts' && (
+          {activePage === 'codex' && (
             <div className="mb-4">
               <select
                 value={shardFilter}
@@ -396,7 +400,7 @@ const filteredFrames =
         )}
       
 
-              {(shardFilter === 'slotted' || shardFilter === 'planned') && (
+              {activePage === 'codex' && (shardFilter === 'slotted' || shardFilter === 'planned') && (
                 <div className="mb-4">
                   <select
                     value={physiqueFilter}
@@ -421,7 +425,7 @@ const filteredFrames =
               )}
           
 
-      {activePage === 'loadouts' && (      
+      {activePage === 'codex' && (      
         <div className="flex flex-wrap gap-2">
 
           {schools.map(school => {
@@ -498,7 +502,14 @@ const filteredFrames =
     )}
       </div>
 
-      {activePage === 'loadouts' ? (
+      {activePage === 'home' ? (
+      <HomePage
+        frames={frames}
+        onOpenFrame={(frame) => setDetailFrame(frame)}
+        onOpenTracker={() => setActivePage('archon-shards')}
+        onOpenCodex={() => setActivePage('codex')}
+      />
+    ) : activePage === 'codex' ? (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredFrames.map(frame => (
           <FrameCard
@@ -558,6 +569,8 @@ const filteredFrames =
               detailFrame
             )
           }}
+
+          onSaved={() => refetchFrames()}
         />
       )}
 

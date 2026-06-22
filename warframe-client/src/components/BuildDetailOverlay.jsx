@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ShardChip from './ShardChip'
 import { getTauBonusText } from '../constants/shardBonuses'
+import { wfUser } from '../lib/supabase'
 
 function getShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
@@ -136,6 +137,7 @@ export default function BuildDetailOverlay({
   onEditArsenal,
   onEditAbilities,
   onEditShards,
+  onSaved,
 }) {
   const color = frame.cultivation_color ?? '#FBBF24'
   const school = frame.cultivation_school ?? 'Unknown School'
@@ -168,6 +170,32 @@ export default function BuildDetailOverlay({
             className="text-[#9C9890] hover:text-[#E8E4DC] text-sm uppercase tracking-[0.25em] transition-colors"
           >
             ← Return to Codex
+          </button>
+
+          <button
+            onClick={async () => {
+              const newVal = !frame.needs_attention
+              const { error } = await wfUser
+                .from('my_frames')
+                .update({ 
+                  needs_attention: newVal,
+                  updated_at: frame.updated_at ?? new Date().toISOString()
+                })
+                .eq('my_frame_id', frame.my_frame_id)
+              if (error) {
+                console.error('Failed to update attention flag:', error)
+                return
+              }
+              if (onSaved) onSaved()
+            }}
+            className="text-[9px] uppercase tracking-[0.25em] font-bold px-3 py-1.5 rounded-lg border transition-colors"
+            style={{
+              background: frame.needs_attention ? 'rgba(230,57,70,0.15)' : 'transparent',
+              borderColor: frame.needs_attention ? '#E63946' : '#6F6A62',
+              color: frame.needs_attention ? '#E63946' : '#9C9890',
+            }}
+          >
+            {frame.needs_attention ? '⚑ Attention On' : '⚑ Mark Attention'}
           </button>
         </div>
 
