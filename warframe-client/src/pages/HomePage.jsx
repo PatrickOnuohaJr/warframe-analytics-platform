@@ -33,6 +33,8 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
     { frame_name: '', offense_buff: '', utility_buff: '' },
     { frame_name: '', offense_buff: '', utility_buff: '' },
   ])
+  const [editingInvig, setEditingInvig] = useState(null) // { index, inv }
+  const [editInvigInput, setEditInvigInput] = useState({ frame_name: '', offense_buff: '', utility_buff: '' })
 
   const recentFrames = [...frames]
     .filter(f => f.updated_at)
@@ -83,24 +85,30 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
     setShardInventory(grouped)
   }
 
-  async function submitInvigorations() {
+  async function saveEditedInvig() {
     const monday = getCurrentMonday()
-    const rows = invigInputs
-      .filter(i => i.frame_name.trim())
-      .map(i => ({ ...i, week_start: monday }))
 
-    if (rows.length === 0) return
-
-    const { error } = await wfUser
+    const { error: deleteError } = await wfUser
       .from('helminth_invigorations')
-      .insert(rows)
+      .delete()
+      .eq('week_start', monday)
+      .eq('frame_name', editingInvig.inv.frame_name)
 
-    if (error) {
-      console.error('Failed to save invigorations:', error)
+    if (deleteError) {
+      console.error('Failed to delete old invigoration:', deleteError)
       return
     }
 
-    setShowInvigForm(false)
+    const { error: insertError } = await wfUser
+      .from('helminth_invigorations')
+      .insert([{ ...editInvigInput, week_start: monday }])
+
+    if (insertError) {
+      console.error('Failed to save invigoration:', insertError)
+      return
+    }
+
+    setEditingInvig(null)
     fetchInvigorations()
   }
 
@@ -179,16 +187,42 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
           <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
             Helminth Invigorations
           </p>
-          <span
-            className="text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 rounded"
-            style={{
-              background: 'rgba(76,175,80,0.1)',
-              border: '1px solid rgba(76,175,80,0.3)',
-              color: '#4CAF50',
-            }}
-          >
-            Week of {getCurrentMonday()}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 rounded"
+              style={{
+                background: 'rgba(76,175,80,0.1)',
+                border: '1px solid rgba(76,175,80,0.3)',
+                color: '#4CAF50',
+              }}
+            >
+              Week of {getCurrentMonday()}
+            </span>
+            {invigorations.length > 0 && (
+              <button
+                onClick={() => {
+                  setInvigInputs(
+                    invigorations.length > 0
+                      ? invigorations.map(inv => ({
+                          frame_name: inv.frame_name,
+                          offense_buff: inv.offense_buff,
+                          utility_buff: inv.utility_buff,
+                        }))
+                      : [
+                          { frame_name: '', offense_buff: '', utility_buff: '' },
+                          { frame_name: '', offense_buff: '', utility_buff: '' },
+                          { frame_name: '', offense_buff: '', utility_buff: '' },
+                        ]
+                  )
+                  setShowInvigForm(true)
+                }}
+                className="rounded-xl px-3 py-0.5 border text-[9px] uppercase font-bold tracking-[0.25em]"
+                style={{ background: 'rgba(76,175,80,0.1)', borderColor: 'rgba(76,175,80,0.5)', color: '#4CAF50' }}
+              >
+                Edit
+              </button>
+            )}
+          </div>
         </div>
 
         {invigorations.length === 0 ? (
@@ -212,8 +246,16 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
             {invigorations.map((inv, i) => (
               <div
                 key={i}
-                className="rounded-xl border p-4"
+                className="rounded-xl border p-4 cursor-pointer hover:brightness-110 transition-all"
                 style={{ background: '#1E2E1E', borderColor: '#4CAF50' }}
+                onClick={() => {
+                  setEditingInvig({ index: i, inv })
+                  setEditInvigInput({
+                    frame_name: inv.frame_name,
+                    offense_buff: inv.offense_buff,
+                    utility_buff: inv.utility_buff,
+                  })
+                }}
               >
                 <p
                   className="text-[9px] uppercase tracking-widest font-bold mb-1"
@@ -248,17 +290,26 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
           <div className="mt-4 rounded-xl border p-4 space-y-4" style={{ background: PANEL_BG, borderColor: BORDER }}>
             {invigInputs.map((row, i) => (
               <div key={i} className="grid grid-cols-3 gap-3">
-                <input
-                  placeholder="Frame name"
+                <select
                   value={row.frame_name}
                   onChange={e => {
                     const updated = [...invigInputs]
                     updated[i].frame_name = e.target.value
                     setInvigInputs(updated)
                   }}
-                  className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                  style={{ borderColor: BORDER, color: '#E8E4DC' }}
-                />
+                  className="rounded-lg border px-3 py-2 text-sm outline-none"
+                  style={{ background: PANEL_BG, borderColor: BORDER, color: row.frame_name ? '#E8E4DC' : '#6F6A62' }}
+                >
+                  <option value="">Select frame</option>
+                  {[...frames]
+                    .sort((a, b) => a.warframe_name.localeCompare(b.warframe_name))
+                    .map(f => (
+                      <option key={f.my_frame_id} value={f.warframe_name}>
+                        {f.warframe_name}
+                      </option>
+                    ))
+                  }
+                </select>
                 <select
                     value={row.offense_buff}
                     onChange={e => {
@@ -361,6 +412,123 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
           </div>
         </div>
       </div>
+
+      {/* Single Invigoration Edit Modal */}
+      {editingInvig && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6"
+          onClick={() => setEditingInvig(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border p-6 space-y-5"
+            style={{ background: '#1C1814', borderColor: '#4CAF50' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] uppercase tracking-[0.25em] mb-1" style={{ color: '#4CAF50' }}>
+                  Editing Invigoration
+                </p>
+                <h2 className="text-xl font-bold" style={{ color: '#E8E4DC' }}>
+                  {editingInvig.inv.frame_name}
+                </h2>
+              </div>
+              <button
+                onClick={() => setEditingInvig(null)}
+                className="text-lg leading-none"
+                style={{ color: MUTED }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Frame dropdown */}
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: MUTED }}>Frame</p>
+              <select
+                value={editInvigInput.frame_name}
+                onChange={e => setEditInvigInput(prev => ({ ...prev, frame_name: e.target.value }))}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={{ background: PANEL_BG, borderColor: BORDER, color: '#E8E4DC' }}
+              >
+                <option value="">Select frame</option>
+                {[...frames]
+                  .sort((a, b) => a.warframe_name.localeCompare(b.warframe_name))
+                  .map(f => (
+                    <option key={f.my_frame_id} value={f.warframe_name}>
+                      {f.warframe_name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Offense buff */}
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: MUTED }}>Offense Buff</p>
+              <select
+                value={editInvigInput.offense_buff}
+                onChange={e => setEditInvigInput(prev => ({ ...prev, offense_buff: e.target.value }))}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={{ background: PANEL_BG, borderColor: BORDER, color: '#E8E4DC' }}
+              >
+                <option value="">Select offense buff</option>
+                <option value="Ability Duration +100%">Ability Duration +100%</option>
+                <option value="Ability Range +100%">Ability Range +100%</option>
+                <option value="Ability Strength +200%">Ability Strength +200%</option>
+                <option value="Primary Crit Chance +200%">Primary Crit Chance +200%</option>
+                <option value="Primary Damage +250%">Primary Damage +250%</option>
+                <option value="Secondary Crit Chance +200%">Secondary Crit Chance +200%</option>
+                <option value="Secondary Damage +250%">Secondary Damage +250%</option>
+                <option value="Melee Crit Chance +200%">Melee Crit Chance +200%</option>
+                <option value="Melee Damage +250%">Melee Damage +250%</option>
+              </select>
+            </div>
+
+            {/* Utility buff */}
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: MUTED }}>Utility Buff</p>
+              <select
+                value={editInvigInput.utility_buff}
+                onChange={e => setEditInvigInput(prev => ({ ...prev, utility_buff: e.target.value }))}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={{ background: PANEL_BG, borderColor: BORDER, color: '#E8E4DC' }}
+              >
+                <option value="">Select utility buff</option>
+                <option value="Armor +1000">Armor +1000</option>
+                <option value="Energy Max +200%">Energy Max +200%</option>
+                <option value="Energy Regen +2/s">Energy Regen +2/s</option>
+                <option value="Health +1000">Health +1000</option>
+                <option value="Health Regen +25/s">Health Regen +25/s</option>
+                <option value="Jump Resets 5">Jump Resets 5</option>
+                <option value="Sprint Speed +75%">Sprint Speed +75%</option>
+                <option value="Parkour Velocity +75%">Parkour Velocity +75%</option>
+                <option value="Ability Efficiency +75%">Ability Efficiency +75%</option>
+                <option value="Reload Speed +75%">Reload Speed +75%</option>
+                <option value="Status Immunity">Status Immunity</option>
+              </select>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={saveEditedInvig}
+                className="flex-1 rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+                style={{ background: 'rgba(76,175,80,0.1)', borderColor: 'rgba(76,175,80,0.5)', color: '#4CAF50' }}
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditingInvig(null)}
+                className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+                style={{ background: 'transparent', borderColor: BORDER, color: MUTED }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Open Codex CTA */}
       <button

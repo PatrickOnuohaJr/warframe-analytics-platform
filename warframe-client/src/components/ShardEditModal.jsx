@@ -296,6 +296,8 @@ export default function ShardEditModal({
     f => String(f.my_frame_id) === String(selectedTargetFrame)
   )
 
+  
+
   function updateActiveShard(field, value) {
     setShards(prev =>
       prev.map((s, i) =>

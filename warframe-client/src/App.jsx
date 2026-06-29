@@ -8,6 +8,7 @@ import useWeapons from './hooks/useWeapons'
 import ArcanesPage from './pages/ArcanesPage'
 import ArchonShardsPage from './pages/ArchonShardsPage'
 import HomePage from './pages/HomePage'
+import AddFrameModal from './components/AddFrameModal'
 
 
 const PAGE_BG = '#2F2A23'
@@ -112,6 +113,7 @@ export default function App() {
   const [helminthSearch, setHelminthSearch] = useState('')
   const [shardFilter, setShardFilter] = useState('all')
   const [physiqueFilter, setPhysiqueFilter] = useState('all')
+  const [showAddFrame, setShowAddFrame] = useState(false)
 
 
     function handleShardFilterChange(value) {
@@ -510,15 +512,30 @@ const filteredFrames =
         onOpenCodex={() => setActivePage('codex')}
       />
     ) : activePage === 'codex' ? (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredFrames.map(frame => (
-          <FrameCard
-            key={frame.my_frame_id}
-            frame={frame}
-            onEdit={() => setDetailFrame(frame)}
-          />
-        ))}
-      </div>
+      <>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowAddFrame(true)}
+            className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+            style={{
+              background: `${GOLD}22`,
+              borderColor: `${GOLD}88`,
+              color: GOLD,
+            }}
+          >
+            + Add Frame
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredFrames.map(frame => (
+            <FrameCard
+              key={frame.my_frame_id}
+              frame={frame}
+              onEdit={() => setDetailFrame(frame)}
+            />
+          ))}
+        </div>
+      </>
     ) : activePage === 'arcanes' ? (
       <ArcanesPage />
     ) : (
@@ -528,6 +545,7 @@ const filteredFrames =
       {detailFrame && (
         <BuildDetailOverlay
           frame={detailFrame}
+          frames={frames}
           onClose={() =>
             setDetailFrame(null)
           }
@@ -796,6 +814,17 @@ const filteredFrames =
           onSaved={() => {
             setEditingFrame(null)
             refetchFrames()
+          }}
+        />
+      )}
+
+      {showAddFrame && (
+        <AddFrameModal
+          onClose={() => setShowAddFrame(false)}
+          onFrameAdded={(frame) => {
+            setShowAddFrame(false)
+            refetchFrames()
+            setDetailFrame(frame)
           }}
         />
       )}
