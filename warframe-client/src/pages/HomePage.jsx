@@ -111,6 +111,41 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
     setEditingInvig(null)
     fetchInvigorations()
   }
+  
+  async function submitInvigorations() {
+  const monday = getCurrentMonday()
+  const validRows = invigInputs.filter(
+    row => row.frame_name && row.offense_buff && row.utility_buff
+  )
+
+  if (validRows.length === 0) {
+    setShowInvigForm(false)
+    return
+  }
+
+  const { error: deleteError } = await wfUser
+    .from('helminth_invigorations')
+    .delete()
+    .eq('week_start', monday)
+
+  if (deleteError) {
+    console.error('Failed to clear existing invigorations:', deleteError)
+    return
+  }
+
+  const { error: insertError } = await wfUser
+    .from('helminth_invigorations')
+    .insert(validRows.map(row => ({ ...row, week_start: monday })))
+
+  if (insertError) {
+    console.error('Failed to save invigorations:', insertError)
+    return
+  }
+
+  setShowInvigForm(false)
+  fetchInvigorations()
+}
+
 
   const totalShards = Object.values(shardInventory)
     .reduce((sum, { base, tau }) => sum + base + tau, 0)
