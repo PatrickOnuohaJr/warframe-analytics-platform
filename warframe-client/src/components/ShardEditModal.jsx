@@ -103,6 +103,11 @@ function IncarnonToggle({ checked, onChange, color }) {
 function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }) {
   const [focused, setFocused] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(0)
+  const [showAllArcanes, setShowAllArcanes] = useState(false)
+
+  const isArcanePicker = useMemo(() => {
+    return weapons.some(item => item.arcane_type !== undefined)
+  }, [weapons])
 
   const filteredWeapons = useMemo(() => {
     const query = value.trim().toLowerCase()
@@ -111,6 +116,12 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
       .filter(item => {
         const itemSlot = item.slot ?? item.arcane_type ?? item.category
         return String(itemSlot).toLowerCase() === String(slot).toLowerCase()
+      })
+      .filter(item => {
+        if (!isArcanePicker) return true
+        if (showAllArcanes) return true
+
+        return item.is_owned === true || (item.owned_copies ?? 0) > 0
       })
       .filter(weapon => weapon.weapon_type !== 'Incarnon Genesis')
       .filter(weapon => {
@@ -132,7 +143,7 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
         return a.name.localeCompare(b.name)
       })
       .slice(0, 8)
-  }, [weapons, slot, value])
+  }, [weapons, slot, value, isArcanePicker, showAllArcanes])
 
   function selectWeapon(weapon) {
     onChange(weapon.name)
@@ -169,9 +180,25 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
 
   return (
     <div className="relative">
-      <label className="block text-[10px] text-[#9C9890] uppercase tracking-widest mb-1">
-        {label}
-      </label>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">
+          {label}
+        </p>
+
+        {isArcanePicker && (
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => {
+              setShowAllArcanes(prev => !prev)
+              setHighlightedIndex(0)
+            }}
+            className="text-[10px] uppercase tracking-widest text-[#B8B3AC] hover:text-[#E8E4DC] transition-colors"
+          >
+            {showAllArcanes ? 'All' : 'Owned'}
+          </button>
+        )}
+      </div>
 
       <input
         value={value}
@@ -192,6 +219,8 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
         <div className="absolute left-0 right-0 top-full mt-1 bg-[#0d0d0d] border border-white/10 rounded-lg overflow-hidden z-[80] max-h-56 overflow-y-auto shadow-xl">
           {filteredWeapons.map((weapon, index) => {
             const highlighted = index === highlightedIndex
+            const ownedCopies = weapon.owned_copies ?? 0
+            const derivedRank = weapon.derived_rank ?? 0
 
             return (
               <button
@@ -201,15 +230,27 @@ function WeaponInput({ label, value, onChange, weapons = [], slot, placeholder }
                 onMouseEnter={() => setHighlightedIndex(index)}
                 className="w-full text-left px-3 py-2 transition-colors"
                 style={{
-                  background: highlighted
-                    ? '#6F6A62'
-                    : 'transparent',
+                  background: highlighted ? '#6F6A62' : 'transparent',
                 }}
               >
-                <p className="text-sm text-[#E8E4DC]">{weapon.name}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-[#E8E4DC]">{weapon.name}</p>
+
+                  {isArcanePicker && ownedCopies > 0 && (
+                    <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">
+                      R{derivedRank}
+                    </span>
+                  )}
+                </div>
+
                 <p className="text-[10px] text-[#9C9890] uppercase tracking-widest">
-                  {weapon.weapon_type ?? weapon.arcane_type ?? weapon.category ?? slot}
-                  {weapon.mastery_rank !== null &&
+                  {weapon.weapon_type ??
+                    weapon.arcane_type ??
+                    weapon.category ??
+                    slot}
+
+                  {!isArcanePicker &&
+                  weapon.mastery_rank !== null &&
                   weapon.mastery_rank !== undefined
                     ? ` • MR ${weapon.mastery_rank}`
                     : ''}
@@ -261,6 +302,9 @@ export default function ShardEditModal({
   const [meleeIsIncarnon, setMeleeIsIncarnon] = useState(
     frame.melee_is_incarnon ?? false
   )
+
+  const [primaryArcane, setPrimaryArcane] = useState(frame.primary_arcane ?? '')
+  const [secondaryArcane, setSecondaryArcane] = useState(frame.secondary_arcane ?? '')
   const [meleeArcane, setMeleeArcane] = useState(frame.melee_arcane ?? '')
 
   const [currentShards, setCurrentShards] = useState(
@@ -357,13 +401,18 @@ export default function ShardEditModal({
       primary_weapon: cleanValue(primaryWeapon),
       secondary_weapon: cleanValue(secondaryWeapon),
       melee_weapon: cleanValue(meleeWeapon),
+
       arcane_1: cleanValue(arcane1),
       arcane_2: cleanValue(arcane2),
+
       primary_is_incarnon: primaryIsIncarnon,
       secondary_is_incarnon: secondaryIsIncarnon,
       melee_is_incarnon: meleeIsIncarnon,
+
+      primary_arcane: cleanValue(primaryArcane),
+      secondary_arcane: cleanValue(secondaryArcane),
       melee_arcane: cleanValue(meleeArcane),
-    }
+          }
 
     await wfUser
       .from('my_frames')
@@ -620,6 +669,15 @@ export default function ShardEditModal({
             />
 
             <WeaponInput
+              label="Primary Arcane"
+              value={primaryArcane}
+              onChange={setPrimaryArcane}
+              weapons={arcanes}
+              slot="Primary"
+              placeholder="Primary Merciless"
+            />
+
+            <WeaponInput
               label="Secondary Weapon"
               value={secondaryWeapon}
               onChange={setSecondaryWeapon}
@@ -632,6 +690,15 @@ export default function ShardEditModal({
               checked={secondaryIsIncarnon}
               onChange={setSecondaryIsIncarnon}
               color={color}
+            />
+
+            <WeaponInput
+              label="Secondary Arcane"
+              value={secondaryArcane}
+              onChange={setSecondaryArcane}
+              weapons={arcanes}
+              slot="Secondary"
+              placeholder="Secondary Merciless"
             />
 
             <WeaponInput

@@ -475,10 +475,18 @@ async function saveIdentity() {
       <div>
         <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Primary</p>
         <WeaponValue name={frame.primary_weapon} incarnon={frame.primary_is_incarnon} />
+        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px] mt-2">
+        Primary Arcane
+      </p>
+      <p className="text-[#E8E4DC]">{frame.primary_arcane ?? '-'}</p>
       </div>
       <div>
         <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Secondary</p>
         <WeaponValue name={frame.secondary_weapon} incarnon={frame.secondary_is_incarnon} />
+        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px] mt-2">
+        Secondary Arcane
+      </p>
+      <p className="text-[#E8E4DC]">{frame.secondary_arcane ?? '-'}</p>
       </div>
       <div>
         <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Melee</p>
