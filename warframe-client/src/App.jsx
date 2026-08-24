@@ -9,6 +9,8 @@ import ArcanesPage from './pages/ArcanesPage'
 import ArchonShardsPage from './pages/ArchonShardsPage'
 import HomePage from './pages/HomePage'
 import AddFrameModal from './components/AddFrameModal'
+import ArsenalSearchPage from './components/ArsenalSearchPage';
+
 
 
 const PAGE_BG = '#2F2A23'
@@ -340,6 +342,18 @@ const filteredFrames =
             </button>
 
             <button
+              onClick={() => setActivePage('arsenal-search')}
+              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+              style={{
+                background: activePage === 'arsenal-search' ? `${GOLD}22` : PANEL_BG,
+                color: activePage === 'arsenal-search' ? GOLD : MUTED,
+                borderColor: activePage === 'arsenal-search' ? `${GOLD}88` : BORDER,
+              }}
+            >
+              Search
+            </button>
+
+            <button
               onClick={() => setActivePage('arcanes')}
               className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
               style={{
@@ -538,8 +552,16 @@ const filteredFrames =
       </>
     ) : activePage === 'arcanes' ? (
       <ArcanesPage />
+    ) : activePage === 'arsenal-search' ? (
+      <ArsenalSearchPage
+        onBack={() => setActivePage('home')}
+        onOpenFrame={(myFrameId) => {
+          const frame = frames.find(f => f.my_frame_id === myFrameId);
+          if (frame) setDetailFrame(frame);
+        }}
+      />
     ) : (
-      <ArchonShardsPage />
+          <ArchonShardsPage />
 )}
 
       {detailFrame && (

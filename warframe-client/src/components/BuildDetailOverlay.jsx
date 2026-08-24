@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import ShardChip from './ShardChip'
 import { getTauBonusText } from '../constants/shardBonuses'
 import { wfUser } from '../lib/supabase'
-
+import WarframeSelector from './Warframeselector';
+import TestingLogTab from './TestingLogTab';
 
 function getShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
@@ -172,6 +173,8 @@ export default function BuildDetailOverlay({
   const [activeAbilityConfig, setActiveAbilityConfig] = useState('A')
   const [activeTab, setActiveTab] = useState('identity')
   const [identityForm, setIdentityForm] = useState({
+    warframe_id: frame.warframe_id ?? null,
+    display_name: frame.display_name ?? '',
     build_title: frame.build_title ?? '',
     tier: frame.tier ?? '',
     cultivation_school: frame.cultivation_school ?? '',
@@ -183,6 +186,8 @@ export default function BuildDetailOverlay({
 
 useEffect(() => {
   setIdentityForm({
+    warframe_id: frame.warframe_id ?? null,
+    display_name: frame.display_name ?? '',
     build_title: frame.build_title ?? '',
     tier: frame.tier ?? '',
     cultivation_school: frame.cultivation_school ?? '',
@@ -190,7 +195,49 @@ useEffect(() => {
     cultivation_art: frame.cultivation_art ?? '',
     cultivation_doctrine: frame.cultivation_doctrine ?? '',
   })
-}, [frame.my_frame_id, frame.build_title, frame.cultivation_art, frame.cultivation_school, frame.cultivation_color, frame.cultivation_doctrine, frame.tier])
+}, [frame.my_frame_id, frame.warframe_id, frame.display_name, frame.build_title, frame.cultivation_art, frame.cultivation_school, frame.cultivation_color, frame.cultivation_doctrine, frame.tier])
+
+  const [primeTarget, setPrimeTarget] = useState(null); // { warframe_id, name } | null
+
+useEffect(() => {
+  let cancelled = false;
+
+  async function checkForPrime() {
+    if (!identityForm.warframe_id) {
+      setPrimeTarget(null);
+      return;
+    }
+
+    const { data: baseRow, error: baseError } = await wfUser
+      .schema('wf_base')
+      .from('warframes')
+      .select('prime_variant_id, is_prime')
+      .eq('warframe_id', identityForm.warframe_id)
+      .single();
+
+    if (cancelled) return;
+
+    if (baseError || !baseRow || baseRow.is_prime || !baseRow.prime_variant_id) {
+      setPrimeTarget(null);
+      return;
+    }
+
+    const { data: primeRow, error: primeError } = await wfUser
+      .schema('wf_base')
+      .from('warframes')
+      .select('warframe_id, name')
+      .eq('warframe_id', baseRow.prime_variant_id)
+      .single();
+
+    if (cancelled) return;
+
+    setPrimeTarget(primeError || !primeRow ? null : primeRow);
+  }
+
+  checkForPrime();
+  return () => { cancelled = true; };
+}, [identityForm.warframe_id]);
+
 
    const selectedConfig =
     frame?.ability_configs?.find(
@@ -220,6 +267,8 @@ async function saveIdentity() {
   const { error } = await wfUser
     .from('my_frames')
     .update({
+      warframe_id: identityForm.warframe_id || null,
+      display_name: identityForm.display_name || null,
       build_title: identityForm.build_title || null,
       tier: identityForm.tier || null,
       cultivation_school: identityForm.cultivation_school || null,
@@ -356,12 +405,42 @@ async function saveIdentity() {
   <TabButton active={activeTab === 'arsenal'} color={color} onClick={() => setActiveTab('arsenal')}>Arsenal</TabButton>
   <TabButton active={activeTab === 'shards'} color={color} onClick={() => setActiveTab('shards')}>Archon Shards</TabButton>
   <TabButton active={activeTab === 'abilities'} color={color} onClick={() => setActiveTab('abilities')}>Abilities</TabButton>
+  <TabButton active={activeTab === 'testing'} color={color} onClick={() => setActiveTab('testing')}>Testing Log</TabButton>
 </div>
 
 {/* Identity tab */}
 {activeTab === 'identity' && (
   <div className="space-y-4 max-w-2xl">
     <div className="grid grid-cols-2 gap-4">
+      <div>
+        <WarframeSelector
+          currentWarframeId={identityForm.warframe_id}
+          currentDisplayName={identityForm.display_name}
+          onSelect={({ warframe_id, name }) =>
+            setIdentityForm(prev => ({ ...prev, warframe_id, display_name: name }))
+          }
+        />
+
+        {primeTarget && (
+        <button
+          onClick={() => {
+            setIdentityForm(prev => ({
+              ...prev,
+              warframe_id: primeTarget.warframe_id,
+              display_name: primeTarget.name,
+            }))
+          }}
+          className="mt-2 rounded-lg px-4 py-2 text-sm uppercase tracking-widest"
+          style={{
+        background: '#FBBF2422',
+        border: '1px solid #FBBF2488',
+        color: '#FBBF24',
+      }}
+        >
+          ✨ Prime to {primeTarget.name}
+        </button>
+      )}  
+      </div>
       <div>
         <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#9C9890' }}>Build Title</p>
         <input
@@ -459,6 +538,11 @@ async function saveIdentity() {
   </button>
 </div>
   </div>
+)}
+
+{/* Testing Log tab */}
+{activeTab === 'testing' && (
+  <TestingLogTab frame={frame} />
 )}
 
 {/* Arsenal tab */}
@@ -572,21 +656,6 @@ async function saveIdentity() {
         </p>
       </div>
     </div>
-  </section>
-)}
-
-{/* Doctrine — always visible below tabs */}
-{activeTab !== 'identity' && (
-  <section className="mt-6 bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 max-w-2xl">
-    <h2 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color }}>
-      Cultivation Doctrine
-    </h2>
-    <p className="text-[#B8B3AC] leading-relaxed">
-      {doctrine
-        ? doctrine
-        : `${art}. This build belongs to the ${school}, using its loadout, shard path, and combat identity as a specialized doctrine within Warframe Jarvis.`
-      }
-    </p>
   </section>
 )}
       </div>
