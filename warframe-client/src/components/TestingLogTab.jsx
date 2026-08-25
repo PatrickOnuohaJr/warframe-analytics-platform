@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { wfUser } from '../lib/supabase';
+import Panel from './ui/Panel';
+import Button from './ui/Button';
 
 // ============================================================================
 // TestingLogTab.jsx
@@ -312,19 +314,9 @@ export default function TestingLogTab({ frame }) {
 
         {error && <p className="text-sm text-red-400 mb-2">{error}</p>}
 
-        <button
-          onClick={handleSubmit}
-          disabled={saving}
-          className="rounded-xl px-6 py-2.5 text-[10px] uppercase font-bold"
-          style={{
-            background: `${GOLD}22`,
-            border: `1px solid ${GOLD}88`,
-            color: GOLD,
-            opacity: saving ? 0.5 : 1,
-          }}
-        >
+        <Button variant="primary" color={GOLD} onClick={handleSubmit} disabled={saving}>
           {saving ? 'Saving...' : 'Log Test'}
-        </button>
+        </Button>
       </div>
 
       <div>
@@ -340,11 +332,7 @@ export default function TestingLogTab({ frame }) {
 
         <div className="space-y-3">
           {tests.map(test => (
-            <div
-              key={test.test_id}
-              className="rounded-xl border p-4"
-              style={{ backgroundColor: PANEL_BG, border: `1px solid ${BORDER}` }}
-            >
+            <Panel key={test.test_id}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span
@@ -394,7 +382,7 @@ export default function TestingLogTab({ frame }) {
               <p className="text-[10px] mt-2" style={{ color: MUTED }}>
                 {new Date(test.tested_at).toLocaleDateString()}
               </p>
-            </div>
+            </Panel>
           ))}
         </div>
       </div>

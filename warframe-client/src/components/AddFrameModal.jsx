@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { wfUser } from '../lib/supabase'
+import ModalShell from './ui/ModalShell'
+import Button from './ui/Button'
 
-const PANEL_BG = '#4A443B'
 const BORDER = '#6F6A62'
 const GOLD = '#FBBF24'
-const MUTED = '#B8B3AC'
 
 export default function AddFrameModal({ onClose, onFrameAdded }) {
   const [allFrames, setAllFrames] = useState([])
@@ -69,25 +69,15 @@ export default function AddFrameModal({ onClose, onFrameAdded }) {
 }
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6"
-      onClick={onClose}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl border p-6 space-y-4"
-        style={{ background: '#2F2A23', borderColor: `${GOLD}55` }}
-      >
-        <div className="flex items-center justify-between">
+    <ModalShell onClose={onClose} accent={GOLD}>
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold" style={{ color: GOLD }}>Add Frame</h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg border px-3 py-1 text-sm"
-            style={{ borderColor: BORDER, color: MUTED }}
-          >
+          <Button variant="ghost" size="sm" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
         </div>
+
+        <div className="space-y-4">
 
         {/* Frame name autocomplete */}
         <div className="relative">
@@ -142,20 +132,16 @@ export default function AddFrameModal({ onClose, onFrameAdded }) {
           />
         </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
-        <button
+        <Button
+          variant="primary"
+          color={GOLD}
+          fullWidth
           onClick={handleCreate}
           disabled={!selectedFrame || !buildTitle.trim() || saving}
-          className="w-full rounded-xl px-4 py-2.5 text-[10px] uppercase font-bold tracking-[0.25em]"
-          style={{
-            background: selectedFrame && buildTitle.trim() ? `${GOLD}22` : PANEL_BG,
-            border: `1px solid ${selectedFrame && buildTitle.trim() ? `${GOLD}88` : BORDER}`,
-            color: selectedFrame && buildTitle.trim() ? GOLD : MUTED,
-            opacity: saving ? 0.5 : 1,
-          }}
         >
           {saving ? 'Creating...' : 'Create Frame'}
-        </button>
-      </div>
-    </div>
+        </Button>
+        </div>
+    </ModalShell>
   )
 }

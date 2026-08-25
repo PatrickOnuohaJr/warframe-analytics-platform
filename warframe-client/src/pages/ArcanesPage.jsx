@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import useArcanes from '../hooks/useArcanes'
+import Panel from '../components/ui/Panel'
+import Button from '../components/ui/Button'
+import ModalShell from '../components/ui/ModalShell'
+
+const GOLD = '#FBBF24'
 
 export default function ArcanesPage() {
   const {
@@ -96,37 +101,34 @@ if (loading) {
    
     <div className="flex gap-6 mb-8 items-start">
       <div className="grid grid-cols-2 gap-4 w-[340px] shrink-0">
-        <div className="rounded-lg border p-4 h-[110px]">
+        <Panel className="!p-4 h-[110px]">
           <div className="text-sm opacity-70">Total</div>
           <div className="text-3xl font-bold">{summary?.total_arcanes ?? 0}</div>
-        </div>
+        </Panel>
 
-        <div className="rounded-lg border p-4 h-[110px]">
+        <Panel className="!p-4 h-[110px]">
           <div className="text-sm opacity-70">Owned</div>
           <div className="text-3xl font-bold">{summary?.owned_arcanes ?? 0}</div>
-        </div>
+        </Panel>
 
-        <div className="rounded-lg border p-4 h-[110px]">
+        <Panel className="!p-4 h-[110px]">
           <div className="text-sm opacity-70">Completed</div>
           <div className="text-3xl font-bold">{summary?.completed_arcanes ?? 0}</div>
-        </div>
+        </Panel>
 
-        <div
-          onClick={() => setShowMissingModal(true)}
-          className="rounded-lg border p-4 h-[110px] cursor-pointer transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
-        >
+        <Panel interactive accent={GOLD} className="!p-4 h-[110px]" onClick={() => setShowMissingModal(true)}>
           <div className="text-sm opacity-70">Missing</div>
           <div className="text-3xl font-bold">{summary?.missing_arcanes ?? 0}</div>
-        </div>
+        </Panel>
 
-        <div className="rounded-lg border p-4 h-[110px]">
+        <Panel className="!p-4 h-[110px]">
           <div className="text-sm opacity-70">Collection Score</div>
           <div className="text-3xl font-bold">{collectionScore}%</div>
-        </div>
+        </Panel>
 
-    </div>  
-  
-    <div className="rounded-lg border p-4 flex-1 min-w-[650px]">
+    </div>
+
+    <Panel className="flex-1 min-w-[650px]">
           <h2 className="text-xl font-bold mb-4">
             Closest To Completion
           </h2>
@@ -151,7 +153,7 @@ if (loading) {
               ))}
             </div>
           )}
-        </div>
+        </Panel>
       </div>
 
       <div className="mb-8">
@@ -159,12 +161,13 @@ if (loading) {
     Arcane Categories
   </h2>
 
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
     {categories.map(category => (
-      <div
+      <Panel
         key={category.arcane_type}
+        interactive
+        accent={GOLD}
         onClick={() => setSelectedCategory(category.arcane_type)}
-        className="rounded-lg border p-4 cursor-pointer transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
       >
         <div className="text-lg font-bold mb-2">
           {category.arcane_type}
@@ -209,25 +212,13 @@ if (loading) {
           </div>
         </div>
 
-      </div>
+      </Panel>
     ))}
   </div>
 </div>
 
     {showMissingModal && (
-  <div
-    className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-6"
-    onClick={() => setShowMissingModal(false)}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      className="w-full max-w-6xl max-h-[85vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl shadow-yellow-900/30"
-      style={{
-        borderColor: '#FBBF24',
-        background:
-          'radial-gradient(circle at top left, #443D34 0%, #2F2A23 45%, #1F1C18 100%)',
-      }}
-    >
+  <ModalShell onClose={() => setShowMissingModal(false)} accent={GOLD} maxWidth="max-w-6xl">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h2 className="text-3xl font-bold">
@@ -238,23 +229,21 @@ if (loading) {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowMissingModal(false)}
-          className="rounded-lg border px-3 py-1 text-sm transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
-        >
+        <Button variant="ghost" size="sm" onClick={() => setShowMissingModal(false)}>
           Close
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {missingArcanes.map(arcane => (
-          <div
+          <Panel
             key={arcane.arcane_id}
+            interactive
+            accent={GOLD}
             onClick={() => {
               setSelectedArcane(arcane)
               setOwnedInput(arcane.owned_copies ?? 0)
             }}
-            className="rounded-lg border p-4 cursor-pointer transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
           >
             <div className="font-bold">
               {arcane.name}
@@ -268,28 +257,14 @@ if (loading) {
               <span>Needed: {arcane.copies_remaining ?? '—'}</span>
               <span className="text-red-400">Missing</span>
             </div>
-          </div>
+          </Panel>
         ))}
       </div>
-    </div>
-  </div>
+  </ModalShell>
 )}
 
       {selectedCategory && (
-  <div
-    className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-6"
-    onClick={() => setSelectedCategory(null)}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      id="arcane-category-modal"
-      className="w-full max-w-6xl max-h-[85vh] overflow-y-auto rounded-2xl border p-6 shadow-2xl shadow-yellow-900/30"
-      style={{
-        borderColor: '#FBBF24',
-        background:
-          'radial-gradient(circle at top left, #443D34 0%, #2F2A23 45%, #1F1C18 100%)',
-      }}
-    >
+  <ModalShell onClose={() => setSelectedCategory(null)} accent={GOLD} maxWidth="max-w-6xl" id="arcane-category-modal">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h2 className="text-3xl font-bold">
@@ -300,23 +275,21 @@ if (loading) {
           </p>
         </div>
 
-        <button
-          onClick={() => setSelectedCategory(null)}
-          className="rounded-lg border px-3 py-1 text-sm transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
-        >
+        <Button variant="ghost" size="sm" onClick={() => setSelectedCategory(null)}>
           Close
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {categoryArcanes.map(arcane => (
-          <div
+          <Panel
             key={arcane.arcane_id}
+            interactive
+            accent={GOLD}
             onClick={() => {
               setSelectedArcane(arcane)
               setOwnedInput(arcane.owned_copies ?? 0)
             }}
-            className="rounded-lg border p-4 cursor-pointer transition-all hover:border-[#C9A66B] hover:bg-[#443D34]"
           >
             <div className="font-bold">
               {arcane.name}
@@ -346,27 +319,14 @@ if (loading) {
                   : 'Missing'}
               </span>
             </div>
-          </div>
+          </Panel>
         ))}
       </div>
-    </div>
-  </div>
+  </ModalShell>
 )}
-  
+
   {selectedArcane && (
-  <div
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
-    onClick={() => setSelectedArcane(null)}
-  >
-    <div
-    onClick={(e) => e.stopPropagation()}
-      className="w-full max-w-5xl rounded-2xl border p-6 shadow-2xl shadow-yellow-900/30"
-      style={{
-        borderColor: '#FBBF24',
-        background:
-          'radial-gradient(circle at top left, #443D34 0%, #2F2A23 45%, #1F1C18 100%)',
-      }}
-    >
+  <ModalShell onClose={() => setSelectedArcane(null)} accent={GOLD} maxWidth="max-w-5xl" zIndex={70}>
     <div className="flex justify-between items-start mb-4">
       <div>
         <h3 className="text-3xl font-bold">
@@ -378,12 +338,9 @@ if (loading) {
         </p>
       </div>
 
-      <button
-        onClick={() => setSelectedArcane(null)}
-        className="rounded-lg border px-3 py-1 text-sm"
-      >
+      <Button variant="ghost" size="sm" onClick={() => setSelectedArcane(null)}>
         Close
-      </button>
+      </Button>
     </div>
 
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -450,6 +407,11 @@ if (loading) {
               : 'text-red-400'
           }`}
         >
+          {selectedArcane.is_completed
+            ? 'Complete'
+            : selectedArcane.is_owned
+            ? 'Partial'
+            : 'Missing'}
         </div>
       </div>
     </div>
@@ -495,7 +457,9 @@ if (loading) {
     ) : null}
 
     <div className="flex gap-3 mt-4">
-  <button
+  <Button
+    variant="primary"
+    color={GOLD}
     onClick={async () => {
   const modalScroll = document.getElementById('arcane-category-modal')
   const modalScrollTop = modalScroll?.scrollTop ?? 0
@@ -515,20 +479,15 @@ if (loading) {
     }
   }, 0)
 }}
-    className="rounded-lg border px-4 py-2 text-sm font-bold uppercase tracking-[0.2em]"
   >
     Save Ownership
-  </button>
+  </Button>
 
-  <button
-    onClick={() => setSelectedArcane(null)}
-    className="rounded-lg border px-4 py-2 text-sm"
-  >
+  <Button variant="ghost" onClick={() => setSelectedArcane(null)}>
     Cancel
-  </button>
+  </Button>
 </div>
-  </div>
-  </div>
+  </ModalShell>
 )}
 </div>
 )

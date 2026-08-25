@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { wfUser } from '../lib/supabase';
+import Panel from './ui/Panel';
 
 // ============================================================================
 // ArsenalSearchPage.jsx
@@ -37,7 +38,6 @@ const GOLD = '#FBBF24';
 const PANEL_BG = '#4A443B';
 const BORDER = '#6F6A62';
 const MUTED = '#B8B3AC';
-const BG = '#2F2A23';
 
 // Maps each searchable column to a human-readable slot label, used when
 // rendering "matched in: X" under each result. Keeping this as a single
@@ -128,7 +128,7 @@ export default function ArsenalSearchPage({ onBack, onOpenFrame }) {
   }, [query, frames]);
 
   return (
-    <div className="min-h-screen p-8" style={{ backgroundColor: BG, color: '#F5F0E8' }}>
+    <div>
       <div className="max-w-3xl mx-auto">
         <button
           onClick={onBack}
@@ -170,11 +170,11 @@ export default function ArsenalSearchPage({ onBack, onOpenFrame }) {
 
         <div className="space-y-3">
           {results.map(({ frame, matchedFields }) => (
-            <div
+            <Panel
               key={frame.my_frame_id}
+              interactive
+              accent={GOLD}
               onClick={() => onOpenFrame?.(frame.my_frame_id)}
-              className="rounded-xl border p-4 cursor-pointer hover:border-opacity-100 transition"
-              style={{ backgroundColor: PANEL_BG, border: `1px solid ${BORDER}` }}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold" style={{ color: GOLD }}>
@@ -196,7 +196,7 @@ export default function ArsenalSearchPage({ onBack, onOpenFrame }) {
                   </span>
                 ))}
               </div>
-            </div>
+            </Panel>
           ))}
         </div>
       </div>

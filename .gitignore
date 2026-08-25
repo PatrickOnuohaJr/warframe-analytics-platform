@@ -24,3 +24,8 @@ Legacy/ETL/Raw/
 
 # Excel files
 Stress Test F1.xlsx
+
+# Local Claude Code skill installs
+.agents/
+.claude/
+skills-lock.json

@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { wfUser } from '../lib/supabase';
-
-const GOLD = '#FBBF24';
-const PANEL_BG = '#4A443B';
-const BORDER = '#6F6A62';
-const MUTED = '#B8B3AC';
+import { COLOR } from '../constants/theme';
 
 /**
  * WarframeSelector
@@ -117,7 +113,7 @@ export default function WarframeSelector({ currentWarframeId, currentDisplayName
     <div ref={containerRef} className="relative w-full">
       <label
         className="block text-xs uppercase tracking-wider mb-1"
-        style={{ color: MUTED }}
+        style={{ color: COLOR.mutedInk }}
       >
         Warframe
       </label>
@@ -133,9 +129,9 @@ export default function WarframeSelector({ currentWarframeId, currentDisplayName
           placeholder="Search Warframe name..."
           className="w-full px-3 py-2 rounded outline-none"
           style={{
-            backgroundColor: PANEL_BG,
-            border: `1px solid ${GOLD}`,
-            color: '#F5F0E8',
+            backgroundColor: COLOR.surface2,
+            border: `1px solid ${COLOR.gold}`,
+            color: COLOR.ink,
           }}
         />
       ) : (
@@ -143,9 +139,9 @@ export default function WarframeSelector({ currentWarframeId, currentDisplayName
           onClick={handleEnterEditMode}
           className="w-full px-3 py-2 rounded cursor-pointer"
           style={{
-            backgroundColor: PANEL_BG,
-            border: `1px solid ${BORDER}`,
-            color: currentDisplayName ? '#F5F0E8' : MUTED,
+            backgroundColor: COLOR.surface2,
+            border: `1px solid ${COLOR.border}`,
+            color: currentDisplayName ? COLOR.ink : COLOR.mutedInk,
           }}
         >
           {currentDisplayName || 'Click to set Warframe...'}
@@ -155,10 +151,10 @@ export default function WarframeSelector({ currentWarframeId, currentDisplayName
       {isOpen && isEditing && (
         <div
           className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded shadow-lg"
-          style={{ backgroundColor: PANEL_BG, border: `1px solid ${BORDER}` }}
+          style={{ backgroundColor: COLOR.surface2, border: `1px solid ${COLOR.border}` }}
         >
           {loading && (
-            <div className="px-3 py-2 text-sm" style={{ color: MUTED }}>
+            <div className="px-3 py-2 text-sm" style={{ color: COLOR.mutedInk }}>
               Loading Warframes...
             </div>
           )}
@@ -168,7 +164,7 @@ export default function WarframeSelector({ currentWarframeId, currentDisplayName
           )}
 
           {!loading && !error && filtered.length === 0 && (
-            <div className="px-3 py-2 text-sm" style={{ color: MUTED }}>
+            <div className="px-3 py-2 text-sm" style={{ color: COLOR.mutedInk }}>
               No matches.
             </div>
           )}
@@ -181,12 +177,12 @@ export default function WarframeSelector({ currentWarframeId, currentDisplayName
                 onClick={() => handlePick(frame)}
                 className="px-3 py-2 cursor-pointer hover:bg-black/20 flex items-center justify-between"
                 style={{
-                  color: frame.warframe_id === currentWarframeId ? GOLD : '#F5F0E8',
+                  color: frame.warframe_id === currentWarframeId ? COLOR.gold : COLOR.ink,
                 }}
               >
                 <span>{frame.name}</span>
                 {frame.is_prime && (
-                  <span className="text-xs" style={{ color: MUTED }}>
+                  <span className="text-xs" style={{ color: COLOR.mutedInk }}>
                     Prime
                   </span>
                 )}

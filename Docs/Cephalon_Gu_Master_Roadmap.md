@@ -18,7 +18,7 @@
 - **Incarnon system** — boolean adapter toggle, no DB duplication; melee arcane slot fully wired
 - **Core Four Arcane Filtering** — all four slot pickers (Warframe/Primary/Secondary/Melee) filter by type, Owned/All toggle, rank display
 - **`wf_base.warframes`** — 117 rows, fully seeded, matches live roster
-- **A2 — Ability Tracking** *(mostly shipped)* — `wf_base.warframe_abilities`, Batches 1–2 verified clean (168 rows). **Gap:** Wisp Prime, Xaku Prime, Zephyr Prime (Batch 3) still unseeded.
+- **A2 — Ability Tracking** ✅ *(complete)* — `wf_base.warframe_abilities`, 468 rows. Batch 3 gap (Wisp Prime, Xaku Prime, Zephyr Prime) confirmed already seeded 2026-08-08, verified correct against live kits — roadmap had gone stale, no code/data work was actually needed.
 - **Helminth Invigoration tracking** — per-card modal, delete-then-insert pattern
 - **Security hardening** — RLS across both schemas, Security Definer → invoker views, locked search paths
 - **Shipment B — Cultivation System** *(largely shipped)* — schools, daos, colors, identity tab, doctrine display
@@ -26,6 +26,7 @@
 - **D.6 — Testing Methodology Log** ✅ *(Session 008)* — `wf_user.build_tests` table (Pass/Fail/Inconclusive verdicts, benchmark archetypes matching A3 vocabulary); `TestingLogTab.jsx` as fifth tab in `BuildDetailOverlay`
 - **A1 — Global Arsenal Search** ✅ *(Session 008)* — `ArsenalSearchPage.jsx`, standalone page, client-side plain-text search across weapon and arcane columns on `my_frames`
 - **`session-checkin` skill** ✅ *(Session 008)* — packaged recon/reconcile discipline as a persistent Claude Skill
+- **`CopyWeaponModal.jsx`** ✅ *(Session 010)* — rebuilt from scratch (original was never committed, lost to history), wired into `ShardEditModal.jsx` Arsenal tab, confirmed working live (Chroma → Frost secondary weapon copy test)
 
 ---
 
@@ -72,9 +73,7 @@ Proportions calculator, build math utilities.
 
 Not locked-queue shipments, but active loose ends:
 
-- **`CopyWeaponModal.jsx`** — built (bulk-copy weapons to multiple builds or entire cultivation schools), **not yet confirmed wired/tested in-app**. Top priority for current session.
 - **Two pending shard swaps + Revenant's shard goal** — need applying via in-app UI (not a code task, Patrick does this directly).
-- **Batch 3 ability seed gap** — Wisp Prime, Xaku Prime, Zephyr Prime still unwritten in `wf_base.warframe_abilities` (data researched, not yet seeded).
 - **Open Granola audit decisions** — in-game vs. Gu arsenal audit surfaced pending review items on: Dagath, Gara, Wukong, Voruna, Ash, Revenant, Khora, Atlas.
 - **Companion tracking scoping** — pets/sentinels currently untracked in Gu at all; needs a scoping pass before it can even join the queue.
 - **Koumei dropdown bug** — confirmed **no longer reproducing** as of Session 008. Candidate to close out as resolved, pending one more confirmation.
@@ -98,5 +97,4 @@ Not locked-queue shipments, but active loose ends:
 
 ## Known open bugs / diagnostics
 
-- **Batch 3 ability gap** — see Open Threads above
 - **Koumei dropdown** — see Open Threads above (likely resolved, needs final confirmation)

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { wfUser } from '../lib/supabase'
 import FrameCard from '../components/FrameCard'
+import Panel from '../components/ui/Panel'
+import Button from '../components/ui/Button'
+import ModalShell from '../components/ui/ModalShell'
 
 const PAGE_BG = '#2F2A23'
 const PANEL_BG = '#4A443B'
@@ -151,14 +154,17 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
     .reduce((sum, { base, tau }) => sum + base + tau, 0)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
 
       {/* Recently Edited */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
-            Recently Edited
-          </p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-3 rounded-full" style={{ background: GOLD }} />
+            <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
+              Recently Edited
+            </p>
+          </div>
           <p className="text-[9px] uppercase tracking-[0.1em]" style={{ color: '#6F6A62' }}>
             Last {recentFrames.length} touched
           </p>
@@ -166,7 +172,7 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
         {recentFrames.length === 0 ? (
           <p className="text-sm" style={{ color: '#6F6A62' }}>No recently edited frames yet.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
             {recentFrames.map(frame => (
               <FrameCard
                 key={frame.my_frame_id}
@@ -181,19 +187,22 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
       {/* Needs Attention */}
       {attentionFrames.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
-              Needs Attention
-            </p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-3 rounded-full" style={{ background: '#E63946' }} />
+              <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
+                Needs Attention
+              </p>
+            </div>
             <p className="text-[9px] uppercase tracking-[0.1em]" style={{ color: '#6F6A62' }}>
               {attentionFrames.length} / 5 flagged
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
             {attentionFrames.map(frame => (
               <div key={frame.my_frame_id} className="relative">
                 <div
-                  className="absolute inset-0 rounded-xl pointer-events-none z-10"
+                  className="absolute inset-0 rounded-2xl pointer-events-none z-10"
                   style={{ border: '1px solid #E63946' }}
                 />
                 <FrameCard
@@ -218,10 +227,13 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
 
       {/* Helminth Invigorations */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
-            Helminth Invigorations
-          </p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-3 rounded-full" style={{ background: '#4CAF50' }} />
+            <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
+              Helminth Invigorations
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <span
               className="text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 rounded"
@@ -234,7 +246,9 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
               Week of {getCurrentMonday()}
             </span>
             {invigorations.length > 0 && (
-              <button
+              <Button
+                variant="success"
+                size="sm"
                 onClick={() => {
                   setInvigInputs(
                     invigorations.length > 0
@@ -251,38 +265,30 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
                   )
                   setShowInvigForm(true)
                 }}
-                className="rounded-xl px-3 py-0.5 border text-[9px] uppercase font-bold tracking-[0.25em]"
-                style={{ background: 'rgba(76,175,80,0.1)', borderColor: 'rgba(76,175,80,0.5)', color: '#4CAF50' }}
               >
                 Edit
-              </button>
+              </Button>
             )}
           </div>
         </div>
 
         {invigorations.length === 0 ? (
-          <div
-            className="rounded-xl border p-4 flex items-center justify-between"
-            style={{ background: PANEL_BG, borderColor: BORDER }}
-          >
+          <Panel className="flex items-center justify-between">
             <p className="text-sm" style={{ color: '#6F6A62' }}>
               No invigorations entered yet — update each Monday.
             </p>
-            <button
-              onClick={() => setShowInvigForm(true)}
-              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-              style={{ background: 'rgba(76,175,80,0.1)', borderColor: 'rgba(76,175,80,0.5)', color: '#4CAF50' }}
-            >
+            <Button variant="success" onClick={() => setShowInvigForm(true)}>
               Enter This Week's
-            </button>
-          </div>
+            </Button>
+          </Panel>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {invigorations.map((inv, i) => (
-              <div
+              <Panel
                 key={i}
-                className="rounded-xl border p-4 cursor-pointer hover:brightness-110 transition-all"
-                style={{ background: '#1E2E1E', borderColor: '#4CAF50' }}
+                interactive
+                accent="#4CAF50"
+                style={{ background: '#1E2E1E' }}
                 onClick={() => {
                   setEditingInvig({ index: i, inv })
                   setEditInvigInput({
@@ -315,14 +321,14 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
                     {inv.utility_buff}
                   </span>
                 </div>
-              </div>
+              </Panel>
             ))}
           </div>
         )}
 
         {/* Invigoration entry form */}
         {showInvigForm && (
-          <div className="mt-4 rounded-xl border p-4 space-y-4" style={{ background: PANEL_BG, borderColor: BORDER }}>
+          <Panel className="mt-4 space-y-4">
             {invigInputs.map((row, i) => (
               <div key={i} className="grid grid-cols-3 gap-3">
                 <select
@@ -392,36 +398,31 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
               </div>
             ))}
             <div className="flex gap-3">
-              <button
-                onClick={submitInvigorations}
-                className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-                style={{ background: 'rgba(76,175,80,0.1)', borderColor: 'rgba(76,175,80,0.5)', color: '#4CAF50' }}
-              >
+              <Button variant="success" onClick={submitInvigorations}>
                 Save Invigorations
-              </button>
-              <button
-                onClick={() => setShowInvigForm(false)}
-                className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-                style={{ background: 'transparent', borderColor: BORDER, color: MUTED }}
-              >
+              </Button>
+              <Button variant="ghost" onClick={() => setShowInvigForm(false)}>
                 Cancel
-              </button>
+              </Button>
             </div>
-          </div>
+          </Panel>
         )}
       </div>
 
       {/* Archon Shard Peek */}
       <div>
-        <div
-          className="rounded-xl border p-4 cursor-pointer hover:border-amber-400/40 transition-colors"
-          style={{ background: PANEL_BG, borderColor: BORDER }}
+        <Panel
+          interactive
+          accent={GOLD}
           onClick={onOpenTracker}
         >
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
-              Archon Shard Inventory — {totalShards} owned
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-3 rounded-full" style={{ background: GOLD }} />
+              <p className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>
+                Archon Shard Inventory — {totalShards} owned
+              </p>
+            </div>
             <p className="text-[9px] uppercase tracking-[0.15em]" style={{ color: GOLD, opacity: 0.7 }}>
               Open tracker →
             </p>
@@ -445,20 +446,13 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       </div>
 
       {/* Single Invigoration Edit Modal */}
       {editingInvig && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6"
-          onClick={() => setEditingInvig(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border p-6 space-y-5"
-            style={{ background: '#1C1814', borderColor: '#4CAF50' }}
-            onClick={e => e.stopPropagation()}
-          >
+        <ModalShell onClose={() => setEditingInvig(null)} accent="#4CAF50" maxWidth="max-w-sm">
+          <div className="space-y-5">
             {/* Header */}
             <div className="flex items-start justify-between">
               <div>
@@ -546,33 +540,21 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
 
             {/* Actions */}
             <div className="flex gap-3 pt-1">
-              <button
-                onClick={saveEditedInvig}
-                className="flex-1 rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-                style={{ background: 'rgba(76,175,80,0.1)', borderColor: 'rgba(76,175,80,0.5)', color: '#4CAF50' }}
-              >
+              <Button variant="success" className="flex-1" onClick={saveEditedInvig}>
                 Save
-              </button>
-              <button
-                onClick={() => setEditingInvig(null)}
-                className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-                style={{ background: 'transparent', borderColor: BORDER, color: MUTED }}
-              >
+              </Button>
+              <Button variant="ghost" onClick={() => setEditingInvig(null)}>
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </ModalShell>
       )}
 
       {/* Open Codex CTA */}
-      <button
-        onClick={onOpenCodex}
-        className="rounded-xl border px-5 py-2.5 text-[10px] uppercase font-bold tracking-[0.25em] transition-colors hover:border-amber-400/40"
-        style={{ background: 'transparent', borderColor: BORDER, color: MUTED }}
-      >
+      <Button variant="ghost" onClick={onOpenCodex}>
         Open full codex — {frames.length} frames
-      </button>
+      </Button>
 
     </div>
   )

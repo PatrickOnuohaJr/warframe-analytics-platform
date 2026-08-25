@@ -10,6 +10,9 @@ import ArchonShardsPage from './pages/ArchonShardsPage'
 import HomePage from './pages/HomePage'
 import AddFrameModal from './components/AddFrameModal'
 import ArsenalSearchPage from './components/ArsenalSearchPage';
+import { getReadableColor } from './utils/color'
+import ModalShell from './components/ui/ModalShell'
+import Button from './components/ui/Button'
 
 
 
@@ -42,7 +45,7 @@ function getSchoolColor(frames, selectedSchool) {
       frame.cultivation_color
   )
 
-  return schoolFrame?.cultivation_color ?? GOLD
+  return getReadableColor(schoolFrame?.cultivation_color ?? GOLD)
 }
 
 function getShards(slots) {
@@ -292,7 +295,7 @@ const filteredFrames =
                 : schoolColor,
           }}
         >
-          Warframe Jarvis
+          Cephalon Gu
         </h1>
 
         <p
@@ -458,7 +461,7 @@ const filteredFrames =
             const color =
               school === 'All Schools'
                 ? GOLD
-                : frame?.cultivation_color ?? MUTED
+                : getReadableColor(frame?.cultivation_color ?? MUTED)
 
             const count =
               school === 'All Schools'
@@ -528,19 +531,11 @@ const filteredFrames =
     ) : activePage === 'codex' ? (
       <>
         <div className="flex justify-end mb-4">
-          <button
-            onClick={() => setShowAddFrame(true)}
-            className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-            style={{
-              background: `${GOLD}22`,
-              borderColor: `${GOLD}88`,
-              color: GOLD,
-            }}
-          >
+          <Button variant="primary" color={GOLD} onClick={() => setShowAddFrame(true)}>
             + Add Frame
-          </button>
+          </Button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredFrames.map(frame => (
             <FrameCard
               key={frame.my_frame_id}
@@ -615,14 +610,7 @@ const filteredFrames =
       )}
 
     {abilitiesFrame && (
-      <div
-        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6"
-        onClick={() => setAbilitiesFrame(null)}
->
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-3xl rounded-2xl border border-[#FBBF24] bg-[#2F2A23] p-6"
-        >
+      <ModalShell onClose={() => setAbilitiesFrame(null)} accent={GOLD} maxWidth="max-w-3xl">
           <div className="flex items-start justify-between mb-6">
             <div>
               <h2 className="text-3xl font-bold">
@@ -656,12 +644,9 @@ const filteredFrames =
 
             </div>
 
-            <button
-              onClick={() => setAbilitiesFrame(null)}
-              className="rounded-lg border px-3 py-1 text-sm"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setAbilitiesFrame(null)}>
               Close
-            </button>
+            </Button>
           </div>
 
           <div className="space-y-2">
@@ -724,8 +709,7 @@ const filteredFrames =
                 </div>
                 
               {showHelminthPicker && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-6">
-                  <div className="w-full max-w-3xl rounded-2xl border border-[#FBBF24] bg-[#2F2A23] p-6">
+                <ModalShell onClose={() => setShowHelminthPicker(false)} accent={GOLD} zIndex={70} maxWidth="max-w-3xl">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h2 className="text-2xl font-bold">Select Helminth Ability</h2>
@@ -734,12 +718,9 @@ const filteredFrames =
                         </p>
                       </div>
 
-                      <button
-                        onClick={() => setShowHelminthPicker(false)}
-                        className="rounded-lg border px-3 py-1 text-sm"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => setShowHelminthPicker(false)}>
                         Close
-                      </button>
+                      </Button>
                     </div>
 
                     <input
@@ -793,8 +774,7 @@ const filteredFrames =
                           </button>
                         ))}
                     </div>
-                  </div>
-                </div>
+                </ModalShell>
               )}
               
               </div>
@@ -817,11 +797,10 @@ const filteredFrames =
                 </p>
               </div>
             </div>
-        </div>
-      </div>
+      </ModalShell>
     )}
 
-    
+
       {editingFrame && (
         <ShardEditModal
           frame={editingFrame}

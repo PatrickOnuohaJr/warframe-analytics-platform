@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import ShardChip from './ShardChip'
+import { getReadableColor } from '../utils/color'
 
 function getShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
@@ -112,6 +114,8 @@ function ShardRow({ label, shards, variant = 'current' }) {
 }
 
 export default function FrameCard({ frame, onEdit }) {
+  const [hovered, setHovered] = useState(false)
+
   const currentShards = getShards(frame.shard_slots)
   const targetShards = getShards(frame.target_shards)
 
@@ -119,25 +123,30 @@ export default function FrameCard({ frame, onEdit }) {
   const constitutionBadge = getConstitutionBadge(frame.shard_slots)
   const hasTarget = targetShards.some(s => s.color)
 
-  const cultivationColor = frame.cultivation_color ?? '#FBBF24'
+  const cultivationColor = getReadableColor(frame.cultivation_color ?? '#FBBF24')
   const hasCultivationColor = Boolean(frame.cultivation_color)
 
   const schoolLabel = getSchool(frame)
   const cultivationArt = getCultivationArt(frame)
   const schoolIcon = getSchoolIcon(schoolLabel)
 
+  const railShadow = hasCultivationColor ? `inset 46px 0 0 ${cultivationColor}18` : null
+  const depthShadow = hovered
+    ? `0 10px 28px ${hasCultivationColor ? `${cultivationColor}33` : 'rgba(251,191,36,0.25)'}`
+    : '0 2px 10px rgba(0,0,0,0.25)'
+
   return (
     <div
-      className="group relative overflow-hidden bg-[#3A342C] border border-[#6F6A62] rounded-xl p-4 pl-16 hover:border-amber-400/40 transition-colors flex flex-col gap-3 cursor-pointer text-[#E8E4DC]"
+      className="group relative overflow-hidden bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-5 pl-16 hover:border-amber-400/40 active:scale-[0.98] transition-all duration-200 flex flex-col gap-3 cursor-pointer text-[#E8E4DC]"
       style={{
         borderLeft: hasCultivationColor
           ? `3px solid ${cultivationColor}`
           : '1px solid #6F6A62',
-        boxShadow: hasCultivationColor
-          ? `inset 46px 0 0 ${cultivationColor}18`
-          : 'none',
+        boxShadow: railShadow ? `${railShadow}, ${depthShadow}` : depthShadow,
       }}
       onClick={onEdit}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {hasCultivationColor && (
         <div

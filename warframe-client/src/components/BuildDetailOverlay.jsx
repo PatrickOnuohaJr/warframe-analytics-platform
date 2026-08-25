@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import ShardChip from './ShardChip'
 import { getTauBonusText } from '../constants/shardBonuses'
 import { wfUser } from '../lib/supabase'
-import WarframeSelector from './Warframeselector';
-import TestingLogTab from './TestingLogTab';
+import TestingLogTab from './TestingLogTab'
+import IdentityTab from './IdentityTab'
+import { getReadableColor } from '../utils/color'
+import Panel from './ui/Panel'
 
 function getShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
@@ -154,134 +156,27 @@ function ShardLine({ label, shards, muted = false }) {
 
 export default function BuildDetailOverlay({
   frame,
-  frames,
   onClose,
   onEditArsenal,
   onEditAbilities,
   onEditShards,
   onSaved,
 }) {
-  const color = frame.cultivation_color ?? '#FBBF24'
+  const color = getReadableColor(frame.cultivation_color ?? '#FBBF24')
   const school = frame.cultivation_school ?? 'Unknown School'
   const art = frame.cultivation_art ?? 'Cultivation identity pending'
-  const doctrine = frame.cultivation_doctrine ?? null
   const icon = getSchoolIcon(school)
   const currentShards = getShards(frame.shard_slots)
   const targetShards = getShards(frame.target_shards)
   const currentConstitution = getConstitutionLabel(currentShards)
   const targetConstitution = getConstitutionLabel(targetShards)
-  const [activeAbilityConfig, setActiveAbilityConfig] = useState('A')
+  const [activeAbilityConfig] = useState('A')
   const [activeTab, setActiveTab] = useState('identity')
-  const [identityForm, setIdentityForm] = useState({
-    warframe_id: frame.warframe_id ?? null,
-    display_name: frame.display_name ?? '',
-    build_title: frame.build_title ?? '',
-    tier: frame.tier ?? '',
-    cultivation_school: frame.cultivation_school ?? '',
-    cultivation_color: frame.cultivation_color ?? '',
-    cultivation_art: frame.cultivation_art ?? '',
-    cultivation_doctrine: frame.cultivation_doctrine ?? '',
-  })
-  const [identitySaving, setIdentitySaving] = useState(false)
 
-useEffect(() => {
-  setIdentityForm({
-    warframe_id: frame.warframe_id ?? null,
-    display_name: frame.display_name ?? '',
-    build_title: frame.build_title ?? '',
-    tier: frame.tier ?? '',
-    cultivation_school: frame.cultivation_school ?? '',
-    cultivation_color: frame.cultivation_color ?? '',
-    cultivation_art: frame.cultivation_art ?? '',
-    cultivation_doctrine: frame.cultivation_doctrine ?? '',
-  })
-}, [frame.my_frame_id, frame.warframe_id, frame.display_name, frame.build_title, frame.cultivation_art, frame.cultivation_school, frame.cultivation_color, frame.cultivation_doctrine, frame.tier])
-
-  const [primeTarget, setPrimeTarget] = useState(null); // { warframe_id, name } | null
-
-useEffect(() => {
-  let cancelled = false;
-
-  async function checkForPrime() {
-    if (!identityForm.warframe_id) {
-      setPrimeTarget(null);
-      return;
-    }
-
-    const { data: baseRow, error: baseError } = await wfUser
-      .schema('wf_base')
-      .from('warframes')
-      .select('prime_variant_id, is_prime')
-      .eq('warframe_id', identityForm.warframe_id)
-      .single();
-
-    if (cancelled) return;
-
-    if (baseError || !baseRow || baseRow.is_prime || !baseRow.prime_variant_id) {
-      setPrimeTarget(null);
-      return;
-    }
-
-    const { data: primeRow, error: primeError } = await wfUser
-      .schema('wf_base')
-      .from('warframes')
-      .select('warframe_id, name')
-      .eq('warframe_id', baseRow.prime_variant_id)
-      .single();
-
-    if (cancelled) return;
-
-    setPrimeTarget(primeError || !primeRow ? null : primeRow);
-  }
-
-  checkForPrime();
-  return () => { cancelled = true; };
-}, [identityForm.warframe_id]);
-
-
-   const selectedConfig =
+  const selectedConfig =
     frame?.ability_configs?.find(
       c => c.config_slot === activeAbilityConfig
     ) ?? null
-
-    const schools = [
-  'Adolla Pyric School',
-  'Chronos Engineering Bureau',
-  'Cosmic Antimatter Council',
-  'Crimson Sanguinary School',
-  'Desert Crown Reliquary',
-  'Eidolon Bone Sect',
-  "Hallowed Path of Heaven's Light",
-  'Heavenly Mandate Pantheon',
-  'Ironclad Mountain Hall',
-  'Moonless Veil Order',
-  'Necropolis Dominion',
-  'Phantom Theater Conservatory',
-  'Plague Garden Sect',
-  'Storm Heaven Convocation',
-  'Tidal Abyss Confraternity',
-]
-
-async function saveIdentity() {
-  setIdentitySaving(true)
-  const { error } = await wfUser
-    .from('my_frames')
-    .update({
-      warframe_id: identityForm.warframe_id || null,
-      display_name: identityForm.display_name || null,
-      build_title: identityForm.build_title || null,
-      tier: identityForm.tier || null,
-      cultivation_school: identityForm.cultivation_school || null,
-      cultivation_color: identityForm.cultivation_color || null,
-      cultivation_art: identityForm.cultivation_art || null,
-      cultivation_doctrine: identityForm.cultivation_doctrine || null,
-    })
-    .eq('my_frame_id', frame.my_frame_id)
-  setIdentitySaving(false)
-  if (error) { console.error('Failed to save identity:', error); return }
-  if (onSaved) onSaved()
-}
-
 
   return (
     <div
@@ -304,7 +199,7 @@ async function saveIdentity() {
               const newVal = !frame.needs_attention
               const { error } = await wfUser
                 .from('my_frames')
-                .update({ 
+                .update({
                   needs_attention: newVal,
                   updated_at: frame.updated_at ?? new Date().toISOString()
                 })
@@ -400,264 +295,128 @@ async function saveIdentity() {
         </section>
 
         {/* Tab bar */}
-<div className="flex gap-2 mb-6">
-  <TabButton active={activeTab === 'identity'} color={color} onClick={() => setActiveTab('identity')}>Identity</TabButton>
-  <TabButton active={activeTab === 'arsenal'} color={color} onClick={() => setActiveTab('arsenal')}>Arsenal</TabButton>
-  <TabButton active={activeTab === 'shards'} color={color} onClick={() => setActiveTab('shards')}>Archon Shards</TabButton>
-  <TabButton active={activeTab === 'abilities'} color={color} onClick={() => setActiveTab('abilities')}>Abilities</TabButton>
-  <TabButton active={activeTab === 'testing'} color={color} onClick={() => setActiveTab('testing')}>Testing Log</TabButton>
-</div>
-
-{/* Identity tab */}
-{activeTab === 'identity' && (
-  <div className="space-y-4 max-w-2xl">
-    <div className="grid grid-cols-2 gap-4">
-      <div>
-        <WarframeSelector
-          currentWarframeId={identityForm.warframe_id}
-          currentDisplayName={identityForm.display_name}
-          onSelect={({ warframe_id, name }) =>
-            setIdentityForm(prev => ({ ...prev, warframe_id, display_name: name }))
-          }
-        />
-
-        {primeTarget && (
-        <button
-          onClick={() => {
-            setIdentityForm(prev => ({
-              ...prev,
-              warframe_id: primeTarget.warframe_id,
-              display_name: primeTarget.name,
-            }))
-          }}
-          className="mt-2 rounded-lg px-4 py-2 text-sm uppercase tracking-widest"
-          style={{
-        background: '#FBBF2422',
-        border: '1px solid #FBBF2488',
-        color: '#FBBF24',
-      }}
-        >
-          ✨ Prime to {primeTarget.name}
-        </button>
-      )}  
-      </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#9C9890' }}>Build Title</p>
-        <input
-          value={identityForm.build_title}
-          onChange={e => setIdentityForm(prev => ({ ...prev, build_title: e.target.value }))}
-          placeholder="e.g. Infested Monarch"
-          className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-          style={{ borderColor: '#6F6A62', color: '#E8E4DC' }}
-        />
-      </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#9C9890' }}>Tier</p>
-        <select
-          value={identityForm.tier}
-          onChange={e => setIdentityForm(prev => ({ ...prev, tier: e.target.value }))}
-          className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
-          style={{ background: '#3A342C', borderColor: '#6F6A62', color: '#E8E4DC' }}
-        >
-          <option value="">No tier</option>
-          <option value="S">S</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-          <option value="C">C</option>
-        </select>
-      </div>
-    </div>
-    <div>
-      <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#9C9890' }}>Cultivation School</p>
-      <select
-        value={identityForm.cultivation_school}
-        onChange={e => setIdentityForm(prev => ({ ...prev, cultivation_school: e.target.value }))}
-        className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
-        style={{ background: '#3A342C', borderColor: '#6F6A62', color: '#E8E4DC' }}
-      >
-        <option value="">Select school</option>
-        {schools.map(s => (
-          <option key={s} value={s}>{s}</option>
-        ))}
-      </select>
-    </div>
-    
-    <div>
-      <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#9C9890' }}>Cultivation Art</p>
-      <input
-        value={identityForm.cultivation_art}
-        onChange={e => setIdentityForm(prev => ({ ...prev, cultivation_art: e.target.value }))}
-        placeholder="e.g. Infested Cordyceps Dao of the Mutating Host"
-        className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-        style={{ borderColor: '#6F6A62', color: '#E8E4DC' }}
-      />
-    </div>
-    <div>
-        <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#9C9890' }}>Cultivation Doctrine</p>
-        <p className="text-sm leading-relaxed" style={{ color: '#B8B3AC' }}>
-          {frame.cultivation_doctrine ?? 'No doctrine set.'}
-        </p>
-      </div>
-    <div className="flex gap-3 items-center">
-  <button
-    onClick={saveIdentity}
-    disabled={identitySaving}
-    className="rounded-xl px-6 py-2.5 text-[10px] uppercase font-bold tracking-[0.25em]"
-    style={{
-      background: `${color}22`,
-      border: `1px solid ${color}88`,
-      color: color,
-      opacity: identitySaving ? 0.5 : 1,
-    }}
-  >
-    {identitySaving ? 'Saving...' : 'Save Identity'}
-  </button>
-
-  <button
-    onClick={async () => {
-      const confirmed = window.confirm(
-        `Remove ${frame.display_name} from your Codex? This cannot be undone.`
-      )
-      if (!confirmed) return
-      const { error } = await wfUser
-        .from('my_frames')
-        .delete()
-        .eq('my_frame_id', frame.my_frame_id)
-      if (error) { console.error('Failed to delete frame:', error); return }
-      if (onSaved) onSaved()
-      onClose()
-    }}
-    className="rounded-xl px-6 py-2.5 text-[10px] uppercase font-bold tracking-[0.25em]"
-    style={{
-      background: 'rgba(230,57,70,0.1)',
-      border: '1px solid rgba(230,57,70,0.4)',
-      color: '#E63946',
-    }}
-  >
-    Remove from Codex
-  </button>
-</div>
-  </div>
-)}
-
-{/* Testing Log tab */}
-{activeTab === 'testing' && (
-  <TestingLogTab frame={frame} />
-)}
-
-{/* Arsenal tab */}
-{activeTab === 'arsenal' && (
-  <section
-    onClick={onEditArsenal}
-    className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#8C8880] hover:bg-[#443D34] max-w-2xl"
-  >
-    <div className="flex items-center justify-between mb-5">
-      <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Arsenal</h2>
-      <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">Click to Edit</span>
-    </div>
-    <div className="space-y-4 text-sm">
-      <div>
-        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Primary</p>
-        <WeaponValue name={frame.primary_weapon} incarnon={frame.primary_is_incarnon} />
-        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px] mt-2">
-        Primary Arcane
-      </p>
-      <p className="text-[#E8E4DC]">{frame.primary_arcane ?? '-'}</p>
-      </div>
-      <div>
-        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Secondary</p>
-        <WeaponValue name={frame.secondary_weapon} incarnon={frame.secondary_is_incarnon} />
-        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px] mt-2">
-        Secondary Arcane
-      </p>
-      <p className="text-[#E8E4DC]">{frame.secondary_arcane ?? '-'}</p>
-      </div>
-      <div>
-        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Melee</p>
-        <WeaponValue name={frame.melee_weapon} incarnon={frame.melee_is_incarnon} />
-      </div>
-      <div className="grid grid-cols-2 gap-4 pt-2">
-        <div>
-          <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Arcane 1</p>
-          <p className="text-[#E8E4DC]">{frame.arcane_1 ?? '—'}</p>
+        <div className="flex gap-2 mb-6">
+          <TabButton active={activeTab === 'identity'} color={color} onClick={() => setActiveTab('identity')}>Identity</TabButton>
+          <TabButton active={activeTab === 'arsenal'} color={color} onClick={() => setActiveTab('arsenal')}>Arsenal</TabButton>
+          <TabButton active={activeTab === 'shards'} color={color} onClick={() => setActiveTab('shards')}>Archon Shards</TabButton>
+          <TabButton active={activeTab === 'abilities'} color={color} onClick={() => setActiveTab('abilities')}>Abilities</TabButton>
+          <TabButton active={activeTab === 'testing'} color={color} onClick={() => setActiveTab('testing')}>Testing Log</TabButton>
         </div>
-        <div>
-          <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Arcane 2</p>
-          <p className="text-[#E8E4DC]">{frame.arcane_2 ?? '—'}</p>
-        </div>
-      </div>
-      <div>
-        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Melee Arcane</p>
-        <p className="text-[#E8E4DC]">{frame.melee_arcane ?? '—'}</p>
-      </div>
-    </div>
-  </section>
-)}
 
-{/* Shards tab */}
-{activeTab === 'shards' && (
-  <section
-    onClick={onEditShards}
-    className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#8C8880] hover:bg-[#443D34] max-w-2xl"
-  >
-    <div className="flex items-center justify-between mb-5">
-      <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Archon Shards</h2>
-      <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">Click to Edit</span>
-    </div>
-    <div className="space-y-8">
-      <div>
-        <ShardLine label="Now" shards={currentShards} />
-        {currentConstitution && (
-          <p className="mt-3 text-xs uppercase tracking-widest" style={{ color }}>
-            Constitution: {currentConstitution}
-          </p>
+        {/* Identity tab */}
+        {activeTab === 'identity' && (
+          <IdentityTab frame={frame} color={color} onSaved={onSaved} onClose={onClose} />
         )}
-      </div>
-      <div>
-        <ShardLine label="Goal" shards={targetShards} muted />
-        {targetConstitution && (
-          <p className="mt-3 text-xs uppercase tracking-widest" style={{ color }}>
-            Goal Constitution: {targetConstitution}
-          </p>
-        )}
-      </div>
-    </div>
-  </section>
-)}
 
-{/* Abilities tab */}
-{activeTab === 'abilities' && (
-  <section
-    onClick={onEditAbilities}
-    className="bg-[#3A342C] border border-[#6F6A62] rounded-2xl p-6 cursor-pointer transition-all hover:border-[#8C8880] hover:bg-[#443D34] max-w-2xl"
-  >
-    <div className="flex items-center justify-between mb-5">
-      <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Abilities</h2>
-      <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">Click to View</span>
-    </div>
-    <div className="space-y-3 text-sm">
-      <div>
-        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Base Kit</p>
-        <div className="space-y-1 font-semibold">
-          {frame.abilities?.length > 0 ? (
-            frame.abilities.map(ability => (
-              <p key={ability.ability_slot}>{ability.ability_slot}. {ability.ability_name}</p>
-            ))
-          ) : (
-            <p className="text-[#B8B3AC]">No ability data yet</p>
-          )}
-        </div>
-      </div>
-      <div>
-        <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Helminth</p>
-        <p className="mt-2 font-semibold">{selectedConfig?.subsumed_ability || 'No subsume'}</p>
-        <p className="text-sm opacity-70">
-          {selectedConfig?.subsumed_slot ? `Replaced Slot ${selectedConfig.subsumed_slot}` : ''}
-        </p>
-      </div>
-    </div>
-  </section>
-)}
+        {/* Testing Log tab */}
+        {activeTab === 'testing' && (
+          <TestingLogTab frame={frame} />
+        )}
+
+        {/* Arsenal tab */}
+        {activeTab === 'arsenal' && (
+          <Panel onClick={onEditArsenal} interactive accent={color} className="max-w-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Arsenal</h2>
+              <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">Click to Edit</span>
+            </div>
+            <div className="space-y-4 text-sm">
+              <div>
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Primary</p>
+                <WeaponValue name={frame.primary_weapon} incarnon={frame.primary_is_incarnon} />
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px] mt-2">
+                Primary Arcane
+              </p>
+              <p className="text-[#E8E4DC]">{frame.primary_arcane ?? '-'}</p>
+              </div>
+              <div>
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Secondary</p>
+                <WeaponValue name={frame.secondary_weapon} incarnon={frame.secondary_is_incarnon} />
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px] mt-2">
+                Secondary Arcane
+              </p>
+              <p className="text-[#E8E4DC]">{frame.secondary_arcane ?? '-'}</p>
+              </div>
+              <div>
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Melee</p>
+                <WeaponValue name={frame.melee_weapon} incarnon={frame.melee_is_incarnon} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div>
+                  <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Arcane 1</p>
+                  <p className="text-[#E8E4DC]">{frame.arcane_1 ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Arcane 2</p>
+                  <p className="text-[#E8E4DC]">{frame.arcane_2 ?? '—'}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Melee Arcane</p>
+                <p className="text-[#E8E4DC]">{frame.melee_arcane ?? '—'}</p>
+              </div>
+            </div>
+          </Panel>
+        )}
+
+        {/* Shards tab */}
+        {activeTab === 'shards' && (
+          <Panel onClick={onEditShards} interactive accent={color} className="max-w-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Archon Shards</h2>
+              <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">Click to Edit</span>
+            </div>
+            <div className="space-y-8">
+              <div>
+                <ShardLine label="Now" shards={currentShards} />
+                {currentConstitution && (
+                  <p className="mt-3 text-xs uppercase tracking-widest" style={{ color }}>
+                    Constitution: {currentConstitution}
+                  </p>
+                )}
+              </div>
+              <div>
+                <ShardLine label="Goal" shards={targetShards} muted />
+                {targetConstitution && (
+                  <p className="mt-3 text-xs uppercase tracking-widest" style={{ color }}>
+                    Goal Constitution: {targetConstitution}
+                  </p>
+                )}
+              </div>
+            </div>
+          </Panel>
+        )}
+
+        {/* Abilities tab */}
+        {activeTab === 'abilities' && (
+          <Panel onClick={onEditAbilities} interactive accent={color} className="max-w-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Abilities</h2>
+              <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">Click to View</span>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Base Kit</p>
+                <div className="space-y-1 font-semibold">
+                  {frame.abilities?.length > 0 ? (
+                    frame.abilities.map(ability => (
+                      <p key={ability.ability_slot}>{ability.ability_slot}. {ability.ability_name}</p>
+                    ))
+                  ) : (
+                    <p className="text-[#B8B3AC]">No ability data yet</p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Helminth</p>
+                <p className="mt-2 font-semibold">{selectedConfig?.subsumed_ability || 'No subsume'}</p>
+                <p className="text-sm opacity-70">
+                  {selectedConfig?.subsumed_slot ? `Replaced Slot ${selectedConfig.subsumed_slot}` : ''}
+                </p>
+              </div>
+            </div>
+          </Panel>
+        )}
       </div>
     </div>
   )

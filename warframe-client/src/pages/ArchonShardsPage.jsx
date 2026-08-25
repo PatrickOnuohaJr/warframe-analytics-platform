@@ -1,6 +1,8 @@
 // ArchonShardsPage.jsx
 import { useState, useEffect } from 'react';
 import { wfUser } from '../lib/supabase';
+import Panel from '../components/ui/Panel';
+import { COLOR } from '../constants/theme';
 
 const SHARD_CONFIG = [
   { type: 'crimson', label: 'Crimson', color: '#D63A3A' },
@@ -10,6 +12,18 @@ const SHARD_CONFIG = [
   { type: 'topaz',   label: 'Topaz',   color: '#E08A3C' },
   { type: 'violet',  label: 'Violet',  color: '#9B59B6' },
 ];
+
+function StepButton({ onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-7 h-7 rounded-lg text-sm font-bold transition-colors"
+      style={{ background: COLOR.surface2, color: COLOR.ink, border: `1px solid ${COLOR.border}` }}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function ArchonShardsPage () {
   const [inventory, setInventory] = useState({}); // { crimson: { base: 0, tau: 0 }, ... }
@@ -82,7 +96,7 @@ export default function ArchonShardsPage () {
   }
 
   if (loading) {
-    return <div className="text-warm-gray p-6">Loading shard inventory...</div>;
+    return <div style={{ color: COLOR.mutedInk }} className="p-6">Loading shard inventory...</div>;
   }
 
   const totalShards = Object.values(inventory).reduce(
@@ -90,60 +104,48 @@ export default function ArchonShardsPage () {
   );
 
   return (
-    <div className="min-h-screen bg-[#1C1608] p-6">
-      <h1 className="text-2xl font-bold text-yellow-500 mb-2">Archon Shard Inventory</h1>
-      <p className="text-gray-300 mb-6">{totalShards} shards owned across all colors</p>
+    <div>
+      <h1 style={{ color: COLOR.gold }} className="text-2xl font-bold mb-2">Archon Shard Inventory</h1>
+      <p style={{ color: COLOR.mutedInk }} className="mb-6">{totalShards} shards owned across all colors</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {SHARD_CONFIG.map(({ type, label, color }) => (
-          <div
-            key={type}
-            className="rounded-lg border border-gray-700 bg-[#2A2218] p-4"
-          >
+          <Panel key={type} accent={color}>
             <div className="flex items-center gap-2 mb-3">
               <span
                 className="w-4 h-4 rounded-full inline-block"
                 style={{ backgroundColor: color }}
               />
-              <h2 className="text-lg font-semibold text-yellow-500">{label}</h2>
+              <h2 className="text-lg font-semibold" style={{ color }}>{label}</h2>
             </div>
 
             {/* Base row */}
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-300">Base</span>
+              <span style={{ color: COLOR.mutedInk }}>Base</span>
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => updateCount(type, false, -1)}
-                  className="w-7 h-7 rounded bg-gray-700 text-white hover:bg-gray-600"
-                >−</button>
-                <span className="text-white w-6 text-center">
+                <StepButton onClick={() => updateCount(type, false, -1)}>−</StepButton>
+                <span style={{ color: COLOR.ink }} className="w-6 text-center">
                   {inventory[type]?.base ?? 0}
                 </span>
-                <button
-                  onClick={() => updateCount(type, false, 1)}
-                  className="w-7 h-7 rounded bg-gray-700 text-white hover:bg-gray-600"
-                >+</button>
+                <StepButton onClick={() => updateCount(type, false, 1)}>+</StepButton>
               </div>
             </div>
 
             {/* Tauforged row */}
-            <div className="flex items-center justify-between rounded p-2 border border-yellow-600/50 bg-yellow-900/10">
-              <span className="text-yellow-400 font-medium">Tauforged</span>
+            <div
+              className="flex items-center justify-between rounded-lg p-2"
+              style={{ border: `1px solid ${color}55`, background: `${color}14` }}
+            >
+              <span style={{ color }} className="font-medium">Tauforged</span>
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => updateCount(type, true, -1)}
-                  className="w-7 h-7 rounded bg-gray-700 text-white hover:bg-gray-600"
-                >−</button>
-                <span className="text-yellow-300 w-6 text-center font-semibold">
+                <StepButton onClick={() => updateCount(type, true, -1)}>−</StepButton>
+                <span style={{ color }} className="w-6 text-center font-semibold">
                   {inventory[type]?.tau ?? 0}
                 </span>
-                <button
-                  onClick={() => updateCount(type, true, 1)}
-                  className="w-7 h-7 rounded bg-gray-700 text-white hover:bg-gray-600"
-                >+</button>
+                <StepButton onClick={() => updateCount(type, true, 1)}>+</StepButton>
               </div>
             </div>
-          </div>
+          </Panel>
         ))}
       </div>
     </div>
