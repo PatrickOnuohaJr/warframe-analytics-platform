@@ -395,3 +395,437 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 8. Analytics layer
 9. AI build advisor (Jarvis layer)
 10. Mobile optimization
+
+
+---
+
+### Session 004 — Arcane Collection Dashboard Sprint
+**Date:** 2026-06-02
+**Location:** Not recorded
+**Duration:** ~7 hours (8:30–9:00 PM CDT → 4:12 AM CDT)
+**Status:** SHIPPED
+
+**Supabase Arcane Collection Integration**
+
+*What Was Done:*
+- Created and finalized `useArcanes.js` custom React hook
+- Connected the Arcane module to Supabase collection views via parallel queries: `arcane_collection_summary`, `arcane_collection_by_type`, `arcane_collection_detail`
+- Resolved schema access and 401 permission errors, React hook misuse, and duplicate import errors
+
+*Outcome:*
+- Live data retrieval from Supabase verified working.
+
+**Collection Dashboard & Catalog**
+
+*What Was Done:*
+- Built live summary cards (Total 129, Owned, Completed, Missing), all dynamically populated
+- Replaced the original table view with category breakdown cards across 9 categories (Amp, Kitgun, Melee, Operator, Primary, Secondary, Tektolyst, Warframe, Zaw)
+- Built full arcane catalog listing (129 records) with Name/Type/Owned/Rank/Needed/Completion columns
+- Added real-time, case-insensitive search and Type Filter buttons (All + 9 categories)
+- Added visual status indicators — Complete (green) / Partial (yellow) / Missing (red), with completed-row highlighting
+
+*Outcome:*
+- Arcane module transformed from placeholder page into a fully functional collection viewer and progress tracker.
+
+**Bugs Fixed:**
+- Duplicate import errors
+- React hook misuse error
+- Blank page rendering issue
+- Supabase 401 schema access errors
+- Category card rendering issues
+- Search filtering logic errors
+- JSX closing tag / rendering errors
+- Catalog data binding issues
+
+**End-of-Session Status:**
+- Arcane module live and Supabase-driven: Collection Summary Dashboard, Category Breakdown Cards, Searchable Catalog (129 records), Type Filters, ownership/rank/completion tracking, visual status indicators
+
+**Next Targets:**
+- Clickable category cards
+- Expandable arcane detail rows
+- Arcane ownership editing (update → save to Supabase → auto-refresh)
+- Complete collection management workflow
+
+---
+
+### Session 005 — Arcane Collection System Completion (Shipment C)
+**Date:** 2026-06-02 → 2026-06-03
+**Location:** Not recorded
+**Duration:** ~10 hours (4:13 PM CDT → 2:20 AM CDT)
+**Status:** SHIPPED — Shipment C COMPLETE
+
+**Catalog Layout & Interaction**
+
+*What Was Done:*
+- Refactored the Arcane catalog from a single-column list with a bottom detail panel into a responsive 4-column tile/card grid
+- Converted the arcane editor from bottom-of-page editing into a modal (opens immediately on click, darkened overlay, click-outside-to-dismiss) — styling unified with Arsenal and Archon Shards modals
+- Added hover/selection highlighting (gold border) for consistent interaction feedback across Jarvis
+
+*Outcome:*
+- Page reads as a collection manager rather than a database dump; navigation and editing significantly faster.
+
+**Ownership & Progress Tracking**
+
+*What Was Done:*
+- Fixed a bug where the Save button appeared functional but ownership values weren't actually persisting to Supabase — verified fixed against Pax Bolt, Melee Influence, and other test cases
+- Fixed `selectedArcane` state not clearing when switching category filters (previous arcane's detail panel stayed open incorrectly)
+- Added per-tile progress display: owned copies, copies remaining, derived rank, percentage, and progress bar (e.g. 21/21 = 100% Complete/green; 4/21 = 19% Partial/yellow; 0/21 = 0% Missing/red)
+- Added Rank Milestone quick-entry buttons (R0=0, R1=3, R2=6, R3=10, R4=15, R5=21), active rank highlighted gold, manual entry still supported for partial amounts
+- Fixed leading-zero input bug and other input validation edge cases
+
+*Outcome:*
+- First fully persistent ownership tracking system, first collection progress bars, first rapid rank-entry system.
+
+**Additional commits this session:**
+- Fixed color mismatch on the Arsenal overlay
+- Migrated the cultivation codex to the manuscript theme; introduced the Physique/Constitution system
+- Arcane codex seeding, cultivation theming, arcane setup copy system
+
+**Architecture Decision:**
+- Arcane data cleanup (missing/incorrect entries) deliberately deferred rather than blocking on it — infrastructure ships first, data cleanup follows once the structure exists. Patrick's framing: "It's easier to change from Halloween decorations to Thanksgiving decorations after you have the keys to the room."
+
+**Milestones (personal + product, not just technical):**
+- Patrick independently diagnosed a JSX structure issue, modified UI typography, and located the correct component among several similar ones — without assistance
+- First external demonstration (Google Meet screen-share to a clan second-in-command) — immediate comprehension without needing developer context, and the first conversation about eventual public release
+
+**End-of-Session Status:**
+- Shipment C (Arcane Collection System) marked COMPLETE
+- End state: 129 total arcanes tracked, 33 owned, 29 completed, 96 missing
+
+**Next Targets (moving into Shipment B — Collection Intelligence):**
+- Clickable category cards
+- Expandable arcane detail rows
+- Arcane ownership editing refinements
+- Future: arcane sorting, missing-arcane prioritization, farming planner, acquisition intelligence
+
+---
+
+### Session 006 — Shipment B: Collection Intelligence & Navigation
+**Date:** 2026-06-03
+**Location:** Not recorded
+**Duration:** ~4 hours (3:37 PM CDT → 7:30 PM CDT)
+**Status:** FUNCTIONALLY COMPLETE (one open item — legacy catalog removal)
+
+**Collection Intelligence Features (B1–B3)**
+
+*What Was Done:*
+- B1: category-level completion analytics — every category card now shows Total/Owned/Completed/Missing plus a completion % bar
+- B2: redesigned the Arcane page hero section — replaced large horizontal summary cards with a compact 2×2 stat cube (Total/Owned/Completed/Missing) alongside a Closest To Completion panel
+- B3: built the Closest To Completion system — owned-but-not-completed arcanes sorted by copies remaining, expanded from Top 5 to Top 15, converted to multi-column layout
+
+*Outcome:*
+- The Arcane page shifted from reporting raw counts to giving actionable guidance on what to finish next — first collection intelligence dashboard.
+
+**Category Navigation System (B4–B6)**
+
+*What Was Done:*
+- B4: made every Arcane Category card clickable, opening a dedicated category modal (Warframe, Operator, Primary, Secondary, Melee, Amp, Kitgun, Zaw, Tektolyst)
+- B5: built the Category Catalog Modal — category-specific arcane listing, counts, and close functionality, visually consistent with the rest of Jarvis
+- B6: chained navigation Category Card → Category Modal → Arcane Selection → Arcane Edit Modal, mirroring the existing Arsenal → Loadout → Archon Shard pattern
+
+*Outcome:*
+- Eliminated the old workflow (Open Page → Scroll → Find → Scroll Again → Edit) in favor of Open Page → Select Category → Select Arcane → Edit — meaningfully faster navigation, no more scroll dependency.
+
+**Technical Challenges**
+
+*What Was Done:*
+- Iterated through multiple hero layout attempts (full-width cards, inline, grid, stretch, flex) before landing on the final 2×2 stat cube + flexible panel design
+- Attempted to remove the legacy Arcane Catalog entirely; this broke the modal hierarchy (JSX structure broke, modal nesting became invalid, category modal stopped functioning)
+- Decision: reverted the removal attempt and preserved the working state rather than pushing through a broken modal hierarchy
+
+*Outcome:*
+- Legacy catalog removal remains explicitly deferred, open discussion item (still open as of Session 007).
+
+**Product Design Decisions**
+
+- Arcane data audit (missing/hallucinated/duplicate/miscategorized entries) formally deferred to its own future shipment — proposed as **Shipment D — Arcane Data Integrity Pass**
+- **Shipment A** confirmed and scoped: Global Arsenal Intelligence — A1 Global Arsenal Search ("search 'Okina Prime' → returns all loadouts using that weapon"), A2 Three Frame Rule Enforcement, A3 Weapon Intelligence Pages
+- Vision reinforced this session: "Jarvis is not simply a database. Jarvis is a Warframe GPS" — the point is real-time decision-making without leaving the app to check Arsenal manually
+
+**Milestones:**
+- First category-specific Arcane Catalog modal, first modal-based category navigation, first collection intelligence dashboard, first completion analytics system, first Closest To Completion recommendation engine, first modal-to-modal navigation chain, first successful hero dashboard redesign
+
+**End-of-Session Status:**
+- Shipment C: COMPLETE (carried over from Session 005)
+- Shipment B: B1–B5 complete; remaining = arcane recommendation logic, collection scoring, farming prioritization, and the open legacy-catalog-removal decision
+- Shipment A: next major target, scoped (A1/A2/A3)
+- Shipment D: queued (Arcane Data Integrity Pass)
+
+**Next Targets:**
+- Shipment A — Global Arsenal Search, Three Frame Rule Enforcement, Weapon Intelligence Pages
+- Remaining Shipment B items: collection scoring, farming prioritization, arcane recommendation logic
+- Resolve legacy Arcane Catalog removal decision
+
+---
+
+### Session 007 — Arcane Database Audit & UI Refinement
+**Date:** 2026-06-04
+**Location:** Offsite — laptop session
+**Duration:** Shorter than usual; offsite constraints
+**Status:** SHIPPED
+
+**Data Engineering — Full Arcane Database Audit**
+
+*What Was Done:*
+- Manually audited all 9 arcane categories (Warframe, Operator, Amp, Primary, Secondary, Melee, Kitgun, Zaw, Tektolyst) against in-game and wiki sources
+- Fixed incorrect classifications across all categories, added missing records, removed invalid records, corrected rank structures
+- Verified specific cases: Eternal = R5, Virtuos = R3, Residual and Pax arcane structures
+- Validated all category counts against official game sources
+
+*Outcome:*
+- The Arcane data layer is considered production-ready — manually audited category-by-category against authoritative sources, suitable as a source of truth for future collection tracking, farming recommendations, and intelligence features. Patrick ranked this alongside the cultivation school system and shard goal tracking system as milestone-tier work — most projects seed data once and move on; this went back into production data and corrected the taxonomy against real sources, which is the standard expected in a professional DE role.
+
+**UI — Arcane Page Refinements**
+
+*What Was Done:*
+- Reworked the Arcane hero section
+- Added a Closest To Completion card, converted the closest-list into a 3-column layout
+- Added category click functionality and a category popup modal
+- Removed the need to scroll to the Arcane Catalog
+- Preserved existing Arcane Detail modal functionality throughout
+
+**End-of-Session Status:**
+- Arcane Data Layer: PRODUCTION-READY, audited and verified against official sources
+- Shipment B: functionally complete; legacy catalog removal remains an open discussion item (unresolved since Session 006)
+
+**Next Targets:**
+- Remaining Shipment B items: collection scoring, farming prioritization, arcane recommendation logic
+- Shipment A: Global Arsenal Search, Three Frame Rule, Weapon Intelligence Pages
+- Shipment D (queued): Arcane Data Integrity Pass — now effectively complete as a byproduct of this session's audit
+
+---
+### Session 008 — Warframe Identity System, D.6 Shipped, A1 Shipped, Copy Weapon Tool
+**Date:** 2026-08-19
+**Location:** Home
+**Duration:** Extended session
+**Status:** SHIPPED
+
+**Warframe Identity Sync Bug**
+
+*What Was Done:*
+- Diagnosed root cause of Invig tracker showing base frame names ("Caliban") instead of correct Prime names ("Caliban Prime")
+- Traced to a mismatch between `wf_user.my_frames.warframe_id` and `display_name` on the Caliban Prime row — `warframe_id` incorrectly pointed at base Caliban (42) instead of Caliban Prime (183)
+- Confirmed via sanity-check query that this was a one-off mistake, not a systemic seeding issue across other Primes
+- Fixed via direct `UPDATE` + verification `SELECT`, per standing DB rules
+
+*Outcome:*
+- Caliban Prime's identity corrected in the database. Root architectural weakness identified: `warframe_id` and `display_name` could drift apart with no UI path to detect or correct it.
+
+**`WarframeSelector.jsx` — New Component**
+
+*What Was Done:*
+- Built a click-to-edit searchable Warframe identity picker: displays as static text until clicked, then becomes a live-filtered typeahead search sourced directly from `wf_base.warframes` (all 117 rows, no caching)
+- Wired into `BuildDetailOverlay.jsx`'s Identity tab — new "Warframe" field above Build Title
+- On selection, writes `warframe_id` + `display_name` together as a single unit, closing off the drift bug at the source
+- Save handler in `saveIdentity()` confirmed to already key off `my_frame_id` (the PK) rather than `build_title`, avoiding stale-WHERE-clause risk now that `build_title` and `display_name` are both editable on the same form
+
+*Bugs Fixed (during build/test):*
+- Search box showing stale text after save — `query` state wasn't syncing when `currentDisplayName` changed from outside; fixed with a `useEffect` watching `currentDisplayName`
+- Box reverting to old value after save without leaving the page — traced to the `identityForm` reset `useEffect`'s dependency array missing `frame.warframe_id` and `frame.display_name`, so the effect never re-fired when those fields changed. Added both to the dependency array.
+- `Uncaught ReferenceError: GOLD is not defined` — Prime button referenced a `GOLD` constant that isn't imported/declared in `BuildDetailOverlay.jsx`; hardcoded the hex value directly instead
+
+**"Prime This Warframe" Button — New Feature**
+
+*What Was Done:*
+- Added `prime_variant_id` self-referencing column to `wf_base.warframes`, indexed per standing FK rule
+- Migration auto-linked 50 base→Prime pairs via `"X" → "X Prime"` name-pattern matching in one UPDATE
+- Verified zero orphaned/unlinked Prime rows and correctly excluded specials (Excalibur Umbra, etc.) that don't follow standard Prime naming
+- Built a one-click button on the Identity tab: appears only when the currently-equipped frame has a linked Prime variant not yet selected; stages the swap into the existing save flow (no separate write path)
+- Confirmed working end-to-end on Styanax → Styanax Prime, including persistence through a full remount
+
+*Outcome:*
+- Future Prime releases (e.g. Citrine Prime, expected Fall 2026) require only a one-line SQL link once seeded — zero frontend changes needed. Button appears automatically.
+
+**`display_name` Backfill**
+
+*What Was Done:*
+- Discovered `display_name` was `NULL` on all 55 remaining `my_frames` rows (only Caliban Prime and Styanax Prime had been manually touched this session)
+- Ran a bulk `UPDATE ... FROM` backfill joining `my_frames` to `wf_base.warframes` on `warframe_id`, populating every null row in one pass
+- Verified zero remaining nulls
+
+*Outcome:*
+- Original Invig tracker bug fully resolved — confirmed live showing correct names (Caliban Prime, Valkyr Prime, Mirage Prime) after backfill.
+
+**Warframe Identity Sync — Cleanup Pass**
+
+*What Was Done:*
+- Discovered the Warframe field / Prime button / Cultivation Doctrine block were duplicated: a correct copy inside the Identity tab conditional, and a stray second copy rendering unconditionally on every tab
+- Removed the standalone "Doctrine — always visible below tabs" block entirely (deliberate design from a past session, no longer wanted)
+- Removed the duplicate Warframe field + Prime button block, keeping only the one correctly scoped inside `{activeTab === 'identity' && (...)}`
+
+*Outcome:*
+- Warframe field, Prime button, and Cultivation Doctrine now only render on the Identity tab, confirmed across all five tabs (Identity/Arsenal/Archon Shards/Abilities/Testing Log)
+
+**Session Log System — Workflow Change**
+
+*What Was Done:*
+- Split the single "reconcile" session-check-in into two distinct commands:
+  - **recon** — chat-only status pulse, scans conversation, reports shipped/open/next, never writes a file. For mid-session reorientation.
+  - **reconcile** — end-of-session action, run only when the session is explicitly ending (may span multiple real days). Writes/appends an entry to this file, and still regenerates `Cephalon_Gu_Master_Roadmap.md` only if a full lettered shipment (A–F) closed out.
+- Established hybrid session log template (this entry uses it) combining structured header + per-topic depth from the archived Session 007 format with the lighter Bugs Fixed / Next Targets bookkeeping from Sessions 000–003
+- Formalized the recon/reconcile split into a packaged Claude Skill (`session-checkin.skill`), so the behavior persists reliably across future sessions without redrifting through memory summarization alone
+
+**D.6 — Testing Methodology Log (SHIPPED)**
+
+*What Was Done:*
+- Designed `wf_user.build_tests` schema: variable_type (Arcane/Shard/Weapon, scope-locked — no Mods yet), variable_changed, expected_outcome, observed_outcome, benchmark_archetype, verdict (Pass/Fail/Inconclusive — three states, not two)
+- `benchmark_archetype` deliberately reuses the exact archetype vocabulary already defined in the roadmap for A3 (Health Tank, Shield Tank, Overguard Tank, Ability Nuke, Weapon Platform, Melee Platform, CC/Control, Support, Status Engine, Hybrid) — no relabeling needed when A3 eventually consumes this data as evidence
+- Built `TestingLogTab.jsx` — form + running history, its own file rather than inlined into BuildDetailOverlay
+- Wired in as a fifth tab
+
+*Bugs Fixed (during build):*
+- 401 Unauthorized on `build_tests` — RLS policy existed but table-level GRANTs were missing (same class of bug as a Session 000 issue). Fixed with explicit `GRANT SELECT, INSERT, UPDATE, DELETE` to `anon, authenticated`, plus sequence USAGE grant for the SERIAL primary key
+
+*Outcome:*
+- D.6 fully shipped and confirmed working. Locked queue advances to Arsenal Search Suite (A1 + Weapon Stat Threshold Search).
+
+**Koumei Dropdown Bug — Investigated, Closed (No Fix Needed)**
+
+*What Was Done:*
+- Re-tested the previously-flagged "Koumei doesn't surface in Add Frame dropdown" issue
+- Confirmed her `wf_base.warframes` row is clean, and she now appears correctly in the Add Frame search
+
+*Outcome:*
+- Bug does not reproduce — closed. Likely resolved as a side effect of the `display_name` backfill earlier in this same session.
+
+**A1 — Global Arsenal Search (SHIPPED)**
+
+*What Was Done:*
+- Built `ArsenalSearchPage.jsx` — new standalone page (not a BuildDetailOverlay tab, since it searches across all builds, not one)
+- No new schema needed — searches existing plain-text columns on `my_frames` (build_title, display_name, all three weapon slots, all five arcane slots) client-side against the full frame list
+- Wired into the existing `activePage` navigation pattern as a new "Search" nav button
+
+*Bugs Fixed (during integration):*
+- Duplicate ternary branch (arcanes branch pasted twice) plus an orphaned leftover `<ArchonShardsPage />` block outside the conditional tree — both cleaned up
+- Transient `ERR_SOCKET_NOT_CONNECTED`/`ERR_CONNECTION_RESET` console errors during testing — determined to be a real but temporary network blip, not a code bug (confirmed via hard refresh + Invig data re-entry)
+
+*Outcome:*
+- A1 fully shipped and confirmed working — search returns correct builds/slots, click-through to open a build works.
+
+**Copy Weapon Tool — Built, Not Yet Confirmed Wired/Tested**
+
+*What Was Done:*
+- Built `CopyWeaponModal.jsx` — bulk-copy a weapon (and optionally its Incarnon toggle state) from the open build to any number of other builds at once, either hand-picked or via a "select entire school" checkbox
+- Mirrors the existing "Copy Goal → Another Frame" shard pattern from Session 001 rather than inventing new UX
+- Deliberately does NOT copy the weapon's arcane — arcane stays independent per build unless explicitly extended later
+- No confirmation dialog on bulk apply — flagged as a known gap, no undo exists
+
+*Outcome:*
+- Component and integration notes delivered. Wiring into the Arsenal tab and end-to-end testing still pending as of session end.
+
+**In-Game vs. Gu Arsenal Audit**
+
+*What Was Done:*
+- Patrick ran a full audit of in-game loadouts against Gu's stored data using Granola (voice-to-notes), surfacing several discrepancies
+- Corrections applied directly in-app (not via raw SQL, per Patrick's preference): Hildryn Prime melee → Furax Wraith, Harrow Prime primary → Aeolak, Dante secondary → Laetum, Cyte-09 secondary confirmed as Lato Vandal
+- Shard swaps (Cyte-09: Adaptation → Fast Deflection; Harrow: Battery → Aegis Crepuscular) and Revenant's shard goal (2 Crimson, energy-on-spawn) flagged to be done via the in-app Archon Shards UI — not confirmed complete as of session end
+
+*Outcome:*
+- Real data-quality gap surfaced: Companions (Nautilus Sentinel mentioned in the audit) aren't tracked in Cephalon Gu at all yet. Noted for whenever that system gets scoped.
+
+**New Idea Captured (memory only, not built): Activity/Change Log**
+
+- Two-layer design: Layer 1 (buildable) — a structured log table capturing every meaningful edit (old value, new value, timestamp, which build) via triggers or explicit log calls at existing save points. Layer 2 (deliberately NOT built into the app) — "does this sequence of edits make sense as one pass" narrative inference, handled by `reconcile` consuming Layer 1's data conversationally, rather than hardcoded as app logic
+- Not started — flagged as future scoping work, touches most of the app's save handlers
+
+**New Idea Captured (memory only, not built): D.6 Phase 2 — Cross-Frame Testing Catalog + Reporting**
+
+- Since `build_tests` is a flat top-level table, nothing blocks querying across every logged test regardless of frame
+- Wanted: (1) a catalog view filterable by frame — "every test I've run on Frame X, over time"; (2) Gu-generated reports — lifetime-to-date summary, and trend-direction analysis over a chosen lookback window, inspired by reporting work at Patrick's previous job (Koddi)
+- Deliberately not built yet — needs real logged test volume to exist before the trend/anomaly logic can be designed meaningfully; likely its own page, separate from BuildDetailOverlay
+
+**Bugs Fixed (summary):**
+- Caliban Prime `warframe_id` mismatch (data)
+- Stale search box text after external prop change (frontend)
+- `identityForm` not resyncing after save — missing `useEffect` dependencies (frontend)
+- `GOLD is not defined` crash on Prime button (frontend)
+- `display_name` null across 55 frames (data, bulk backfill)
+- Duplicate Warframe field/Prime button/Doctrine rendering on every tab (removed)
+- 401 on `build_tests` — missing table GRANTs
+- Duplicate ternary branch + orphaned JSX block in `App.jsx`'s activePage switch
+- Koumei dropdown — confirmed non-reproducing, closed
+
+**End-of-Session Status:**
+- Warframe identity system (name + Prime linkage) is now internally consistent across all 117 base/Prime rows and all `my_frames` builds, and correctly scoped to the Identity tab only
+- Invig tracker naming bug fully closed
+- D.6 and A1 both fully shipped and verified
+- Copy Weapon tool built but not yet wired/tested — first task next session
+- In-game arsenal audit partially applied (weapons done, shards pending)
+- Session log format, `recon`/`reconcile` workflow, and the packaged `session-checkin` skill all established going forward
+
+**Next Targets:**
+- Finish wiring and test `CopyWeaponModal` in the Arsenal tab
+- Complete the two pending shard swaps + Revenant's shard goal via in-app UI
+- Scope the `wf_base` weapon-stats table (unblocks Weapon Stat Threshold Search, the second half of the Arsenal Search Suite bundle)
+- D.1 — Armory (next locked-queue item after Arsenal Search Suite fully completes)
+- Batch 3 ability seed (Wisp Prime, Xaku Prime, Zephyr Prime) — still open, data researched not yet written
+- Open decisions from the audit, no action yet: Dagath/Gara primary weapons, Wukong/Voruna/Ash slot swaps, Revenant's melee replacement, Khora's three empty slots, Atlas's utility primary
+- Companions (pets/sentinels) — confirmed untracked in Cephalon Gu; the audit surfaced this gap concretely (Nautilus Sentinel), worth keeping in mind for future scoping
+- Citrine Prime — when seeded this fall, run the one-line `prime_variant_id` link query; no other work needed
+
+---
+
+### Session 009 — Legacy Stack Retirement, Codebase Standing Rules, Skill Setup
+**Date:** 2026-08-25
+**Location:** Not recorded
+**Duration:** Not recorded
+**Status:** SHIPPED
+
+**Full Codebase Review**
+
+*What Was Done:*
+- First full-repo review since the project's early ETL/FastAPI phase
+- Surfaced that the README still described the original Python ETL → SQL Server → FastAPI architecture, while the live client (`warframe-client/`) actually talks straight to Supabase/Postgres via `@supabase/supabase-js` — the two backends had drifted apart, with FastAPI dead but undocumented as such
+- Flagged several oversized frontend files as maintainability risk: `ShardEditModal.jsx` (1160 lines), `BuildDetailOverlay.jsx` (663), `HomePage.jsx` (578), `ArcanesPage.jsx` (534)
+- Confirmed no secrets committed; `.env` correctly gitignored at both root and `warframe-client/` level
+
+*Outcome:*
+- Decision made to retire the legacy stack rather than keep maintaining two parallel backends.
+
+**Legacy Stack Retirement (Archive, Not Delete)**
+
+*What Was Done:*
+- Chose to archive rather than delete, since `Docs/Accomplishments/` portfolio material references the original FastAPI/SQL Server/ETL engineering work
+- Moved `API/` (FastAPI app), `ETL/` (pipeline scripts + logs), `DB/Schemas/` (SQL Server schema + load scripts), `DB/Loaders/load_data.sql`, `run_api.ps1`, and `run_etl.ps1` into a new `Legacy/` folder via `git mv`, preserving history
+- Caught before archiving that `ETL/Scripts/migrate_to_supabase.py`, `seed_arcanes.py`, `seed_cultivation_colors.py`, and `seed_weapons.py` actually target the live Supabase DB (not SQL Server) — pulled those out into a new active `DB/Seeds/` folder instead of archiving them
+- Updated `.gitignore`: relocated the `ETL/Processed/` and `ETL/Raw/` ignore rules to their new `Legacy/ETL/...` paths (52MB of raw/processed data had gone untracked-but-visible after the move)
+- Rewrote `README.md` to describe the current React + Supabase architecture up front, with the original stack documented as archived under `Legacy/` for portfolio reference
+
+*Outcome:*
+- Single source of truth for the active architecture restored. Committed (`c6bab38`, "refactor: archive legacy FastAPI/SQL Server/ETL stack to Legacy/") and pushed to `origin/main`.
+
+**New Standing Codebase Rules**
+
+*What Was Done:*
+- **1000-line file cap:** no file should exceed ~1000 lines going forward; split into subcomponents/hooks/helper modules before it grows past that. Motivated directly by `ShardEditModal.jsx` already being over the line.
+- **Comment code on every change:** for this project specifically, write explanatory comments when adding/modifying code (overrides Claude's general low-comment default) — Patrick wants to be able to reorient quickly when returning to code later.
+- Both rules saved to Claude's persistent memory so they carry forward automatically in future sessions without needing to be restated.
+
+*Outcome:*
+- Standing rules in effect for all future work on this codebase. Not yet applied retroactively — `ShardEditModal.jsx` and the other oversized files still need to be split (see Next Targets).
+
+**Skill Library Setup**
+
+*What Was Done:*
+- Installed via `npx skills add`: the `taste-skill` bundle (13 skills — brandkit, industrial-brutalist-ui, gpt-taste, image-to-code, imagegen-frontend-mobile/web, minimalist-ui, full-output-enforcement, redesign-existing-projects, high-end-visual-design, stitch-design-taste, design-taste-frontend + v1), Vercel's `web-design-guidelines`, and `caveman` (Shawnchee/caveman-skill, terse-response style)
+- Evaluated and rejected two candidates before installing safer alternatives: `JuliusBrussee/caveman` (installs global `~/.claude/settings.json` hooks that auto-run every session across 30+ tools, plus a browser-automation module capable of clicking/submitting forms — went with the lightweight `Shawnchee/caveman-skill` instead, markdown-only) and `superdesigndev/superdesign-skill` (shells out to a paid hosted CLI with login + generation credits — installed, then uninstalled once Patrick decided the existing static taste-skill set was enough without touching a paid external service)
+
+*Outcome:*
+- 16 skills installed and available starting next session (skills load at session start, not mid-session). Every third-party skill was fetched and read before install per Patrick's standing preference.
+
+**Bugs Fixed:**
+- None — infrastructure/tooling session, no application code touched
+
+**End-of-Session Status:**
+- Legacy FastAPI/SQL Server/ETL stack fully archived to `Legacy/`, active architecture now accurately documented in `README.md`
+- Two new standing rules in effect (1000-line file cap, mandatory code comments) but not yet retroactively applied
+- 16 third-party skills installed, pending a new session to become invocable
+- No `Cephalon_Gu_Master_Roadmap.md` found in the repo to check against for shipment-closure — roadmap regeneration skipped this session; flagging in case the file is expected to exist somewhere Claude didn't find it
+
+**Next Targets:**
+- Split `ShardEditModal.jsx` (1160 lines) into subcomponents/hooks — first candidate under the new file-size rule
+- Same treatment eventually for `BuildDetailOverlay.jsx` (663), `HomePage.jsx` (578), `ArcanesPage.jsx` (534)
+- Everything still open from Session 008 remains open (not touched this session): `CopyWeaponModal` wiring/testing, two pending shard swaps + Revenant's shard goal, `wf_base` weapon-stats table, D.1 Armory, Batch 3 ability seed, audit slot-swap decisions, Companions tracking scope
+- Confirm whether `Cephalon_Gu_Master_Roadmap.md` exists somewhere outside the repo (e.g. a separate doc/Notion) so future `reconcile` runs can actually check shipment-closure against it
+
+---

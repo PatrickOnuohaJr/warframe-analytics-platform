@@ -1,0 +1,102 @@
+# Cephalon Gu — Master Roadmap
+*As of August 25, 2026 — Claude Code context sync (Session 009, in progress)*
+
+> **Note on this file:** This is a context-bridge update for Claude Code, not a formal
+> `reconcile`-triggered regeneration (no full lettered shipment has closed since the
+> Aug 19 version). It reflects everything shipped in Session 008 plus open threads
+> carried into Session 009, so Claude Code isn't working from an 6-day-stale picture.
+
+---
+
+## ✅ SHIPPED
+
+- **Build card grid** — S/A manual tier grading, shard chips, NOW vs GOAL shard tracking
+- **Physique/Constitution Badge System** — filterable dropdown, 7 named physiques, per-physique counts
+- **Archon Shard Tracker** — ShardEditModal refactor (~880 → ~308 lines), all 6 shard types + Tau-forged scaling, Variant/Apex Variant Constitution badges
+- **Arsenal modal redesign** — tabbed Arsenal / Archon Shards, unified autocomplete
+- **Arcane DB** — 129 arcanes seeded (`arcane_seed.sql` + MODERN_ADDENDUM), full metadata columns
+- **Incarnon system** — boolean adapter toggle, no DB duplication; melee arcane slot fully wired
+- **Core Four Arcane Filtering** — all four slot pickers (Warframe/Primary/Secondary/Melee) filter by type, Owned/All toggle, rank display
+- **`wf_base.warframes`** — 117 rows, fully seeded, matches live roster
+- **A2 — Ability Tracking** *(mostly shipped)* — `wf_base.warframe_abilities`, Batches 1–2 verified clean (168 rows). **Gap:** Wisp Prime, Xaku Prime, Zephyr Prime (Batch 3) still unseeded.
+- **Helminth Invigoration tracking** — per-card modal, delete-then-insert pattern
+- **Security hardening** — RLS across both schemas, Security Definer → invoker views, locked search paths
+- **Shipment B — Cultivation System** *(largely shipped)* — schools, daos, colors, identity tab, doctrine display
+- **`WarframeSelector.jsx`** — click-to-edit searchable typeahead sourced live from `wf_base.warframes`; `prime_variant_id` self-referencing column with 50 base↔Prime pairs; "Prime This Warframe" one-click button *(Session 008)*
+- **D.6 — Testing Methodology Log** ✅ *(Session 008)* — `wf_user.build_tests` table (Pass/Fail/Inconclusive verdicts, benchmark archetypes matching A3 vocabulary); `TestingLogTab.jsx` as fifth tab in `BuildDetailOverlay`
+- **A1 — Global Arsenal Search** ✅ *(Session 008)* — `ArsenalSearchPage.jsx`, standalone page, client-side plain-text search across weapon and arcane columns on `my_frames`
+- **`session-checkin` skill** ✅ *(Session 008)* — packaged recon/reconcile discipline as a persistent Claude Skill
+
+---
+
+## 🔴 THE LOCKED QUEUE (in order)
+
+### 1. Arsenal Search Suite — *partially shipped*
+- A1 Global Arsenal Search ✅ shipped (see above)
+- **Weapon Stat Threshold Search** — still unscoped. Slider + type-in field per stat (crit chance, crit damage, range, attack speed, etc.), riven-level decimal precision, needs new `wf_base` weapon-stats table. **This is the item now blocking suite completion and, downstream, D.1 Armory.**
+
+### 2. D.1 — Armory
+Drag/drop equipment, weapon allocation tracking, 3-Weapon Rule live validation, attribute/personality-tag search. Benefits from Weapon Stat Threshold Search landing first.
+
+### 3. Mods Inventory & DB
+Own dedicated multi-session arc — hundreds of mods, polarity matching, drain/capacity math, 8-slot loadout schema with forma count. **Hard prerequisite** for everything below it — including giving A3 (#6) complete build-state visibility.
+
+### 4. D.2–D.5 — Survivability Suite
+Survivability Analytics, Report Card, Survivability Profiles, Resilience metric. **Blocked until Mods DB exists.**
+
+### 5. D.7 — Build Recommendation / Flow / Doctrine Adjacency
+Flow metric (how well a build chains movement/combat/buffs), doctrine adjacency modeling (structured sister-art/cross-school relationship data, currently only in codex prose).
+
+### 6. A3 — Predictive Build Crafting / Build Intelligence Layer
+Locked queue position unchanged since Aug 19 scoping. Full Bayesian confidence-scoring mechanism and benchmark-gated intervention logic already finalized (see prior roadmap version / PM Update doc for full spec) — implementation still gated on #1, #3, and #5 above. Acceptance test remains the Citrine build (infer Health Tank archetype from observation alone, correctly benchmark against Jade Light).
+
+Also folded in: **Ideal Invigoration Profile** — inferred ideal weekly Helminth Invigoration per loadout based on detected build direction/bottleneck. No new infrastructure; consumes A3's existing Observe→Infer→Model→Detect→Simulate→Intervene pipeline.
+
+### 7. Shipment C — Shareable Build URL
+Read-only build link.
+
+### 8. Shipment E — OAuth / User Profiles
+
+### 9. Shipment F — Tools
+Proportions calculator, build math utilities.
+
+---
+
+## 🧩 FLEX ITEM (no dependencies, insert whenever convenient)
+
+- **B1 — School Navigation Cleanup** — top bar crowded with 14 separate school tabs, probably collapses into a dropdown. Zero prerequisites.
+
+---
+
+## 🟡 OPEN THREADS — carried from Session 008 into Session 009
+
+Not locked-queue shipments, but active loose ends:
+
+- **`CopyWeaponModal.jsx`** — built (bulk-copy weapons to multiple builds or entire cultivation schools), **not yet confirmed wired/tested in-app**. Top priority for current session.
+- **Two pending shard swaps + Revenant's shard goal** — need applying via in-app UI (not a code task, Patrick does this directly).
+- **Batch 3 ability seed gap** — Wisp Prime, Xaku Prime, Zephyr Prime still unwritten in `wf_base.warframe_abilities` (data researched, not yet seeded).
+- **Open Granola audit decisions** — in-game vs. Gu arsenal audit surfaced pending review items on: Dagath, Gara, Wukong, Voruna, Ash, Revenant, Khora, Atlas.
+- **Companion tracking scoping** — pets/sentinels currently untracked in Gu at all; needs a scoping pass before it can even join the queue.
+- **Koumei dropdown bug** — confirmed **no longer reproducing** as of Session 008. Candidate to close out as resolved, pending one more confirmation.
+
+---
+
+## 🗑️ DROPPED / CUT
+
+- **Incarnon visual chip redesign** — reviewed, satisfied with current toggle UI, off the roadmap
+- **Standalone doctrine tagging/search UI filter** — repositioned into D.7 Doctrine Adjacency
+- **Shipment C4 — Forums** — explicitly cut, build sharing gets ~90% of the value without moderation overhead
+
+## ❄️ DEFERRED / UNSCHEDULED ORPHANS
+
+- **C2 — Friends System**
+- **C3 — Clan System**
+- **Arcane Phase 2** (Kitgun, Zaw, Amp, Operator, Tektolyst arcanes) — needs separate schema, modular weapon builds not yet modeled
+- **Helminth Invigoration `active_until` date model** — supports overlapping invigorations across weeks
+
+---
+
+## Known open bugs / diagnostics
+
+- **Batch 3 ability gap** — see Open Threads above
+- **Koumei dropdown** — see Open Threads above (likely resolved, needs final confirmation)
