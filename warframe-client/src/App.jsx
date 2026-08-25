@@ -10,6 +10,7 @@ import ArchonShardsPage from './pages/ArchonShardsPage'
 import HomePage from './pages/HomePage'
 import AddFrameModal from './components/AddFrameModal'
 import ArsenalSearchPage from './components/ArsenalSearchPage';
+import ArmoryPage from './pages/ArmoryPage'
 import { getReadableColor } from './utils/color'
 import ModalShell from './components/ui/ModalShell'
 import Button from './components/ui/Button'
@@ -397,6 +398,27 @@ const filteredFrames =
             >
               Archon Shards
             </button>
+
+            <button
+              onClick={() => setActivePage('armory')}
+              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+              style={{
+                background:
+                  activePage === 'armory'
+                    ? `${GOLD}22`
+                    : PANEL_BG,
+                color:
+                  activePage === 'armory'
+                    ? GOLD
+                    : MUTED,
+                borderColor:
+                  activePage === 'armory'
+                    ? `${GOLD}88`
+                    : BORDER,
+              }}
+            >
+              Armory
+            </button>
             </div>
           {activePage === 'codex' && (
             <div className="mb-4">
@@ -555,6 +577,8 @@ const filteredFrames =
           if (frame) setDetailFrame(frame);
         }}
       />
+    ) : activePage === 'armory' ? (
+      <ArmoryPage />
     ) : (
           <ArchonShardsPage />
 )}

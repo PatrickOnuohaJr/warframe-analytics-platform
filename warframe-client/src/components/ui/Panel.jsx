@@ -11,6 +11,7 @@ export default function Panel({
   onClick,
   className = '',
   style = {},
+  ...rest
 }) {
   const borderColor = accent ? `${accent}55` : COLOR.border
   const hoverBorder = accent ? `${accent}88` : '#8C8880'
@@ -31,6 +32,7 @@ export default function Panel({
         boxShadow: 'var(--shadow-resting)',
         ...style,
       }}
+      {...rest}
     >
       {children}
     </div>
