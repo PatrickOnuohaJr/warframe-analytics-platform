@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { wfUser } from '../lib/supabase';
 import Panel from './ui/Panel';
+import WeaponStatSearchTab from './WeaponStatSearchTab';
 
 // ============================================================================
 // ArsenalSearchPage.jsx
@@ -57,6 +58,7 @@ const SEARCHABLE_FIELDS = [
 ];
 
 export default function ArsenalSearchPage({ onBack, onOpenFrame }) {
+  const [mode, setMode] = useState('builds'); // 'builds' | 'stats'
   const [query, setQuery] = useState('');
   const [frames, setFrames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +131,7 @@ export default function ArsenalSearchPage({ onBack, onOpenFrame }) {
 
   return (
     <div>
-      <div className="max-w-3xl mx-auto">
+      <div className={mode === 'stats' ? 'max-w-6xl mx-auto' : 'max-w-3xl mx-auto'}>
         <button
           onClick={onBack}
           className="text-xs uppercase tracking-widest mb-6"
@@ -139,66 +141,99 @@ export default function ArsenalSearchPage({ onBack, onOpenFrame }) {
         </button>
 
         <h1 className="text-2xl font-bold uppercase tracking-wide mb-2" style={{ color: GOLD }}>
-          Global Arsenal Search
+          {mode === 'builds' ? 'Global Arsenal Search' : 'Weapon Stat Threshold Search'}
         </h1>
         <p className="text-sm mb-6" style={{ color: MUTED }}>
-          Search across every build's weapons and arcanes. "Where is X used?" answered instantly.
+          {mode === 'builds'
+            ? 'Search across every build\'s weapons and arcanes. "Where is X used?" answered instantly.'
+            : 'Filter the full weapon catalog by minimum stat thresholds — riven-shopping precision, before it\'s even in a loadout.'}
         </p>
 
-        <input
-          type="text"
-          autoFocus
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="e.g. Molt Augmented, Vadarya Prime, Caliban..."
-          className="w-full rounded-lg border px-4 py-3 text-base outline-none mb-6"
-          style={{ backgroundColor: PANEL_BG, border: `1px solid ${BORDER}`, color: '#F5F0E8' }}
-        />
-
-        {loading && <p style={{ color: MUTED }}>Loading arsenal...</p>}
-        {error && <p className="text-red-400">{error}</p>}
-
-        {!loading && !error && query.trim() && (
-          <p className="text-xs uppercase tracking-widest mb-4" style={{ color: MUTED }}>
-            {results.length} {results.length === 1 ? 'match' : 'matches'}
-          </p>
-        )}
-
-        {!loading && !error && query.trim() && results.length === 0 && (
-          <p style={{ color: MUTED }}>No matches found.</p>
-        )}
-
-        <div className="space-y-3">
-          {results.map(({ frame, matchedFields }) => (
-            <Panel
-              key={frame.my_frame_id}
-              interactive
-              accent={GOLD}
-              onClick={() => onOpenFrame?.(frame.my_frame_id)}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-bold" style={{ color: GOLD }}>
-                  {frame.display_name || '(Unnamed Warframe)'}
-                </span>
-                <span className="text-xs" style={{ color: MUTED }}>
-                  {frame.build_title}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {matchedFields.map(({ label, value }) => (
-                  <span
-                    key={label}
-                    className="text-xs px-2 py-1 rounded"
-                    style={{ backgroundColor: `${GOLD}22`, color: GOLD }}
-                  >
-                    {label}: {value}
-                  </span>
-                ))}
-              </div>
-            </Panel>
-          ))}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setMode('builds')}
+            className="rounded-xl px-4 py-2 text-[10px] uppercase font-bold tracking-[0.25em] transition-colors"
+            style={{
+              background: mode === 'builds' ? `${GOLD}18` : PANEL_BG,
+              border: `1px solid ${mode === 'builds' ? `${GOLD}55` : BORDER}`,
+              color: mode === 'builds' ? GOLD : MUTED,
+            }}
+          >
+            Find In My Builds
+          </button>
+          <button
+            onClick={() => setMode('stats')}
+            className="rounded-xl px-4 py-2 text-[10px] uppercase font-bold tracking-[0.25em] transition-colors"
+            style={{
+              background: mode === 'stats' ? `${GOLD}18` : PANEL_BG,
+              border: `1px solid ${mode === 'stats' ? `${GOLD}55` : BORDER}`,
+              color: mode === 'stats' ? GOLD : MUTED,
+            }}
+          >
+            Weapon Stats
+          </button>
         </div>
+
+        {mode === 'stats' ? (
+          <WeaponStatSearchTab />
+        ) : (
+          <>
+            <input
+              type="text"
+              autoFocus
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="e.g. Molt Augmented, Vadarya Prime, Caliban..."
+              className="w-full rounded-lg border px-4 py-3 text-base outline-none mb-6"
+              style={{ backgroundColor: PANEL_BG, border: `1px solid ${BORDER}`, color: '#F5F0E8' }}
+            />
+
+            {loading && <p style={{ color: MUTED }}>Loading arsenal...</p>}
+            {error && <p className="text-red-400">{error}</p>}
+
+            {!loading && !error && query.trim() && (
+              <p className="text-xs uppercase tracking-widest mb-4" style={{ color: MUTED }}>
+                {results.length} {results.length === 1 ? 'match' : 'matches'}
+              </p>
+            )}
+
+            {!loading && !error && query.trim() && results.length === 0 && (
+              <p style={{ color: MUTED }}>No matches found.</p>
+            )}
+
+            <div className="space-y-3">
+              {results.map(({ frame, matchedFields }) => (
+                <Panel
+                  key={frame.my_frame_id}
+                  interactive
+                  accent={GOLD}
+                  onClick={() => onOpenFrame?.(frame.my_frame_id)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold" style={{ color: GOLD }}>
+                      {frame.display_name || '(Unnamed Warframe)'}
+                    </span>
+                    <span className="text-xs" style={{ color: MUTED }}>
+                      {frame.build_title}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {matchedFields.map(({ label, value }) => (
+                      <span
+                        key={label}
+                        className="text-xs px-2 py-1 rounded"
+                        style={{ backgroundColor: `${GOLD}22`, color: GOLD }}
+                      >
+                        {label}: {value}
+                      </span>
+                    ))}
+                  </div>
+                </Panel>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

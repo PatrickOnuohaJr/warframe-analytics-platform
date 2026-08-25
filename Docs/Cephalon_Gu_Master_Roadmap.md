@@ -27,38 +27,36 @@
 - **A1 — Global Arsenal Search** ✅ *(Session 008)* — `ArsenalSearchPage.jsx`, standalone page, client-side plain-text search across weapon and arcane columns on `my_frames`
 - **`session-checkin` skill** ✅ *(Session 008)* — packaged recon/reconcile discipline as a persistent Claude Skill
 - **`CopyWeaponModal.jsx`** ✅ *(Session 010)* — rebuilt from scratch (original was never committed, lost to history), wired into `ShardEditModal.jsx` Arsenal tab, confirmed working live (Chroma → Frost secondary weapon copy test)
+- **Design system pass** ✅ *(Session 010)* — Cinzel/Outfit fonts, custom favicon, app renamed to Cephalon Gu, shared `ui/Panel` / `ui/Button` / `ui/ModalShell` primitives + `constants/theme.js` rolled out across every page and modal, cultivation-color contrast fix (`utils/color.js` lifts unreadable dark identity colors to a legible floor without touching stored data), ArchonShardsPage's off-palette colors fixed
+- **Arsenal Search Suite — COMPLETE** ✅ *(Session 010)* — Weapon Stat Threshold Search shipped as a second tab on `ArsenalSearchPage.jsx` (`WeaponStatSearchTab.jsx`). Turned out **no new table was needed** — `wf_base.weapons.raw_json` already carries every stat (crit chance/multiplier, status chance, fire rate, multishot, magazine size for guns; range, combo duration, heavy attack damage for melee) from the existing WFCD seed. Client-side threshold filtering across all 665 weapons, category-aware stat sets, slider + type-in per stat with live-computed min/max bounds.
 
 ---
 
 ## 🔴 THE LOCKED QUEUE (in order)
 
-### 1. Arsenal Search Suite — *partially shipped*
-- A1 Global Arsenal Search ✅ shipped (see above)
-- **Weapon Stat Threshold Search** — still unscoped. Slider + type-in field per stat (crit chance, crit damage, range, attack speed, etc.), riven-level decimal precision, needs new `wf_base` weapon-stats table. **This is the item now blocking suite completion and, downstream, D.1 Armory.**
+### 1. D.1 — Armory
+Drag/drop equipment, weapon allocation tracking, 3-Weapon Rule live validation, attribute/personality-tag search. Arsenal Search Suite (A1 + Weapon Stat Threshold Search) is fully shipped, so this is next up unblocked.
 
-### 2. D.1 — Armory
-Drag/drop equipment, weapon allocation tracking, 3-Weapon Rule live validation, attribute/personality-tag search. Benefits from Weapon Stat Threshold Search landing first.
+### 2. Mods Inventory & DB
+Own dedicated multi-session arc — hundreds of mods, polarity matching, drain/capacity math, 8-slot loadout schema with forma count. **Hard prerequisite** for everything below it — including giving A3 (#5) complete build-state visibility.
 
-### 3. Mods Inventory & DB
-Own dedicated multi-session arc — hundreds of mods, polarity matching, drain/capacity math, 8-slot loadout schema with forma count. **Hard prerequisite** for everything below it — including giving A3 (#6) complete build-state visibility.
-
-### 4. D.2–D.5 — Survivability Suite
+### 3. D.2–D.5 — Survivability Suite
 Survivability Analytics, Report Card, Survivability Profiles, Resilience metric. **Blocked until Mods DB exists.**
 
-### 5. D.7 — Build Recommendation / Flow / Doctrine Adjacency
+### 4. D.7 — Build Recommendation / Flow / Doctrine Adjacency
 Flow metric (how well a build chains movement/combat/buffs), doctrine adjacency modeling (structured sister-art/cross-school relationship data, currently only in codex prose).
 
-### 6. A3 — Predictive Build Crafting / Build Intelligence Layer
-Locked queue position unchanged since Aug 19 scoping. Full Bayesian confidence-scoring mechanism and benchmark-gated intervention logic already finalized (see prior roadmap version / PM Update doc for full spec) — implementation still gated on #1, #3, and #5 above. Acceptance test remains the Citrine build (infer Health Tank archetype from observation alone, correctly benchmark against Jade Light).
+### 5. A3 — Predictive Build Crafting / Build Intelligence Layer
+Locked queue position unchanged since Aug 19 scoping. Full Bayesian confidence-scoring mechanism and benchmark-gated intervention logic already finalized (see prior roadmap version / PM Update doc for full spec) — implementation still gated on #1, #2, and #4 above. Acceptance test remains the Citrine build (infer Health Tank archetype from observation alone, correctly benchmark against Jade Light).
 
 Also folded in: **Ideal Invigoration Profile** — inferred ideal weekly Helminth Invigoration per loadout based on detected build direction/bottleneck. No new infrastructure; consumes A3's existing Observe→Infer→Model→Detect→Simulate→Intervene pipeline.
 
-### 7. Shipment C — Shareable Build URL
+### 6. Shipment C — Shareable Build URL
 Read-only build link.
 
-### 8. Shipment E — OAuth / User Profiles
+### 7. Shipment E — OAuth / User Profiles
 
-### 9. Shipment F — Tools
+### 8. Shipment F — Tools
 Proportions calculator, build math utilities.
 
 ---
