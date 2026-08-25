@@ -15,9 +15,9 @@ venv/
 # VS Code settings
 .vscode/
 
-# Generated ETL files
-ETL/Processed/
-ETL/Raw/
+# Generated ETL files (legacy pipeline, archived)
+Legacy/ETL/Processed/
+Legacy/ETL/Raw/
 
 # Backup / resolve files
 *.resolved

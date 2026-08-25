@@ -1,228 +1,100 @@
-# Warframe Analytics Platform
+# Warframe Jarvis (Cephalon Gu)
 
-A full end-to-end data engineering and backend analytics platform built for extracting, transforming, storing, and serving Warframe game data.  
-This project demonstrates production-style engineering: ETL pipelines, SQL Server modeling, an API layer, and complete documentation.
+A personal Warframe companion app — tracks arsenal, arcanes, Archon Shards, Helminth invigorations, and cultivation lore, built on a React frontend backed directly by Supabase/Postgres.
 
 ---
 
 ## 🚀 Overview
 
-This system fetches live Warframe metadata (frames, weapons, mods, arcanes), processes it into structured analytical tables, loads it into SQL Server, and exposes the data through a fully documented FastAPI REST API.
+The live app is a React + Vite client that reads and writes directly to a Supabase (Postgres) database — no intermediate API layer. Data (frame/weapon/mod/arcane base stats) was originally sourced via a Python ETL pipeline and has since been migrated and is maintained through one-off seed scripts in `DB/Seeds/`.
 
 ---
 
 ## 🧱 Architecture
 
-External Warframe API
-│
-▼
-ETL Pipeline (Python)
-├── Extract (raw JSON)
-├── Transform (clean/shape)
-└── Load (SQL scripts)
-│
-▼
-SQL Server Database
-│
-▼
-FastAPI REST API Layer
-(warframes, weapons, mods, arcanes, builds)
+```
+React + Vite client (warframe-client/)
+        │
+        ▼
+Supabase JS client (@supabase/supabase-js)
+        │
+        ▼
+Supabase / Postgres  (wf_base = game data, wf_user = personal collection/progress)
+```
 
+Occasional data loads/migrations run through standalone scripts in `DB/Seeds/` (Python, talk to Supabase directly).
 
 ---
 
 ## 🗂️ Project Structure
 
-Warframe_Analytics_Platform/
+```
+Warframe_Project/
 │
-├── API/
-│ ├── app/
-│ │ ├── main.py
-│ │ ├── db.py
-│ │ ├── config.py
-│ │ ├── models/
-│ │ └── routers/
-│ └── requirements.txt
-│
-├── ETL/
-│ ├── Scripts/
-│ │ ├── extract.py
-│ │ ├── transform.py
-│ │ ├── load.py
-│ │ └── pipeline.py
-│ ├── Raw/
-│ └── Processed/
+├── warframe-client/        React + Vite + Tailwind frontend (the live app)
+│   └── src/
+│       ├── pages/
+│       ├── components/
+│       ├── hooks/
+│       ├── lib/            Supabase client
+│       └── constants/
 │
 ├── DB/
-│ ├── phase1_schema.sql
-│ └── load_data.sql
+│   ├── Migrations/         Dated SQL migrations against the live Supabase DB
+│   ├── Cultivation/        Cultivation doctrine seed SQL (run in Supabase SQL editor)
+│   ├── Seeds/              Python scripts that seed/migrate data into Supabase
+│   └── Guides/
 │
-├── Docs/
-│ ├── implementation_plan.md
-│ ├── api_implementation_plan.md
-│ └── api_walkthrough.md
+├── Docs/                   Session logs, lore, accomplishments
 │
-└── .gitignore
-
-
-
----
-
-## ⚙️ Features
-
-### 🔹 ETL Pipeline
-- Automated Warframe API ingestion  
-- Cleans and shapes:
-  - warframes  
-  - weapons  
-  - mods  
-  - arcanes  
-- Generates SQL insert scripts  
-- Creates raw + processed staging files  
-- Logging for each ETL step  
-
-### 🔹 SQL Server Database
-- Normalized schema for all base game data  
-- Designed for analytical queries  
-- Connected via SQLAlchemy + ODBC  
-
-### 🔹 FastAPI Backend
-- REST endpoints:
-  - `/warframes`
-  - `/weapons`
-  - `/mods`
-  - `/arcanes`
-  - `/builds/frames`
-  - `/builds/loadouts`
-- Auto-generated Swagger docs  
-- Pydantic response models  
-- Dependency-injected DB session  
-
----
-
-## 🛠️ Installation & Setup
-
-### 1️⃣ Clone the repository
-```bash
-git clone https://github.com/PatrickOnuohaJr/warframe-analytics-platform.git
-cd warframe-analytics-platform
+└── Legacy/                 Archived first-pass stack (pre-Claude Code era) — see below
 ```
 
-### Run the ETL Pipeline
-python ETL/Scripts/pipeline.py
+---
 
+## 📦 Legacy Stack (Archived)
 
-This will:
+Before switching to React + Supabase, this project started as a FastAPI + SQL Server + Python ETL pipeline — kept in `Legacy/` for portfolio/reference purposes, not actively maintained or run:
 
-Extract → ETL/Raw/
+```
+Legacy/
+├── API/            FastAPI app (SQLAlchemy + pyodbc, SQL Server backend)
+├── ETL/            Extract/transform/load pipeline targeting SQL Server
+├── DB/Schemas/     Original SQL Server schema + load scripts
+├── run_api.ps1
+└── run_etl.ps1
+```
 
-Transform → ETL/Processed/
+This demonstrates the original data engineering work (API ingestion, ETL automation, SQL Server schema design, FastAPI + SQLAlchemy backend) — see `Docs/Accomplishments/` for how it's presented.
 
-Generate SQL inserts → DB/load_data.sql
+---
 
-Load the SQL into SQL Server manually via SSMS.
+## 🛠️ Running the App
 
+```bash
+cd warframe-client
+npm install
+npm run dev
+```
 
-### Run the API
-Install dependencies:
-cd API
-pip install -r requirements.txt
+Requires a `.env` in `warframe-client/` with:
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+```
 
-### Configure your DB (.env or config.py)
-DB_SERVER=THEBLACKPRIME
-DB_NAME=Warframe
-DB_USER=
-DB_PASSWORD=
-DB_DRIVER=ODBC Driver 17 for SQL Server
+---
 
-### Start API server:
-uvicorn app.main:app --reload
+## 🧩 Skills Demonstrated
 
-### Open documentation:
-💻 http://127.0.0.1:8000/docs
+**Frontend:** React 19, Vite, Tailwind CSS v4, Supabase JS client, custom hooks
+**Data:** Postgres/Supabase schema design (`wf_base`/`wf_user` split), SQL migrations, Python seed/migration scripting
+**Legacy (archived):** FastAPI, SQLAlchemy ORM, SQL Server, ETL pipeline design
 
-🔍 Example API Endpoints
-Resource          	Endpoint
-All Warframes	      GET /warframes
-Warframe by ID	    GET /warframes/Ash
-Weapons	            GET /weapons
-Mods	              GET /mods
-Arcanes	            GET /arcanes
-User Builds	        GET /builds/frames
+---
 
+## 📄 License
 
-🧪 Example Warframe Response
-{
-  "warframeId": 0,
-  "uniqueName": "/Lotus/Powersuits/Ninja/Ninja",
-  "name": "Ash",
-  "armor": 150,
-  "health": 455,
-  "shields": 270,
-  "energy": 100,
-  "sprintSpeed": 1.15
-}
+For educational and portfolio purposes.
 
-
-🧩 Skills Demonstrated
-Data Engineering
-API ingestion
-ETL automation
-JSON normalization
-SQL Server schema design
-Data modeling
-
-### Backend Engineering
-FastAPI
-SQLAlchemy ORM
-REST API architecture
-Dependency injection
-Environment-based config
-
-### Software Engineering
-Version control (Git/GitHub)
-Modular folder structure
-Documentation (Markdown)
-Logging & debugging
-
-🗺️ Roadmap
-Add user authentication
-Upload custom builds
-Deploy on cloud (Railway/Azure)
-Build Power BI dashboards
-Schedule automated ETL refreshes
-
-📄 License:
-This project is for educational and portfolio purposes.
-
-
-Credits:
-Developed by Patrick Onuoha Jr.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+**Credits:** Developed by Patrick Onuoha Jr.
