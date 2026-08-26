@@ -2,8 +2,27 @@ import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
 import Panel from '../components/ui/Panel';
 import Button from '../components/ui/Button';
+import ModalShell from '../components/ui/ModalShell';
 import AddModToInventoryModal from '../components/AddModToInventoryModal';
 import { COLOR } from '../constants/theme';
+
+// WFCD's mod data has no flat "description" field -- the actual effect
+// text lives per-rank in raw_json.levelStats[rank].stats. Augment mods
+// carry their target frame/weapon in raw_json.compatName + isAugment.
+function isAugment(mod) {
+  return mod.raw_json?.isAugment === true;
+}
+
+function augmentTarget(mod) {
+  return mod.raw_json?.compatName;
+}
+
+function effectTextAtRank(mod, rank) {
+  const levels = mod.raw_json?.levelStats;
+  if (!levels || levels.length === 0) return null;
+  const index = Math.max(0, Math.min(rank, levels.length - 1));
+  return (levels[index]?.stats || []).join(' ');
+}
 
 // ============================================================================
 // ModsPage.jsx (Mods Inventory & DB -- first slice)
@@ -26,6 +45,7 @@ export default function ModsPage() {
   const [exilusOnly, setExilusOnly] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [rankDrafts, setRankDrafts] = useState({}); // mod_id -> string, in-progress edits
+  const [selectedMod, setSelectedMod] = useState(null);
 
   async function loadInventory() {
     setLoading(true);
@@ -44,7 +64,7 @@ export default function ModsPage() {
 
     const { data: modRows, error: modsError } = await wfBase
       .from('mods')
-      .select('mod_id, name, category, polarity, base_drain, max_rank, rarity, is_aura, is_exilus')
+      .select('mod_id, name, category, polarity, base_drain, max_rank, rarity, is_aura, is_exilus, raw_json')
       .order('name', { ascending: true });
 
     if (modsError) {
@@ -206,8 +226,10 @@ export default function ModsPage() {
           const rankValue = rankDrafts[mod.mod_id] ?? String(inv?.owned_rank ?? 0);
           const cap = mod.max_rank ?? 0;
 
+          const augment = isAugment(mod);
+
           return (
-            <Panel key={mod.mod_id} accent={COLOR.gold}>
+            <Panel key={mod.mod_id} accent={COLOR.gold} interactive onClick={() => setSelectedMod(mod)}>
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <p className="font-bold" style={{ color: COLOR.ink }}>{mod.name}</p>
@@ -216,9 +238,14 @@ export default function ModsPage() {
                     {mod.is_aura ? ' · Aura' : ''}
                     {mod.is_exilus ? ' · Exilus' : ''}
                   </p>
+                  {augment && (
+                    <p className="text-xs mt-1" style={{ color: COLOR.gold }}>
+                      ◆ {augmentTarget(mod) || 'Augment'} Augment
+                    </p>
+                  )}
                 </div>
                 <button
-                  onClick={() => handleRemove(mod)}
+                  onClick={e => { e.stopPropagation(); handleRemove(mod); }}
                   className="text-xs"
                   style={{ color: '#F87171' }}
                 >
@@ -226,7 +253,7 @@ export default function ModsPage() {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
                 <label className="text-xs" style={{ color: COLOR.mutedInk }}>Rank</label>
                 <input
                   type="number"
@@ -261,6 +288,38 @@ export default function ModsPage() {
           }}
         />
       )}
+
+      {selectedMod && (() => {
+        const inv = owned.get(selectedMod.mod_id);
+        const rank = inv?.owned_rank ?? 0;
+        const cap = selectedMod.max_rank ?? 0;
+        const augment = isAugment(selectedMod);
+        const effect = effectTextAtRank(selectedMod, rank);
+
+        return (
+          <ModalShell onClose={() => setSelectedMod(null)} accent={COLOR.gold} maxWidth="max-w-lg">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h2 className="text-xl font-bold" style={{ color: COLOR.gold }}>{selectedMod.name}</h2>
+                <p className="text-xs" style={{ color: COLOR.mutedInk }}>
+                  {selectedMod.category} · {selectedMod.polarity ?? '—'} · {selectedMod.rarity ?? '—'} · Rank {rank}/{cap}
+                </p>
+              </div>
+              <button onClick={() => setSelectedMod(null)} className="text-xl leading-none" style={{ color: COLOR.mutedInk }}>×</button>
+            </div>
+
+            {augment && (
+              <p className="text-sm font-bold mb-3" style={{ color: COLOR.gold }}>
+                ◆ {augmentTarget(selectedMod) || 'Augment'} Augment
+              </p>
+            )}
+
+            <p className="text-sm" style={{ color: COLOR.ink }}>
+              {effect || 'No effect text available for this mod.'}
+            </p>
+          </ModalShell>
+        );
+      })()}
     </div>
   );
 }
