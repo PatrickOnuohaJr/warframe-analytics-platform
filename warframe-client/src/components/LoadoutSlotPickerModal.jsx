@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import ModalShell from './ui/ModalShell';
+import PolaritySymbol from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain } from '../utils/modCapacity';
 
@@ -59,10 +60,11 @@ export default function LoadoutSlotPickerModal({ mods, ownedByModId, slotPolarit
               onClick={() => onSelect(mod.mod_id)}
               className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-black/20"
             >
-              <div>
+              <div className="flex items-center gap-2">
+                <PolaritySymbol polarity={mod.polarity} size={15} color={COLOR.mutedInk} />
                 <span style={{ color: COLOR.ink }}>{mod.name}</span>
-                <span className="text-xs ml-2" style={{ color: COLOR.mutedInk }}>
-                  {mod.polarity ?? '—'} · Rank {rank}/{mod.max_rank ?? 0}
+                <span className="text-xs" style={{ color: COLOR.mutedInk }}>
+                  Rank {rank}/{mod.max_rank ?? 0}
                 </span>
               </div>
               <span className="text-xs font-bold" style={{ color: discounted ? COLOR.success : COLOR.mutedInk }}>

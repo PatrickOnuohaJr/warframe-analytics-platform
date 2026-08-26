@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import Panel from './ui/Panel';
 import LoadoutSlotPickerModal from './LoadoutSlotPickerModal';
+import PolaritySymbol, { POLARITIES } from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain, pieceCapacity } from '../utils/modCapacity';
 
 const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
-const POLARITIES = ['madurai', 'vazarin', 'naramon', 'zenurik', 'unairu'];
 
 function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, cost, discounted, accent }) {
   return (
@@ -25,7 +25,10 @@ function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, cost, di
       <div onClick={onOpenPicker}>
         {mod ? (
           <>
-            <p className="text-sm font-bold" style={{ color: COLOR.ink }}>{mod.name}</p>
+            <div className="flex items-center gap-1.5">
+              <PolaritySymbol polarity={mod.polarity} size={13} color={COLOR.mutedInk} />
+              <p className="text-sm font-bold" style={{ color: COLOR.ink }}>{mod.name}</p>
+            </div>
             <p className="text-xs" style={{ color: COLOR.mutedInk }}>Rank {rank}/{mod.max_rank ?? 0}</p>
           </>
         ) : (
@@ -33,16 +36,25 @@ function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, cost, di
         )}
       </div>
 
-      <select
-        value={slot.polarity ?? ''}
+      <div
+        className="flex items-center gap-1 mt-2 flex-wrap"
         onClick={e => e.stopPropagation()}
-        onChange={e => onSetPolarity(e.target.value || null)}
-        className="w-full mt-2 rounded-lg border px-2 py-1 text-xs outline-none"
-        style={{ background: COLOR.surface1, border: `1px solid ${COLOR.border}`, color: COLOR.mutedInk }}
       >
-        <option value="">No polarity</option>
-        {POLARITIES.map(p => <option key={p} value={p}>{p}</option>)}
-      </select>
+        {POLARITIES.map(p => (
+          <button
+            key={p}
+            onClick={() => onSetPolarity(slot.polarity === p ? null : p)}
+            title={p}
+            className="rounded-md p-1 transition-colors"
+            style={{
+              background: slot.polarity === p ? `${accent}22` : 'transparent',
+              border: `1px solid ${slot.polarity === p ? accent : 'transparent'}`,
+            }}
+          >
+            <PolaritySymbol polarity={p} size={13} color={slot.polarity === p ? accent : COLOR.mutedInk} />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

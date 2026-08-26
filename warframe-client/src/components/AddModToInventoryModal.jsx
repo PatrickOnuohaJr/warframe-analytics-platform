@@ -3,6 +3,7 @@ import { wfUser } from '../lib/supabase';
 import ModalShell from './ui/ModalShell';
 import { COLOR } from '../constants/theme';
 import { isAugment, isPrimeMod, modSetName, weaponTag } from '../utils/modMeta';
+import PolaritySymbol from './PolaritySymbol';
 
 const CATEGORIES = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee'];
 
@@ -204,11 +205,12 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
               checked={selected.has(m.mod_id)}
               onChange={() => toggle(m.mod_id)}
             />
+            <PolaritySymbol polarity={m.polarity} size={14} color={COLOR.mutedInk} />
             <span style={{ color: COLOR.ink }} className="flex-1">{m.name}</span>
             <span className="text-xs" style={{ color: COLOR.mutedInk }}>
               {m.category}
               {weaponTag(m) ? ` · ${weaponTag(m)}` : ''}
-              {' · '}{m.polarity ?? '—'} {m.is_aura ? '· Aura' : ''}{m.is_exilus ? '· Exilus' : ''}
+              {' '}{m.is_aura ? '· Aura' : ''}{m.is_exilus ? '· Exilus' : ''}
             </span>
           </label>
         ))}
