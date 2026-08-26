@@ -578,7 +578,7 @@ const filteredFrames =
         }}
       />
     ) : activePage === 'armory' ? (
-      <ArmoryPage />
+      <ArmoryPage frames={frames} refetchFrames={refetchFrames} />
     ) : (
           <ArchonShardsPage />
 )}

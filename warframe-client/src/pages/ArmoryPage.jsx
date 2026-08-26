@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
-import useFrames from '../hooks/useFrames';
 import Panel from '../components/ui/Panel';
 import Button from '../components/ui/Button';
 import ArmoryFrameRoster from '../components/ArmoryFrameRoster';
@@ -34,9 +33,7 @@ const SLOT_COLUMN = {
   Melee: 'melee_weapon',
 };
 
-export default function ArmoryPage() {
-  const { frames, refetchFrames } = useFrames();
-
+export default function ArmoryPage({ frames, refetchFrames }) {
   const [catalog, setCatalog] = useState([]);
   const [ownedIds, setOwnedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
