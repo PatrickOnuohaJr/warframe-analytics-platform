@@ -293,9 +293,14 @@ export default function ArmoryPage({ frames, refetchFrames }) {
         <AddWeaponToInventoryModal
           catalog={catalog}
           ownedIds={ownedIds}
+          initialCategory={categoryFilter}
           onClose={() => setShowAddModal(false)}
-          onAdded={weapon => {
-            setOwnedIds(prev => new Set(prev).add(weapon.weapon_id));
+          onAdded={weapons => {
+            setOwnedIds(prev => {
+              const next = new Set(prev);
+              weapons.forEach(w => next.add(w.weapon_id));
+              return next;
+            });
             setShowAddModal(false);
           }}
         />
