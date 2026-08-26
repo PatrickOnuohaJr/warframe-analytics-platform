@@ -32,11 +32,15 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   const groups = useMemo(() => {
     let augmentCount = 0;
     let primeCount = 0;
+    let auraCount = 0;
+    let exilusCount = 0;
     const setCounts = new Map();
 
     catalog.forEach(m => {
       if (isAugment(m)) augmentCount += 1;
       if (isPrimeMod(m)) primeCount += 1;
+      if (m.is_aura) auraCount += 1;
+      if (m.is_exilus) exilusCount += 1;
       const set = modSetName(m);
       if (set) setCounts.set(set, (setCounts.get(set) || 0) + 1);
     });
@@ -44,6 +48,8 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
     return {
       augmentCount,
       primeCount,
+      auraCount,
+      exilusCount,
       sets: [...setCounts.entries()].sort((a, b) => a[0].localeCompare(b[0])),
     };
   }, [catalog]);
@@ -52,6 +58,8 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
     let matches;
     if (groupKey === 'augment') matches = catalog.filter(isAugment);
     else if (groupKey === 'prime') matches = catalog.filter(isPrimeMod);
+    else if (groupKey === 'aura') matches = catalog.filter(m => m.is_aura);
+    else if (groupKey === 'exilus') matches = catalog.filter(m => m.is_exilus);
     else if (groupKey.startsWith('set:')) {
       const setName = groupKey.slice(4);
       matches = catalog.filter(m => modSetName(m) === setName);
@@ -148,6 +156,8 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
         <option value="">Select an entire group to add...</option>
         <option value="augment">All Augments ({groups.augmentCount})</option>
         <option value="prime">All Prime Mods ({groups.primeCount})</option>
+        <option value="aura">All Aura Mods ({groups.auraCount})</option>
+        <option value="exilus">All Exilus Mods ({groups.exilusCount})</option>
         {groups.sets.map(([name, count]) => (
           <option key={name} value={`set:${name}`}>{name} Set ({count})</option>
         ))}
