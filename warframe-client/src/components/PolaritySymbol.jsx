@@ -5,6 +5,7 @@ import zenurik from '../assets/polarities/zenurik.svg?raw';
 import unairu from '../assets/polarities/unairu.svg?raw';
 import penjaga from '../assets/polarities/penjaga.svg?raw';
 import umbra from '../assets/polarities/umbra.svg?raw';
+import omni from '../assets/polarities/omni.svg?raw';
 
 // Official polarity icons pulled directly from the Warframe wiki (each
 // mod's polarity is a specific glyph in-game, not a color -- text names
@@ -31,9 +32,13 @@ const ICONS = {
   unairu: recolorToCurrentColor(unairu),
   penjaga: recolorToCurrentColor(penjaga),
   umbra: recolorToCurrentColor(umbra),
+  omni: recolorToCurrentColor(omni),
 };
 
-export const POLARITIES = ['madurai', 'vazarin', 'naramon', 'zenurik', 'unairu', 'umbra', 'penjaga'];
+// 'omni' is the universal polarity from Omni Forma (Update 38.5, the
+// reworked Aura Forma) -- it matches any mod, so it always earns the
+// half-cost discount. Listed last since it's the premium option.
+export const POLARITIES = ['madurai', 'vazarin', 'naramon', 'zenurik', 'unairu', 'umbra', 'penjaga', 'omni'];
 
 // size in px, color as any CSS color (defaults to inheriting text color)
 export default function PolaritySymbol({ polarity, size = 16, color, className = '' }) {

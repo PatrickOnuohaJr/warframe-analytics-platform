@@ -3,7 +3,7 @@ import Panel from './ui/Panel';
 import LoadoutSlotPickerModal from './LoadoutSlotPickerModal';
 import PolaritySymbol, { POLARITIES } from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
-import { effectiveDrain, pieceCapacity } from '../utils/modCapacity';
+import { effectiveDrain, pieceCapacity, isDiscounted } from '../utils/modCapacity';
 
 const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
@@ -181,7 +181,7 @@ export default function LoadoutEquipmentSection({
             mod={auraMod}
             rank={auraRank}
             cost={auraDrain}
-            discounted={auraSlot.polarity && auraMod?.polarity === auraSlot.polarity}
+            discounted={isDiscounted(auraMod, auraSlot.polarity)}
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'aura', pool: auraMods, slot: auraSlot })}
             onSetPolarity={polarity => onSetSlot('aura', { mod_id: auraSlot.mod_id, polarity })}
@@ -195,7 +195,7 @@ export default function LoadoutEquipmentSection({
           mod={exilusMod}
           rank={exilusRank}
           cost={exilusDrain}
-          discounted={exilusSlot.polarity && exilusMod?.polarity === exilusSlot.polarity}
+          discounted={isDiscounted(exilusMod, exilusSlot.polarity)}
           accent={accent}
           onOpenPicker={() => setPicker({ slotPosition: 'exilus', pool: ownedMods, slot: exilusSlot })}
           onSetPolarity={polarity => onSetSlot('exilus', { mod_id: exilusSlot.mod_id, polarity })}
@@ -216,7 +216,7 @@ export default function LoadoutEquipmentSection({
               mod={mod}
               rank={rank}
               cost={cost}
-              discounted={slot.polarity && mod?.polarity === slot.polarity}
+              discounted={isDiscounted(mod, slot.polarity)}
               accent={accent}
               onOpenPicker={() => setPicker({ slotPosition: pos, pool: ownedMods, slot })}
               onSetPolarity={polarity => onSetSlot(pos, { mod_id: slot.mod_id, polarity })}

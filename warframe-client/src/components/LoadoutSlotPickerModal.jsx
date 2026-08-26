@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import ModalShell from './ui/ModalShell';
 import PolaritySymbol from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
-import { effectiveDrain } from '../utils/modCapacity';
+import { effectiveDrain, isDiscounted } from '../utils/modCapacity';
 import { statGroups, STAT_GROUPS } from '../utils/modMeta';
 
 // Mod picker for a single loadout slot. `mods` is already pre-filtered by
@@ -83,7 +83,7 @@ export default function LoadoutSlotPickerModal({ mods, ownedByModId, slotPolarit
         {results.map(mod => {
           const rank = ownedByModId.get(mod.mod_id)?.owned_rank ?? 0;
           const cost = effectiveDrain(mod, rank, slotPolarity);
-          const discounted = slotPolarity && mod.polarity === slotPolarity;
+          const discounted = isDiscounted(mod, slotPolarity);
 
           return (
             <button
