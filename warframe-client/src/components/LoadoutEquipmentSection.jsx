@@ -12,6 +12,7 @@ function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRan
 
   return (
     <div
+      onClick={onOpenPicker}
       className="rounded-xl border p-3 cursor-pointer transition-colors hover:bg-black/10"
       style={{ borderColor: mod ? `${accent}55` : COLOR.border, background: COLOR.surface2 }}
     >
@@ -24,7 +25,7 @@ function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRan
         )}
       </div>
 
-      <div onClick={onOpenPicker}>
+      <div>
         {mod ? (
           <div className="flex items-center gap-1.5">
             <PolaritySymbol polarity={mod.polarity} size={13} color={COLOR.mutedInk} />
