@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
+import { fetchAll } from '../lib/fetchAll';
 import Panel from '../components/ui/Panel';
 import Button from '../components/ui/Button';
 import ModalShell from '../components/ui/ModalShell';
@@ -53,10 +54,14 @@ export default function ModsPage() {
       return;
     }
 
-    const { data: modRows, error: modsError } = await wfBase
-      .from('mods')
-      .select('mod_id, name, category, polarity, base_drain, max_rank, rarity, is_aura, is_exilus, raw_json')
-      .order('name', { ascending: true });
+    // Paged -- the mod catalog is past PostgREST's 1000-row default cap,
+    // which silently truncates (see lib/fetchAll.js).
+    const { data: modRows, error: modsError } = await fetchAll(() =>
+      wfBase
+        .from('mods')
+        .select('mod_id, name, category, polarity, base_drain, max_rank, rarity, is_aura, is_exilus, raw_json')
+        .order('name', { ascending: true })
+    );
 
     if (modsError) {
       console.error('Failed to load mod catalog:', modsError);

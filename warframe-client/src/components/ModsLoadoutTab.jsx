@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
+import { fetchAll } from '../lib/fetchAll';
 import LoadoutEquipmentSection from './LoadoutEquipmentSection';
 import { COLOR } from '../constants/theme';
 
@@ -37,7 +38,11 @@ export default function ModsLoadoutTab({ frame, color }) {
       setError(null);
 
       const [modsRes, invRes, slotsRes, metaRes, profileRes] = await Promise.all([
-        wfBase.from('mods').select('mod_id, name, category, polarity, base_drain, max_rank, is_aura, is_exilus, raw_json'),
+        // Paged -- the mod catalog is past PostgREST's 1000-row default
+        // cap, which silently truncates (see lib/fetchAll.js).
+        fetchAll(() =>
+          wfBase.from('mods').select('mod_id, name, category, polarity, base_drain, max_rank, is_aura, is_exilus, raw_json')
+        ),
         wfUser.from('mod_inventory').select('mod_id, owned_rank'),
         wfUser.from('loadout_slots').select('*').eq('my_frame_id', frame.my_frame_id),
         wfUser.from('loadout_meta').select('*').eq('my_frame_id', frame.my_frame_id),
