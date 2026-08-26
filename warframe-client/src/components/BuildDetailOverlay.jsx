@@ -4,6 +4,7 @@ import { getTauBonusText } from '../constants/shardBonuses'
 import { wfUser } from '../lib/supabase'
 import TestingLogTab from './TestingLogTab'
 import IdentityTab from './IdentityTab'
+import ModsLoadoutTab from './ModsLoadoutTab'
 import { getReadableColor } from '../utils/color'
 import Panel from './ui/Panel'
 
@@ -301,6 +302,7 @@ export default function BuildDetailOverlay({
           <TabButton active={activeTab === 'shards'} color={color} onClick={() => setActiveTab('shards')}>Archon Shards</TabButton>
           <TabButton active={activeTab === 'abilities'} color={color} onClick={() => setActiveTab('abilities')}>Abilities</TabButton>
           <TabButton active={activeTab === 'testing'} color={color} onClick={() => setActiveTab('testing')}>Testing Log</TabButton>
+          <TabButton active={activeTab === 'mods'} color={color} onClick={() => setActiveTab('mods')}>Mods</TabButton>
         </div>
 
         {/* Identity tab */}
@@ -311,6 +313,11 @@ export default function BuildDetailOverlay({
         {/* Testing Log tab */}
         {activeTab === 'testing' && (
           <TestingLogTab frame={frame} />
+        )}
+
+        {/* Mods tab */}
+        {activeTab === 'mods' && (
+          <ModsLoadoutTab frame={frame} color={color} />
         )}
 
         {/* Arsenal tab */}
