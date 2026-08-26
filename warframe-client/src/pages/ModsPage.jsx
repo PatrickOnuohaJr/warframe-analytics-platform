@@ -26,6 +26,8 @@ export default function ModsPage() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [auraOnly, setAuraOnly] = useState(false);
   const [exilusOnly, setExilusOnly] = useState(false);
+  const [augmentOnly, setAugmentOnly] = useState(false);
+  const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedMod, setSelectedMod] = useState(null);
 
@@ -69,13 +71,16 @@ export default function ModsPage() {
   );
 
   const visibleMods = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return ownedMods.filter(m => {
       if (categoryFilter !== 'All' && m.category !== categoryFilter) return false;
       if (auraOnly && !m.is_aura) return false;
       if (exilusOnly && !m.is_exilus) return false;
+      if (augmentOnly && !isAugment(m)) return false;
+      if (q && !m.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [ownedMods, categoryFilter, auraOnly, exilusOnly]);
+  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, search]);
 
   async function handleRemove(mod) {
     const confirmed = window.confirm(`Remove ${mod.name} from your inventory?`);
@@ -158,6 +163,15 @@ export default function ModsPage() {
         </Button>
       </div>
 
+      <input
+        type="text"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search your mod inventory..."
+        className="w-full rounded-lg border px-3 py-2 text-sm outline-none mb-4"
+        style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+      />
+
       <div className="flex flex-wrap gap-2 mb-4">
         <button
           onClick={() => setAuraOnly(v => !v)}
@@ -180,6 +194,17 @@ export default function ModsPage() {
           }}
         >
           Exilus Only
+        </button>
+        <button
+          onClick={() => setAugmentOnly(v => !v)}
+          className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
+          style={{
+            background: augmentOnly ? `${COLOR.gold}22` : 'transparent',
+            color: augmentOnly ? COLOR.gold : COLOR.mutedInk,
+            border: `1px solid ${augmentOnly ? COLOR.gold : COLOR.border}`,
+          }}
+        >
+          Augment Only
         </button>
       </div>
 
