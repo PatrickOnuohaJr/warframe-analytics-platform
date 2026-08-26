@@ -11,6 +11,7 @@ import HomePage from './pages/HomePage'
 import AddFrameModal from './components/AddFrameModal'
 import ArsenalSearchPage from './components/ArsenalSearchPage';
 import ArmoryPage from './pages/ArmoryPage'
+import ModsPage from './pages/ModsPage'
 import { getReadableColor } from './utils/color'
 import ModalShell from './components/ui/ModalShell'
 import Button from './components/ui/Button'
@@ -419,6 +420,27 @@ const filteredFrames =
             >
               Armory
             </button>
+
+            <button
+              onClick={() => setActivePage('mods')}
+              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
+              style={{
+                background:
+                  activePage === 'mods'
+                    ? `${GOLD}22`
+                    : PANEL_BG,
+                color:
+                  activePage === 'mods'
+                    ? GOLD
+                    : MUTED,
+                borderColor:
+                  activePage === 'mods'
+                    ? `${GOLD}88`
+                    : BORDER,
+              }}
+            >
+              Mods
+            </button>
             </div>
           {activePage === 'codex' && (
             <div className="mb-4">
@@ -579,6 +601,8 @@ const filteredFrames =
       />
     ) : activePage === 'armory' ? (
       <ArmoryPage frames={frames} refetchFrames={refetchFrames} />
+    ) : activePage === 'mods' ? (
+      <ModsPage />
     ) : (
           <ArchonShardsPage />
 )}
