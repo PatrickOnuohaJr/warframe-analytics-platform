@@ -4,7 +4,18 @@
 // <LOWER_IS_BETTER> / <ENERGY> meant for their own icon rendering, not ours.
 
 export function isAugment(mod) {
-  return mod.raw_json?.isAugment === true;
+  if (mod.raw_json?.isAugment !== true) return false;
+
+  // WFCD sets isAugment=true for two generic buckets too -- compatName
+  // "WARFRAME" (plain stat/set mods like the Augur or Umbra sets) and
+  // "AURA" -- neither modifies a specific ability. A real per-ability
+  // augment always names a specific frame ("Chroma", "Volt", ...), and
+  // those generic buckets are always ALL-CAPS placeholders, so filter on
+  // that rather than hardcoding a frame-name list.
+  const target = mod.raw_json?.compatName;
+  if (!target || target === target.toUpperCase()) return false;
+
+  return true;
 }
 
 export function augmentTarget(mod) {
