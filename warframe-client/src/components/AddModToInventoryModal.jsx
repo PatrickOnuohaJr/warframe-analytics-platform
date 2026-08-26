@@ -17,6 +17,7 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   const [category, setCategory] = useState(CATEGORIES.includes(initialCategory) ? initialCategory : 'All');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(new Set());
+  const [showSelectedOnly, setShowSelectedOnly] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -26,8 +27,9 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
       .filter(m => !ownedIds.has(m.mod_id))
       .filter(m => category === 'All' || m.category === category)
       .filter(m => !q || m.name.toLowerCase().includes(q))
+      .filter(m => !showSelectedOnly || selected.has(m.mod_id))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [catalog, ownedIds, category, search]);
+  }, [catalog, ownedIds, category, search, showSelectedOnly, selected]);
 
   // Real WFCD data behind "groupable": isAugment flag, isPrime flag, and
   // modSet (parsed to a human name, e.g. "Umbra", "Augur", "Strain") --
@@ -89,6 +91,10 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
       matches.forEach(m => { if (!ownedIds.has(m.mod_id)) next.add(m.mod_id); });
       return next;
     });
+
+    // Jump straight to reviewing what got picked -- the whole point of
+    // grouping is not having to scroll the full 600+ list to check it.
+    setShowSelectedOnly(true);
   }
 
   function toggle(modId) {
@@ -199,11 +205,18 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
         style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
       />
 
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <p className="text-xs" style={{ color: COLOR.mutedInk }}>
-          {results.length} mod{results.length === 1 ? '' : 's'} · {selected.size} selected
+          Showing {results.length} · {selected.size} selected total
         </p>
         <div className="flex gap-3">
+          <button
+            onClick={() => setShowSelectedOnly(v => !v)}
+            className="text-xs font-bold"
+            style={{ color: showSelectedOnly ? COLOR.gold : COLOR.mutedInk }}
+          >
+            {showSelectedOnly ? 'Showing Selected Only' : 'Show Selected Only'}
+          </button>
           <button onClick={selectAllVisible} className="text-xs" style={{ color: COLOR.gold }}>
             Select All Visible
           </button>
