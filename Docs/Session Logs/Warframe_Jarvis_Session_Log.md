@@ -921,3 +921,78 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Real 3-Weapon Rule violation surfaced in live data: **Dread is currently on 4 primaries** — flagged during Armory testing, not addressed, Patrick's call
 
 ---
+
+### Session 011 — Mods Inventory & DB: full arc, DB to and inventory to build
+**Date:** 2026-08-26
+**Location:** Not recorded
+**Duration:** Not recorded — single very long session, high output
+**Status:** SHIPPED
+
+**Mods DB — Schema, Seed, and Data Quality**
+
+*What Was Done:*
+- Ran the Mods DB migration Patrick had pending from Session 010 (`wf_base.mods`, `wf_user.mod_inventory`, `loadout_slots`, `loadout_meta`). First run silently applied RLS with zero working policies — anon reads returned an empty catalog with no error. Diagnosed via anon-key vs service-key row-count comparison, shipped a fix migration re-establishing policies + grants.
+- `seed_mods.py` written against the live WFCD API (665 weapons' sibling dataset), scoped to Warframe/Primary/Secondary/Melee mods only, matching the app's existing weapon scope boundary.
+- **14 fake/discontinued mods purged**: 4 (Primed Streamline, Primed Fast Deflection, Primed Blunderbuss, Primed Charged Chamber) were coded by DE but never shipped — no release date, no drop sources, unlike every real mod. 10 more (Primed Bane/Expel Of Corpus/Grineer/Infested/Orokin/The Murmur) were real but discontinued across three naming generations, superseded by Primed Cleanse. Found via Patrick's live in-game codex cross-check; seed script now excludes all 14 by uniqueName permanently.
+- **87 mods recovered from a duplicate-name data-loss bug**: WFCD sometimes lists the same real mod twice under different internal item codes (old pre-rework version + current, e.g. Ammo Drum at fusionLimit 5 and 10), and sometimes reuses one display name for two genuinely different mods (Equilibrium covers both the real mod, fusionLimit 10, and the separate early-game "Flawed Equilibrium," fusionLimit 3). The original upsert-by-name seed let whichever WFCD entry came last silently overwrite the other — this is why Patrick's "Equilibrium" was permanently capped at rank 3 showing the wrong description. Rewrote `seed_mods.py` to disambiguate by wiki page (same name + same wiki page = true duplicate, keep highest fusionLimit; same name + different wiki page = genuinely different mods, keep both, rename from wiki title) and reconcile in place by uniqueName so existing inventory rows got corrected/renamed rather than orphaned. Final catalog: 1086 mods (was 991).
+- **PostgREST's 1000-row default cap silently truncating the catalog**: once the reconciliation pushed the catalog past 1000 rows, two different queries started dropping different mods depending on their sort order — Steel Charge (owned, maxed, needed for Frost's build) vanished from the loadout builder specifically. New `lib/fetchAll.js` pages through explicitly; both call sites fixed.
+
+*Outcome:*
+- Catalog is now 1086 real, current, correctly-named mods. Verified live against Patrick's actual in-game codex multiple times over the session, including a full "list every Prime mod" audit that confirmed zero remaining gaps in scope.
+
+**Mod Inventory Page (`ModsPage.jsx`)**
+
+*What Was Done:*
+- Ownership list with rank slider (replaced initial number-input version) + one-click Max button, both writing live to `mod_inventory.owned_rank`.
+- Mod effect text surfaced directly on cards and a detail modal, sourced from `raw_json.levelStats` (WFCD has no flat description field) with a `cleanStatText()` pass stripping the game's internal `<TAG>` markup (`<LOWER_IS_BETTER>`, `<DT_*_COLOR>`, etc.).
+- Weapon subtype tag (Rifle/Shotgun/Pistol/Nikanas/etc., from `raw_json.compatName`) shown inline so a card is self-explanatory without already knowing the mod.
+- Filters: category, Aura/Exilus/Augment Only, 9 stat-group filters (Health/Shield/Armor/Energy/Sprint Speed/Duration/Efficiency/Range/Strength — `statGroups()` in `utils/modMeta.js`, scanned from real effect text and verified against real mods before shipping, not guessed keywords), Not Maxed Only, and a text search bar.
+- Bulk Edit mode: checkboxes per card, Select All Shown (respects active filters), Max All Selected / Set Rank To N for the whole selection at once — closes the loop with Not Maxed Only for "select everything below max, max it all in one shot."
+- **Real augment-badge bug fixed**: WFCD's `isAugment` flag is true for two generic buckets (`compatName` "WARFRAME" and "AURA") that aren't real per-ability augments — this was tagging the entire Augur set and others as fake augments. Fixed by requiring a specific (non-ALL-CAPS) compatName target.
+- Official Warframe polarity icons (all 7 real polarities — madurai/vazarin/naramon/zenurik/unairu/umbra/penjaga — downloaded from the wiki, not approximated) shown next to every mod everywhere it appears.
+
+**Add Mods Modal (`AddModToInventoryModal.jsx`)**
+
+*What Was Done:*
+- Two separate group-select dropdowns: themed sets (Prime + all 19 real mod sets — Augur, Umbra, Strain, Vigilante, etc., derived from `raw_json.modSet`, not a guessed list) and mod type/stat (Aura, Exilus, Augment, Health, Shield, Armor, Energy).
+- Picking a group auto-switches the list to "Showing Selected Only" so a 600+ mod catalog doesn't require scrolling to review what got picked before committing.
+
+**Loadout Builder (`ModsLoadoutTab.jsx` + `LoadoutEquipmentSection.jsx` + `LoadoutSlotPickerModal.jsx`) — the other half of the Mods arc**
+
+*What Was Done:*
+- New "Mods" tab in `BuildDetailOverlay`, per the existing per-build tab pattern. Per build: 4 equipment pieces (Warframe/Primary/Secondary/Melee), each with 8 numbered slots + Exilus (+ Aura on Warframe), forma count, catalyst/reactor toggle, live capacity/drain math.
+- Slot polarity picker: clickable row of the real polarity icons (Patrick's explicit ask — "I don't want a dropdown, I want the symbols"), not a `<select>`.
+- **Omni Forma** added as an 8th polarity option (Update 38.5, the reworked Aura Forma) after Patrick named it correctly the second time — first WebFetch pass on the wiki came back empty, second pass (searching "Omni Forma" directly) confirmed it. Discount rule: matches every polarity except Umbra (Patrick corrected a wrong wiki summary that claimed the opposite, live-tested both cases side by side to confirm).
+- Rank slider + Max button added directly to loadout slots, not just the Mods page — Patrick's real workflow is maxing mods mid-build in the Arsenal, not walking back to the mod terminal.
+- **Three real capacity math bugs found and fixed**, all root-caused against Patrick's own reported ground truth (his build showed 209/102 capacity; real in-game ceiling with Steel Charge is 78) rather than patched at the symptom:
+  1. `drainAtRank` had a sign error — `baseDrain + rank` is correct for positive-cost mods (Serration: 4,5,6...14) but wrong for negative ones (aura refunds), silently flipping them toward zero instead of away from it (Steel Charge at max rank came out to +1 instead of the real -9). Fixed and verified against the wiki for three independent real mods.
+  2. Aura mods use a completely different polarity rule than every other mod — matching polarity *doubles* the capacity bonus, not half-cost — which the code didn't implement at all until this session.
+  3. Mastery Rank was wrongly coded as a flat +30 max capacity bonus. Its only real effect is a minimum capacity floor while an item is still leveling from rank 0 — irrelevant once a piece is at max rank, which every build here is. Removed from the formula; removed the now-dead Mastery Rank input from the build page entirely rather than leave a control that silently did nothing.
+- Verified end-to-end against Frost Prime: MR 30 + Reactor + Steel Charge maxed in a matching/Omni aura slot now computes to exactly 78 net capacity, matching Patrick's real-game ceiling exactly.
+
+**Bugs Fixed:**
+- Mods migration RLS applied with zero working policies (silent empty catalog for anon reads)
+- 14 fake/discontinued mods in catalog and Patrick's real inventory (one ranked to 10 believing it was real)
+- 87 mods silently overwritten by upsert-by-name WFCD data collisions (Equilibrium capped at rank 3 was actually "Flawed Equilibrium," among others)
+- PostgREST 1000-row cap silently truncating the mod catalog once it crossed 1000 rows (Steel Charge invisible in the loadout builder specifically)
+- Augment badge false-tagging entire non-augment sets (Augur, etc.) due to trusting WFCD's `isAugment` flag on generic buckets
+- WFCD's raw `<TAG>` markup (`<LOWER_IS_BETTER>`, `<DT_*_COLOR>`, etc.) showing literally in mod effect text
+- Loadout slot click target shrank to just the mod-name text after the rank slider was added, breaking "click to open the picker" for most of the visible card
+- Aura mod drain computing backwards (sign error) and aura polarity match mechanic missing entirely
+- Mastery Rank wrongly inflating displayed build capacity by up to +30
+
+**End-of-Session Status:**
+- **Mods Inventory & DB is fully shipped** — DB (1086 real, current, correctly-named mods), inventory tracking with bulk workflows, and the loadout builder with capacity/drain math verified against real gameplay. This was the hard prerequisite blocking D.2–D.5 Survivability Suite and contributing to A3; both are now unblocked on this front.
+- All work committed and pushed to `origin/main` across roughly 20 commits this session.
+
+**Next Targets:**
+- **D.2–D.5 — Survivability Suite** — now at the top of the locked queue, no longer blocked
+- Custom logo/favicon — still a placeholder mark, explicitly deferred by Patrick
+- Open Granola audit decisions, still untouched: Dagath/Gara primary weapons, Wukong/Voruna/Ash slot swaps, Revenant's melee replacement, Khora's three empty slots, Atlas's utility primary
+- Companion tracking — still untracked, still unscoped
+- Koumei dropdown — still pending final confirmation (likely resolved since Session 008, never formally closed)
+- Two pending shard swaps + Revenant's shard goal — still pending, in-app UI task for Patrick to do directly
+- Real 3-Weapon Rule violation surfaced in live data (Session 010): **Dread is currently on 4 primaries** — still not addressed, Patrick's call
+- Aura/Exilus mismatch-polarity math (80% aura shrink, +25% regular-mod mismatch penalty mentioned by the wiki) implemented for the matched case only this session — mismatch-specific edge cases not yet live-verified against real gameplay
+
+---
