@@ -253,7 +253,17 @@ export default function ModsPage() {
               <div className="mt-2" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs" style={{ color: COLOR.mutedInk }}>Rank</label>
-                  <span className="text-xs font-bold" style={{ color: COLOR.gold }}>{rank} / {cap}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold" style={{ color: COLOR.gold }}>{rank} / {cap}</span>
+                    <button
+                      onClick={() => handleRankChange(mod, cap)}
+                      disabled={cap === 0 || rank === cap}
+                      className="text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded disabled:opacity-30"
+                      style={{ background: `${COLOR.gold}18`, border: `1px solid ${COLOR.gold}55`, color: COLOR.gold }}
+                    >
+                      Max
+                    </button>
+                  </div>
                 </div>
                 <input
                   type="range"
