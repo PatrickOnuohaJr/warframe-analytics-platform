@@ -5,24 +5,7 @@ import Button from '../components/ui/Button';
 import ModalShell from '../components/ui/ModalShell';
 import AddModToInventoryModal from '../components/AddModToInventoryModal';
 import { COLOR } from '../constants/theme';
-
-// WFCD's mod data has no flat "description" field -- the actual effect
-// text lives per-rank in raw_json.levelStats[rank].stats. Augment mods
-// carry their target frame/weapon in raw_json.compatName + isAugment.
-function isAugment(mod) {
-  return mod.raw_json?.isAugment === true;
-}
-
-function augmentTarget(mod) {
-  return mod.raw_json?.compatName;
-}
-
-function effectTextAtRank(mod, rank) {
-  const levels = mod.raw_json?.levelStats;
-  if (!levels || levels.length === 0) return null;
-  const index = Math.max(0, Math.min(rank, levels.length - 1));
-  return (levels[index]?.stats || []).join(' ');
-}
+import { isAugment, augmentTarget, effectTextAtRank } from '../utils/modMeta';
 
 // ============================================================================
 // ModsPage.jsx (Mods Inventory & DB -- first slice)
@@ -44,7 +27,6 @@ export default function ModsPage() {
   const [auraOnly, setAuraOnly] = useState(false);
   const [exilusOnly, setExilusOnly] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [rankDrafts, setRankDrafts] = useState({}); // mod_id -> string, in-progress edits
   const [selectedMod, setSelectedMod] = useState(null);
 
   async function loadInventory() {
@@ -116,37 +98,26 @@ export default function ModsPage() {
     });
   }
 
-  async function commitRank(mod) {
-    const draft = rankDrafts[mod.mod_id];
-    if (draft === undefined) return;
-
-    const cap = mod.max_rank ?? 0;
-    const nextRank = Math.max(0, Math.min(cap, Number(draft) || 0));
+  function handleRankChange(mod, nextRank) {
     const current = owned.get(mod.mod_id);
-
-    setRankDrafts(prev => {
-      const next = { ...prev };
-      delete next[mod.mod_id];
-      return next;
-    });
-
     if (!current || current.owned_rank === nextRank) return;
 
-    const { error: updateError } = await wfUser
-      .from('mod_inventory')
-      .update({ owned_rank: nextRank })
-      .eq('mod_id', mod.mod_id);
-
-    if (updateError) {
-      console.error('Failed to update mod rank:', updateError);
-      return;
-    }
-
+    // Optimistic: update locally first so the slider and effect text move
+    // together, then persist. Slider steps are small integers (max_rank
+    // rarely exceeds 10), so a write per step is cheap.
     setOwned(prev => {
       const next = new Map(prev);
       next.set(mod.mod_id, { ...current, owned_rank: nextRank });
       return next;
     });
+
+    wfUser
+      .from('mod_inventory')
+      .update({ owned_rank: nextRank })
+      .eq('mod_id', mod.mod_id)
+      .then(({ error: updateError }) => {
+        if (updateError) console.error('Failed to update mod rank:', updateError);
+      });
   }
 
   if (loading) {
@@ -223,10 +194,11 @@ export default function ModsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleMods.map(mod => {
           const inv = owned.get(mod.mod_id);
-          const rankValue = rankDrafts[mod.mod_id] ?? String(inv?.owned_rank ?? 0);
+          const rank = inv?.owned_rank ?? 0;
           const cap = mod.max_rank ?? 0;
 
           const augment = isAugment(mod);
+          const effect = effectTextAtRank(mod, rank);
 
           return (
             <Panel key={mod.mod_id} accent={COLOR.gold} interactive onClick={() => setSelectedMod(mod)}>
@@ -253,20 +225,27 @@ export default function ModsPage() {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
-                <label className="text-xs" style={{ color: COLOR.mutedInk }}>Rank</label>
+              <div className="mt-2" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs" style={{ color: COLOR.mutedInk }}>Rank</label>
+                  <span className="text-xs font-bold" style={{ color: COLOR.gold }}>{rank} / {cap}</span>
+                </div>
                 <input
-                  type="number"
+                  type="range"
                   min="0"
                   max={cap}
-                  value={rankValue}
-                  onChange={e => setRankDrafts(prev => ({ ...prev, [mod.mod_id]: e.target.value }))}
-                  onBlur={() => commitRank(mod)}
-                  className="w-16 rounded-lg border px-2 py-1 text-sm outline-none"
-                  style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+                  step="1"
+                  value={rank}
+                  onChange={e => handleRankChange(mod, Number(e.target.value))}
+                  disabled={cap === 0}
+                  className="w-full"
+                  style={{ accentColor: COLOR.gold }}
                 />
-                <span className="text-xs" style={{ color: COLOR.mutedInk }}>/ {cap}</span>
               </div>
+
+              {effect && (
+                <p className="text-xs mt-2" style={{ color: COLOR.ink }}>{effect}</p>
+              )}
             </Panel>
           );
         })}

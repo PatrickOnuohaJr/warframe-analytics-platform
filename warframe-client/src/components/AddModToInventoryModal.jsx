@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { wfUser } from '../lib/supabase';
 import ModalShell from './ui/ModalShell';
 import { COLOR } from '../constants/theme';
+import { isAugment, isPrimeMod, modSetName } from '../utils/modMeta';
 
 const CATEGORIES = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee'];
 
@@ -24,6 +25,46 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
       .filter(m => !q || m.name.toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [catalog, ownedIds, category, search]);
+
+  // Real WFCD data behind "groupable": isAugment flag, isPrime flag, and
+  // modSet (parsed to a human name, e.g. "Umbra", "Augur", "Strain") --
+  // whatever sets actually exist in the catalog, not a guessed list.
+  const groups = useMemo(() => {
+    let augmentCount = 0;
+    let primeCount = 0;
+    const setCounts = new Map();
+
+    catalog.forEach(m => {
+      if (isAugment(m)) augmentCount += 1;
+      if (isPrimeMod(m)) primeCount += 1;
+      const set = modSetName(m);
+      if (set) setCounts.set(set, (setCounts.get(set) || 0) + 1);
+    });
+
+    return {
+      augmentCount,
+      primeCount,
+      sets: [...setCounts.entries()].sort((a, b) => a[0].localeCompare(b[0])),
+    };
+  }, [catalog]);
+
+  function selectGroup(groupKey) {
+    let matches;
+    if (groupKey === 'augment') matches = catalog.filter(isAugment);
+    else if (groupKey === 'prime') matches = catalog.filter(isPrimeMod);
+    else if (groupKey.startsWith('set:')) {
+      const setName = groupKey.slice(4);
+      matches = catalog.filter(m => modSetName(m) === setName);
+    } else {
+      return;
+    }
+
+    setSelected(prev => {
+      const next = new Set(prev);
+      matches.forEach(m => { if (!ownedIds.has(m.mod_id)) next.add(m.mod_id); });
+      return next;
+    });
+  }
 
   function toggle(modId) {
     setSelected(prev => {
@@ -97,6 +138,20 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
           </button>
         ))}
       </div>
+
+      <select
+        value=""
+        onChange={e => { if (e.target.value) selectGroup(e.target.value); }}
+        className="w-full rounded-lg border px-3 py-2 text-sm outline-none mb-3"
+        style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+      >
+        <option value="">Select an entire group to add...</option>
+        <option value="augment">All Augments ({groups.augmentCount})</option>
+        <option value="prime">All Prime Mods ({groups.primeCount})</option>
+        {groups.sets.map(([name, count]) => (
+          <option key={name} value={`set:${name}`}>{name} Set ({count})</option>
+        ))}
+      </select>
 
       <input
         type="text"
