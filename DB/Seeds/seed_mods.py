@@ -1,5 +1,7 @@
 import os
 import requests
+from collections import defaultdict
+from urllib.parse import unquote
 from supabase import create_client
 from dotenv import load_dotenv
 
@@ -52,11 +54,96 @@ EXCLUDED_UNIQUE_NAMES = {
 }
 
 
-def upsert_mod(payload):
-    supabase.schema("wf_base").table("mods").upsert(
-        payload,
-        on_conflict="name",
-    ).execute()
+def wiki_title(mod):
+    url = mod.get("wikiaUrl")
+    if not url:
+        return None
+    segment = url.rstrip("/").split("/")[-1]
+    return unquote(segment).replace("_", " ")
+
+
+def build_targets(raw_mods):
+    """
+    Real bug found 2026-08-26: WFCD sometimes lists the exact same real
+    mod more than once under different internal item codes (uniqueName)
+    -- almost always an old pre-rework version alongside the current one
+    (e.g. Ammo Drum at fusionLimit 5 AND fusionLimit 10), both sharing
+    the same display name AND the same wiki page. It also sometimes
+    reuses one display name for two genuinely different, separately-
+    obtainable mods -- "Equilibrium" covers both the real mod (fusion
+    limit 10, up to +110%) and the early-game "Flawed Equilibrium"
+    (fusion limit 3, up to +32%), which the wiki correctly treats as
+    separate pages even though WFCD's `name` field doesn't.
+
+    Naive upsert-by-name (the original approach) silently let whichever
+    entry got processed last in the API response overwrite the other,
+    which is how Patrick ended up with Equilibrium permanently capped at
+    rank 3 with the wrong description.
+
+    Disambiguate by wiki page: entries that share both name AND wiki
+    page are the same real mod -- keep only the current (highest
+    fusionLimit) one. Entries that share name but NOT wiki page are
+    genuinely different mods -- keep all of them, renamed from their own
+    wiki page title so they stop colliding.
+
+    Returns a list of (original_name, display_name, mod_dict).
+    """
+    scoped = [
+        m for m in raw_mods
+        if m.get("type") in TYPE_TO_CATEGORY
+        and m.get("name")
+        and m.get("uniqueName") not in EXCLUDED_UNIQUE_NAMES
+    ]
+
+    by_name = defaultdict(list)
+    for m in scoped:
+        by_name[m["name"]].append(m)
+
+    targets = []
+
+    for name, entries in by_name.items():
+        if len(entries) == 1:
+            targets.append((name, name, entries[0]))
+            continue
+
+        by_wiki = defaultdict(list)
+        for e in entries:
+            by_wiki[wiki_title(e) or name].append(e)
+
+        # Only rename when the split is real (more than one distinct
+        # wiki page in this group) -- a group that collapses to a single
+        # wiki page keeps the original WFCD name untouched.
+        genuinely_split = len(by_wiki) > 1
+
+        for wiki_name, group in by_wiki.items():
+            winner = max(group, key=lambda m: (m.get("fusionLimit") or 0))
+            display_name = wiki_name if genuinely_split else name
+            targets.append((name, display_name, winner))
+
+    return targets
+
+
+def fetch_existing():
+    """mod_id, name, and uniqueName (from raw_json) for every row already
+    seeded, paginated past PostgREST's 1000-row default cap."""
+    existing = []
+    offset = 0
+
+    while True:
+        res = (
+            supabase.schema("wf_base")
+            .table("mods")
+            .select("mod_id, name, raw_json")
+            .range(offset, offset + 999)
+            .execute()
+        )
+        rows = res.data or []
+        existing.extend(rows)
+        if len(rows) < 1000:
+            break
+        offset += 1000
+
+    return existing
 
 
 def seed_mods():
@@ -68,58 +155,84 @@ def seed_mods():
         print("Failed to fetch mod data.")
         return
 
-    mods = response.json()
+    raw_mods = response.json()
+    targets = build_targets(raw_mods)
 
-    seeded = 0
+    existing_rows = fetch_existing()
+    existing_by_name = {r["name"]: r for r in existing_rows}
+
+    # Group targets back by their original collision name so, for a
+    # genuine multi-mod split, we know which target should reuse the
+    # pre-existing row (matched by uniqueName) vs which are brand new.
+    by_original_name = defaultdict(list)
+    for original_name, display_name, mod in targets:
+        by_original_name[original_name].append((display_name, mod))
+
+    updated = 0
+    inserted = 0
     skipped = 0
-    out_of_scope = 0
-    excluded = 0
 
-    for mod in mods:
-        try:
-            name = mod.get("name")
-            mod_type = mod.get("type")
+    for original_name, group in by_original_name.items():
+        existing_row = existing_by_name.get(original_name)
+        existing_unique_name = None
+        if existing_row:
+            existing_unique_name = (existing_row.get("raw_json") or {}).get("uniqueName")
 
-            if not name:
+        # Whichever target matches the pre-existing row's own uniqueName
+        # gets updated in place (preserves mod_id, so any inventory FK
+        # referencing it survives untouched). If nothing matches, the
+        # existing row is holding a tier WFCD has since dropped entirely
+        # (seen live: Vitality/Redirection/Steel Fiber had a 3rd
+        # "Intermediate" tier in old seeded data that's gone from the
+        # current API) -- fall back to the highest-fusionLimit target
+        # (the regular, non-"Flawed" mod), since that's what a player
+        # almost always means, rather than an arbitrary pick.
+        reuse_index = None
+        for i, (_, mod) in enumerate(group):
+            if mod.get("uniqueName") == existing_unique_name:
+                reuse_index = i
+                break
+        if reuse_index is None:
+            reuse_index = max(range(len(group)), key=lambda i: group[i][1].get("fusionLimit") or 0)
+
+        for i, (display_name, mod) in enumerate(group):
+            try:
+                category = TYPE_TO_CATEGORY.get(mod.get("type"))
+                if category is None:
+                    skipped += 1
+                    continue
+
+                payload = {
+                    "name": display_name,
+                    "category": category,
+                    "polarity": mod.get("polarity"),
+                    "base_drain": mod.get("baseDrain"),
+                    "max_rank": mod.get("fusionLimit"),
+                    "rarity": mod.get("rarity"),
+                    "is_aura": mod.get("compatName") == "AURA",
+                    "is_exilus": bool(mod.get("isExilus")),
+                    "raw_json": mod,
+                }
+
+                if existing_row and i == reuse_index:
+                    supabase.schema("wf_base").table("mods").update(payload).eq(
+                        "mod_id", existing_row["mod_id"]
+                    ).execute()
+                    print(f"Updated: {display_name} [{category}]")
+                    updated += 1
+                else:
+                    supabase.schema("wf_base").table("mods").insert(payload).execute()
+                    print(f"Inserted: {display_name} [{category}]")
+                    inserted += 1
+
+            except Exception as e:
+                print(f"Failed: {display_name} -> {e}")
                 skipped += 1
-                continue
-
-            if mod.get("uniqueName") in EXCLUDED_UNIQUE_NAMES:
-                excluded += 1
-                continue
-
-            category = TYPE_TO_CATEGORY.get(mod_type)
-
-            if category is None:
-                out_of_scope += 1
-                continue
-
-            payload = {
-                "name": name,
-                "category": category,
-                "polarity": mod.get("polarity"),
-                "base_drain": mod.get("baseDrain"),
-                "max_rank": mod.get("fusionLimit"),
-                "rarity": mod.get("rarity"),
-                "is_aura": mod.get("compatName") == "AURA",
-                "is_exilus": bool(mod.get("isExilus")),
-                "raw_json": mod,
-            }
-
-            upsert_mod(payload)
-
-            print(f"Seeded: {name} [{category}]")
-            seeded += 1
-
-        except Exception as e:
-            print(f"Failed: {mod.get('name')} -> {e}")
-            skipped += 1
 
     print("\nDone.")
-    print(f"Seeded/updated: {seeded}")
-    print(f"Out of scope (skipped): {out_of_scope}")
-    print(f"Excluded (never released / discontinued): {excluded}")
-    print(f"Failed: {skipped}")
+    print(f"Updated (existing rows corrected): {updated}")
+    print(f"Inserted (newly recognized distinct mods): {inserted}")
+    print(f"Skipped: {skipped}")
 
 
 if __name__ == "__main__":
