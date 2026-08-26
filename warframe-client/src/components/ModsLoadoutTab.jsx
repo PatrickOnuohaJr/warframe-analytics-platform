@@ -147,6 +147,28 @@ export default function ModsLoadoutTab({ frame, color }) {
     if (upsertError) console.error('Failed to save loadout meta:', upsertError);
   }
 
+  // A mod's rank belongs to the mod itself (mod_inventory), not to the
+  // slot -- ranking one up here raises it everywhere it's equipped, same
+  // as fusing the physical card in-game does.
+  function handleSetRank(modId, nextRank) {
+    const current = owned.get(modId);
+    if (!current || current.owned_rank === nextRank) return;
+
+    setOwned(prev => {
+      const next = new Map(prev);
+      next.set(modId, { ...current, owned_rank: nextRank });
+      return next;
+    });
+
+    wfUser
+      .from('mod_inventory')
+      .update({ owned_rank: nextRank })
+      .eq('mod_id', modId)
+      .then(({ error: updateError }) => {
+        if (updateError) console.error('Failed to update mod rank:', updateError);
+      });
+  }
+
   async function handleSetMasteryRank(value) {
     const clamped = Math.max(0, Math.min(999, value));
     setMasteryRankState(clamped);
@@ -197,6 +219,7 @@ export default function ModsLoadoutTab({ frame, color }) {
           masteryRank={masteryRank}
           onSetMeta={patch => handleSetMeta(type, patch)}
           onSetSlot={(slotPosition, value) => handleSetSlot(type, slotPosition, value)}
+          onSetRank={handleSetRank}
           accent={color}
         />
       ))}

@@ -7,7 +7,9 @@ import { effectiveDrain, pieceCapacity } from '../utils/modCapacity';
 
 const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
-function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, cost, discounted, accent }) {
+function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRank, cost, discounted, accent }) {
+  const cap = mod?.max_rank ?? 0;
+
   return (
     <div
       className="rounded-xl border p-3 cursor-pointer transition-colors hover:bg-black/10"
@@ -24,17 +26,45 @@ function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, cost, di
 
       <div onClick={onOpenPicker}>
         {mod ? (
-          <>
-            <div className="flex items-center gap-1.5">
-              <PolaritySymbol polarity={mod.polarity} size={13} color={COLOR.mutedInk} />
-              <p className="text-sm font-bold" style={{ color: COLOR.ink }}>{mod.name}</p>
-            </div>
-            <p className="text-xs" style={{ color: COLOR.mutedInk }}>Rank {rank}/{mod.max_rank ?? 0}</p>
-          </>
+          <div className="flex items-center gap-1.5">
+            <PolaritySymbol polarity={mod.polarity} size={13} color={COLOR.mutedInk} />
+            <p className="text-sm font-bold" style={{ color: COLOR.ink }}>{mod.name}</p>
+          </div>
         ) : (
           <p className="text-sm" style={{ color: COLOR.mutedInk }}>Empty</p>
         )}
       </div>
+
+      {/* Rank editing in-place: ranking a mod up mid-build is the common
+          case (you fuse it right there in the Arsenal), so it shouldn't
+          require a trip out to the Mods page. Writes the mod's owned_rank,
+          which is global to the mod, not per-slot. */}
+      {mod && (
+        <div className="mt-1.5" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs" style={{ color: COLOR.mutedInk }}>Rank {rank}/{cap}</span>
+            <button
+              onClick={() => onSetRank(mod.mod_id, cap)}
+              disabled={cap === 0 || rank === cap}
+              className="text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded disabled:opacity-30"
+              style={{ background: `${accent}18`, border: `1px solid ${accent}55`, color: accent }}
+            >
+              Max
+            </button>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max={cap}
+            step="1"
+            value={rank}
+            onChange={e => onSetRank(mod.mod_id, Number(e.target.value))}
+            disabled={cap === 0}
+            className="w-full"
+            style={{ accentColor: accent }}
+          />
+        </div>
+      )}
 
       <div
         className="flex items-center gap-1 mt-2 flex-wrap"
@@ -70,6 +100,7 @@ export default function LoadoutEquipmentSection({
   masteryRank,
   onSetMeta,
   onSetSlot,
+  onSetRank,
   accent,
 }) {
   const [picker, setPicker] = useState(null); // { slotPosition, pool }
@@ -154,6 +185,7 @@ export default function LoadoutEquipmentSection({
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'aura', pool: auraMods, slot: auraSlot })}
             onSetPolarity={polarity => onSetSlot('aura', { mod_id: auraSlot.mod_id, polarity })}
+            onSetRank={onSetRank}
           />
         )}
 
@@ -167,6 +199,7 @@ export default function LoadoutEquipmentSection({
           accent={accent}
           onOpenPicker={() => setPicker({ slotPosition: 'exilus', pool: ownedMods, slot: exilusSlot })}
           onSetPolarity={polarity => onSetSlot('exilus', { mod_id: exilusSlot.mod_id, polarity })}
+          onSetRank={onSetRank}
         />
 
         {NUMBERED_SLOTS.map(pos => {
@@ -187,6 +220,7 @@ export default function LoadoutEquipmentSection({
               accent={accent}
               onOpenPicker={() => setPicker({ slotPosition: pos, pool: ownedMods, slot })}
               onSetPolarity={polarity => onSetSlot(pos, { mod_id: slot.mod_id, polarity })}
+              onSetRank={onSetRank}
             />
           );
         })}
