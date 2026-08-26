@@ -2,7 +2,9 @@ import { useState, useMemo } from 'react';
 import { wfUser } from '../lib/supabase';
 import ModalShell from './ui/ModalShell';
 import { COLOR } from '../constants/theme';
-import { isAugment, isPrimeMod, modSetName, weaponTag } from '../utils/modMeta';
+import { isAugment, isPrimeMod, modSetName, weaponTag, statGroups } from '../utils/modMeta';
+
+const TYPE_STAT_GROUPS = ['Aura', 'Exilus', 'Augment', 'Health', 'Shield', 'Armor', 'Energy'];
 import PolaritySymbol from './PolaritySymbol';
 
 const CATEGORIES = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee'];
@@ -31,39 +33,53 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   // modSet (parsed to a human name, e.g. "Umbra", "Augur", "Strain") --
   // whatever sets actually exist in the catalog, not a guessed list.
   const groups = useMemo(() => {
-    let augmentCount = 0;
     let primeCount = 0;
-    let auraCount = 0;
-    let exilusCount = 0;
     const setCounts = new Map();
 
     catalog.forEach(m => {
-      if (isAugment(m)) augmentCount += 1;
       if (isPrimeMod(m)) primeCount += 1;
-      if (m.is_aura) auraCount += 1;
-      if (m.is_exilus) exilusCount += 1;
       const set = modSetName(m);
       if (set) setCounts.set(set, (setCounts.get(set) || 0) + 1);
     });
 
     return {
-      augmentCount,
       primeCount,
-      auraCount,
-      exilusCount,
       sets: [...setCounts.entries()].sort((a, b) => a[0].localeCompare(b[0])),
     };
   }, [catalog]);
 
+  // Mod type / stat groups -- a separate menu from the themed-set one
+  // above, since "what kind of mod is this" (Aura/Exilus/Augment) and
+  // "what stat does it boost" (Health/Shield/...) are a different
+  // grouping axis than "which themed set is it part of."
+  const typeStatCounts = useMemo(() => {
+    const counts = {};
+    TYPE_STAT_GROUPS.forEach(g => { counts[g] = 0; });
+    catalog.forEach(m => {
+      if (m.is_aura) counts.Aura += 1;
+      if (m.is_exilus) counts.Exilus += 1;
+      if (isAugment(m)) counts.Augment += 1;
+      statGroups(m).forEach(g => { if (g in counts) counts[g] += 1; });
+    });
+    return counts;
+  }, [catalog]);
+
+  function matchesTypeStatGroup(mod, group) {
+    if (group === 'Aura') return mod.is_aura;
+    if (group === 'Exilus') return mod.is_exilus;
+    if (group === 'Augment') return isAugment(mod);
+    return statGroups(mod).includes(group);
+  }
+
   function selectGroup(groupKey) {
     let matches;
-    if (groupKey === 'augment') matches = catalog.filter(isAugment);
-    else if (groupKey === 'prime') matches = catalog.filter(isPrimeMod);
-    else if (groupKey === 'aura') matches = catalog.filter(m => m.is_aura);
-    else if (groupKey === 'exilus') matches = catalog.filter(m => m.is_exilus);
+    if (groupKey === 'prime') matches = catalog.filter(isPrimeMod);
     else if (groupKey.startsWith('set:')) {
       const setName = groupKey.slice(4);
       matches = catalog.filter(m => modSetName(m) === setName);
+    } else if (groupKey.startsWith('typestat:')) {
+      const group = groupKey.slice(9);
+      matches = catalog.filter(m => matchesTypeStatGroup(m, group));
     } else {
       return;
     }
@@ -154,13 +170,22 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
         className="w-full rounded-lg border px-3 py-2 text-sm outline-none mb-3"
         style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
       >
-        <option value="">Select an entire group to add...</option>
-        <option value="augment">All Augments ({groups.augmentCount})</option>
+        <option value="">Select a themed set to add...</option>
         <option value="prime">All Prime Mods ({groups.primeCount})</option>
-        <option value="aura">All Aura Mods ({groups.auraCount})</option>
-        <option value="exilus">All Exilus Mods ({groups.exilusCount})</option>
         {groups.sets.map(([name, count]) => (
           <option key={name} value={`set:${name}`}>{name} Set ({count})</option>
+        ))}
+      </select>
+
+      <select
+        value=""
+        onChange={e => { if (e.target.value) selectGroup(e.target.value); }}
+        className="w-full rounded-lg border px-3 py-2 text-sm outline-none mb-3"
+        style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+      >
+        <option value="">Select a mod type or stat to add...</option>
+        {TYPE_STAT_GROUPS.map(group => (
+          <option key={group} value={`typestat:${group}`}>{group} ({typeStatCounts[group]})</option>
         ))}
       </select>
 
