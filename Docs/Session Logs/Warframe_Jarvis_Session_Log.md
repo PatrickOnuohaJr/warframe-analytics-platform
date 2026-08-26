@@ -829,3 +829,95 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Confirm whether `Cephalon_Gu_Master_Roadmap.md` exists somewhere outside the repo (e.g. a separate doc/Notion) so future `reconcile` runs can actually check shipment-closure against it
 
 ---
+
+### Session 010 — Redesign, Weapon Stat Search, D.1 Armory
+**Date:** 2026-08-25 → 2026-08-26
+**Location:** Not recorded
+**Duration:** Not recorded — long session, high output
+**Status:** SHIPPED
+
+**`CopyWeaponModal.jsx` — Rebuilt From Scratch**
+
+*What Was Done:*
+- Discovered the component Session 008 described as "built" was never actually committed — confirmed via `git log --all -- '**/CopyWeaponModal*'` returning nothing. Lost to history, not a regression.
+- Rebuilt it from the Session 008 spec: bulk-copy a weapon (+ optional Incarnon toggle state) from the open build to hand-picked builds or an entire cultivation school, mirroring the existing "Copy Goal → Another Frame" shard pattern. Deliberately excludes arcanes, same as originally specced.
+- Wired into `ShardEditModal.jsx`'s Arsenal tab.
+
+*Outcome:*
+- Confirmed working live, including a real user-performed write (Chroma → Frost secondary weapon copy).
+
+**Batch 3 Ability Seed Gap — Investigated, Already Resolved**
+
+*What Was Done:*
+- Roadmap and Session Log both flagged Wisp Prime / Xaku Prime / Zephyr Prime abilities as an unseeded gap. Queried the live DB directly instead of trusting the doc.
+- Found all three (plus their base variants) already correctly seeded since 2026-08-08, verified against real kits. Table has 468 rows total, not the 168 the roadmap cited.
+
+*Outcome:*
+- No code or data work needed — the roadmap had simply gone stale. A2 — Ability Tracking marked complete.
+
+**File-Size Cap Enforcement (Session 009's Standing Rule, First Applied)**
+
+*What Was Done:*
+- `ShardEditModal.jsx`: 1195 → 96 lines. Extracted `LoadoutTab.jsx`, `ShardsTab.jsx`, `WeaponInput.jsx`, `IncarnonToggle.jsx`, `TabButton.jsx`, `utils/shardHelpers.js`.
+- `BuildDetailOverlay.jsx`: 664 → 430 lines. Extracted `IdentityTab.jsx`.
+- Both splits also incidentally cleaned up several pre-existing lint errors (unused vars) in the parent files.
+
+*Outcome:*
+- Verified live tab-by-tab after each split (including nested-modal click-isolation for Copy Weapon inside the Arsenal editor) — no regressions.
+
+**Redesign — Design System Pass**
+
+*What Was Done:*
+- Quick wins first: Cinzel (headers) + Outfit (body) fonts, custom SVG favicon replacing the stock Vite bolt, `<title>`/meta rename, deleted dead `App.css` (unused Vite scaffold leftover), active-press feedback on cards.
+- Cultivation color contrast fix: several identity colors were unreadably dark against the app's background (Dagath `#8B0000`, Oraxia `#1A0F1F` — barely visible). `utils/color.js` lifts any color's HSL lightness to a legible floor while preserving hue/saturation, applied at the 5 single points across the app where a component derives `color` from `cultivation_color`. Stored data untouched.
+- App renamed Warframe Jarvis → **Cephalon Gu** throughout (title, meta, in-app header).
+- Full design-system rollout after Patrick asked for "a proper redesign" and confirmed system-first staging: `constants/theme.js` + shared `ui/Panel.jsx`, `ui/Button.jsx`, `ui/ModalShell.jsx` primitives, verified on `BuildDetailOverlay.jsx` first, then rolled out across every remaining page and modal — `HomePage.jsx`, `App.jsx` (nav + both inline modals), `ArcanesPage.jsx` (also fixed a dead empty "Status" tile bug in the arcane detail modal), `ArchonShardsPage.jsx` (full rewrite — this one had a genuinely broken off-palette color scheme, cool Tailwind grays and a mismatched background clashing with the rest of the app), `ArsenalSearchPage.jsx`, `TestingLogTab.jsx`, `AddFrameModal.jsx`, and `Warframeselector.jsx` (unified onto the shared theme constants, no primitive candidates there but same consistency goal).
+
+*Outcome:*
+- Every page and modal now draws from one shared surface/color/motion language instead of five hand-rolled ones. Custom logo explicitly deferred by Patrick ("we can work on the logo later") — favicon is a placeholder mark.
+
+**Weapon Stat Threshold Search (Arsenal Search Suite — Now Complete)**
+
+*What Was Done:*
+- New "Weapon Stats" tab on `ArsenalSearchPage.jsx` (`WeaponStatSearchTab.jsx`). Scoped it first by querying live data — turned out the roadmap's assumption of needing a new `wf_base` weapon-stats table was wrong; `wf_base.weapons.raw_json` already carries every needed stat from the existing WFCD seed.
+- Category-aware slider + type-in filters across all 665 weapons, min/max bounds computed live from actual data, not hardcoded.
+- Iterated per Patrick's direct feedback after initial ship: added Attack Speed to the melee stat set (WFCD reuses the same `fireRate` field for melee attack speed — no new data needed), reordered by his stated priority.
+
+*Outcome:*
+- Arsenal Search Suite (A1 + Weapon Stat Threshold Search) marked fully complete.
+
+**D.1 — Armory**
+
+*What Was Done:*
+- Scoped via two rounds of direct questions rather than guessing: real ownership-tracking table vs. deriving from equipped builds (Patrick chose real table), and auto-derived personality tags vs. hand-authored (Patrick chose auto-derived).
+- New `wf_user.weapon_inventory` table (migration written, run manually by Patrick in the Supabase SQL Editor — the API key available here is data-plane only, no DDL access).
+- `ArmoryPage.jsx`: category filters, auto-derived personality tags (`utils/weaponTags.js`, rules-based off stats already in `raw_json`), live 3-Weapon Rule validation, native HTML5 drag/drop onto `ArmoryFrameRoster.jsx`'s per-frame slot targets, `AddWeaponToInventoryModal.jsx` for marking ownership.
+- Captured the 3-Weapon Rule's actual definition directly from Patrick (one primary/melee weapon, max 3 warframes sharing it, secondary exempt) and saved it to persistent memory — it wasn't written down anywhere before this.
+- **Real bug found via Patrick's own usage, same session:** `ArmoryPage` called its own independent `useFrames()` instead of receiving frames as a prop like every other page. Drag/drop writes were persisting correctly to Supabase, but `App.jsx`'s own separate copy of frame state (the one `BuildDetailOverlay` reads) never refetched — so a weapon assigned via Armory wouldn't show up on that frame's Arsenal tab without a full page reload. Confirmed the underlying data was never actually lost (Patrick's Acceltra → Excalibur Umbra assignment was correctly saved) before fixing. Fixed by passing `frames`/`refetchFrames` down from `App.jsx`; verified live in one continuous session with no reload needed afterward.
+- **Bulk-add follow-up:** Patrick found the one-at-a-time add flow too slow for importing an existing arsenal. `AddWeaponToInventoryModal` upgraded to category-tabbed multi-select (opens pre-filtered to whichever category tab was active in Armory) with checkboxes, "Select All Visible", and a single batch insert instead of one network call per weapon.
+
+*Outcome:*
+- D.1 fully shipped and verified live end-to-end, including a real drag/drop DB write and a real batch-insert DB write (both confirmed via direct query, test rows cleaned up afterward without touching Patrick's real entries). Surfaced a genuine 3-Weapon Rule violation in the live data while testing (Dread on 4 primaries) — left untouched, just confirms the check works.
+
+**Bugs Fixed:**
+- Empty "Status" tile in the Arcane detail modal (`ArcanesPage.jsx`) — rendered nothing due to a dead/incomplete conditional, now shows Complete/Partial/Missing
+- `ArchonShardsPage.jsx` — entirely off-palette color scheme (cool Tailwind grays, mismatched background) clashing with the rest of the app
+- `ArmoryPage.jsx` — disconnected frames state (own `useFrames()` call instead of props), causing drag/drop weapon assignments to not reflect in `BuildDetailOverlay` without a full reload
+
+**End-of-Session Status:**
+- Full shared design system in place across every page and modal
+- Arsenal Search Suite fully complete (A1 + Weapon Stat Threshold Search)
+- D.1 Armory fully shipped, verified, and already iterated on once (bulk-add) based on real usage
+- App renamed to Cephalon Gu throughout
+- All work committed and pushed to `origin/main` across six commits this session
+
+**Next Targets:**
+- **Mods Inventory & DB** — now at the top of the locked queue, hard prerequisite for D.2–D.5 Survivability Suite and A3
+- Custom logo/favicon — still a placeholder mark, explicitly deferred by Patrick
+- Open Granola audit decisions, still untouched: Dagath/Gara primary weapons, Wukong/Voruna/Ash slot swaps, Revenant's melee replacement, Khora's three empty slots, Atlas's utility primary
+- Companion tracking — still untracked, still unscoped
+- Koumei dropdown — still pending final confirmation (likely resolved since Session 008, never formally closed)
+- Two pending shard swaps + Revenant's shard goal — still pending, in-app UI task for Patrick to do directly
+- Real 3-Weapon Rule violation surfaced in live data: **Dread is currently on 4 primaries** — flagged during Armory testing, not addressed, Patrick's call
+
+---
