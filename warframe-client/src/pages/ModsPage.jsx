@@ -29,6 +29,7 @@ export default function ModsPage() {
   const [exilusOnly, setExilusOnly] = useState(false);
   const [augmentOnly, setAugmentOnly] = useState(false);
   const [statFilter, setStatFilter] = useState(null);
+  const [notMaxedOnly, setNotMaxedOnly] = useState(false);
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedMod, setSelectedMod] = useState(null);
@@ -84,10 +85,14 @@ export default function ModsPage() {
       if (exilusOnly && !m.is_exilus) return false;
       if (augmentOnly && !isAugment(m)) return false;
       if (statFilter && !statGroups(m).includes(statFilter)) return false;
+      if (notMaxedOnly) {
+        const rank = owned.get(m.mod_id)?.owned_rank ?? 0;
+        if (rank >= (m.max_rank ?? 0)) return false;
+      }
       if (q && !m.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, statFilter, search]);
+  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, statFilter, notMaxedOnly, owned, search]);
 
   async function handleRemove(mod) {
     const confirmed = window.confirm(`Remove ${mod.name} from your inventory?`);
@@ -283,6 +288,17 @@ export default function ModsPage() {
           }}
         >
           Augment Only
+        </button>
+        <button
+          onClick={() => setNotMaxedOnly(v => !v)}
+          className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
+          style={{
+            background: notMaxedOnly ? `${COLOR.gold}22` : 'transparent',
+            color: notMaxedOnly ? COLOR.gold : COLOR.mutedInk,
+            border: `1px solid ${notMaxedOnly ? COLOR.gold : COLOR.border}`,
+          }}
+        >
+          Not Maxed Only
         </button>
       </div>
 
