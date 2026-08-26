@@ -26,6 +26,20 @@ export function isPrimeMod(mod) {
   return mod.raw_json?.isPrime === true;
 }
 
+// compatName also carries the specific weapon subtype a non-augment mod
+// fits (Rifle, Shotgun, Sniper, Pistol, Nikanas, Bow, or a single
+// weapon-exclusive name like "Sobek") -- exactly what a mod card needs to
+// show so you don't have to already know the mod to know what it's for.
+// Skip the generic all-caps buckets, which just repeat the category.
+const GENERIC_COMPAT_NAMES = new Set(['WARFRAME', 'AURA', 'PRIMARY', 'SECONDARY', 'MELEE']);
+
+export function weaponTag(mod) {
+  if (isAugment(mod)) return null; // already shown via the augment badge
+  const compat = mod.raw_json?.compatName;
+  if (!compat || GENERIC_COMPAT_NAMES.has(compat)) return null;
+  return compat;
+}
+
 // raw_json.modSet is a path like ".../Sets/Umbra/UmbraSetMod" -- pull the
 // human-readable set name out of it. Returns null for mods with no set.
 export function modSetName(mod) {

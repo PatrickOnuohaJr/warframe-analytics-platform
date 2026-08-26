@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { wfUser } from '../lib/supabase';
 import ModalShell from './ui/ModalShell';
 import { COLOR } from '../constants/theme';
-import { isAugment, isPrimeMod, modSetName } from '../utils/modMeta';
+import { isAugment, isPrimeMod, modSetName, weaponTag } from '../utils/modMeta';
 
 const CATEGORIES = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee'];
 
@@ -206,7 +206,9 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
             />
             <span style={{ color: COLOR.ink }} className="flex-1">{m.name}</span>
             <span className="text-xs" style={{ color: COLOR.mutedInk }}>
-              {m.category} · {m.polarity ?? '—'} {m.is_aura ? '· Aura' : ''}{m.is_exilus ? '· Exilus' : ''}
+              {m.category}
+              {weaponTag(m) ? ` · ${weaponTag(m)}` : ''}
+              {' · '}{m.polarity ?? '—'} {m.is_aura ? '· Aura' : ''}{m.is_exilus ? '· Exilus' : ''}
             </span>
           </label>
         ))}

@@ -5,7 +5,7 @@ import Button from '../components/ui/Button';
 import ModalShell from '../components/ui/ModalShell';
 import AddModToInventoryModal from '../components/AddModToInventoryModal';
 import { COLOR } from '../constants/theme';
-import { isAugment, augmentTarget, effectTextAtRank } from '../utils/modMeta';
+import { isAugment, augmentTarget, effectTextAtRank, weaponTag } from '../utils/modMeta';
 
 // ============================================================================
 // ModsPage.jsx (Mods Inventory & DB -- first slice)
@@ -224,6 +224,7 @@ export default function ModsPage() {
 
           const augment = isAugment(mod);
           const effect = effectTextAtRank(mod, rank);
+          const weapon = weaponTag(mod);
 
           return (
             <Panel key={mod.mod_id} accent={COLOR.gold} interactive onClick={() => setSelectedMod(mod)}>
@@ -231,7 +232,9 @@ export default function ModsPage() {
                 <div>
                   <p className="font-bold" style={{ color: COLOR.ink }}>{mod.name}</p>
                   <p className="text-xs" style={{ color: COLOR.mutedInk }}>
-                    {mod.category} · {mod.polarity ?? '—'} · {mod.rarity ?? '—'}
+                    {mod.category}
+                    {weapon ? ` · ${weapon}` : ''}
+                    {' · '}{mod.polarity ?? '—'} · {mod.rarity ?? '—'}
                     {mod.is_aura ? ' · Aura' : ''}
                     {mod.is_exilus ? ' · Exilus' : ''}
                   </p>
@@ -309,6 +312,7 @@ export default function ModsPage() {
         const cap = selectedMod.max_rank ?? 0;
         const augment = isAugment(selectedMod);
         const effect = effectTextAtRank(selectedMod, rank);
+        const weapon = weaponTag(selectedMod);
 
         return (
           <ModalShell onClose={() => setSelectedMod(null)} accent={COLOR.gold} maxWidth="max-w-lg">
@@ -316,7 +320,9 @@ export default function ModsPage() {
               <div>
                 <h2 className="text-xl font-bold" style={{ color: COLOR.gold }}>{selectedMod.name}</h2>
                 <p className="text-xs" style={{ color: COLOR.mutedInk }}>
-                  {selectedMod.category} · {selectedMod.polarity ?? '—'} · {selectedMod.rarity ?? '—'} · Rank {rank}/{cap}
+                  {selectedMod.category}
+                  {weapon ? ` · ${weapon}` : ''}
+                  {' · '}{selectedMod.polarity ?? '—'} · {selectedMod.rarity ?? '—'} · Rank {rank}/{cap}
                 </p>
               </div>
               <button onClick={() => setSelectedMod(null)} className="text-xl leading-none" style={{ color: COLOR.mutedInk }}>×</button>
