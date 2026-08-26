@@ -98,7 +98,6 @@ export default function LoadoutEquipmentSection({
   auraMods,
   ownedByModId,
   modsById,
-  masteryRank,
   onSetMeta,
   onSetSlot,
   onSetRank,
@@ -108,12 +107,12 @@ export default function LoadoutEquipmentSection({
 
   const isWarframe = equipmentType === 'Warframe';
 
-  const capacity = pieceCapacity({ hasCatalyst: meta.has_catalyst, masteryRank });
+  const capacity = pieceCapacity({ hasCatalyst: meta.has_catalyst });
 
   const auraSlot = slotsByPosition.get('aura') ?? { mod_id: null, polarity: null };
   const auraMod = auraSlot.mod_id ? modsById.get(auraSlot.mod_id) : null;
   const auraRank = auraMod ? (ownedByModId.get(auraMod.mod_id)?.owned_rank ?? 0) : 0;
-  const auraDrain = auraMod ? effectiveDrain(auraMod, auraRank, auraSlot.polarity) : 0;
+  const auraDrain = auraMod ? effectiveDrain(auraMod, auraRank, auraSlot.polarity, true) : 0;
 
   const exilusSlot = slotsByPosition.get('exilus') ?? { mod_id: null, polarity: null };
   const exilusMod = exilusSlot.mod_id ? modsById.get(exilusSlot.mod_id) : null;
@@ -182,7 +181,7 @@ export default function LoadoutEquipmentSection({
             mod={auraMod}
             rank={auraRank}
             cost={auraDrain}
-            discounted={isDiscounted(auraMod, auraSlot.polarity)}
+            discounted={isDiscounted(auraMod, auraSlot.polarity, true)}
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'aura', pool: auraMods, slot: auraSlot })}
             onSetPolarity={polarity => onSetSlot('aura', { mod_id: auraSlot.mod_id, polarity })}

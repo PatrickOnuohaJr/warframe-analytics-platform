@@ -13,6 +13,11 @@ import { COLOR } from '../constants/theme';
 // reactor toggle, and live capacity/drain math (utils/modCapacity.js).
 // Informational only -- nothing here blocks an over-budget loadout.
 //
+// No Mastery Rank input here on purpose: its only mod-capacity effect is
+// a minimum floor while an item is still leveling up from rank 0, which
+// doesn't apply once a piece is at max rank -- every build tracked here
+// is. Verified against Patrick's real Frost Prime (see modCapacity.js).
+//
 // loadout_slots only gets a row once a slot is actually touched (mod or
 // polarity set), not pre-seeded for all 60 frames x 4 pieces x 10 slots --
 // untouched slots are rendered from a default { mod_id: null, polarity:
@@ -26,7 +31,6 @@ export default function ModsLoadoutTab({ frame, color }) {
   const [owned, setOwned] = useState(new Map()); // mod_id -> { owned_rank }
   const [slots, setSlots] = useState([]); // raw loadout_slots rows for this frame
   const [meta, setMeta] = useState([]); // raw loadout_meta rows for this frame
-  const [masteryRank, setMasteryRankState] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,7 +41,7 @@ export default function ModsLoadoutTab({ frame, color }) {
       setLoading(true);
       setError(null);
 
-      const [modsRes, invRes, slotsRes, metaRes, profileRes] = await Promise.all([
+      const [modsRes, invRes, slotsRes, metaRes] = await Promise.all([
         // Paged -- the mod catalog is past PostgREST's 1000-row default
         // cap, which silently truncates (see lib/fetchAll.js).
         fetchAll(() =>
@@ -46,7 +50,6 @@ export default function ModsLoadoutTab({ frame, color }) {
         wfUser.from('mod_inventory').select('mod_id, owned_rank'),
         wfUser.from('loadout_slots').select('*').eq('my_frame_id', frame.my_frame_id),
         wfUser.from('loadout_meta').select('*').eq('my_frame_id', frame.my_frame_id),
-        wfUser.from('player_profile').select('mastery_rank').eq('profile_id', 1).single(),
       ]);
 
       if (cancelled) return;
@@ -58,17 +61,10 @@ export default function ModsLoadoutTab({ frame, color }) {
         return;
       }
 
-      // player_profile may not exist yet if the migration hasn't been run
-      // -- degrade to Mastery Rank 0 rather than failing the whole tab.
-      if (profileRes.error) {
-        console.warn('player_profile not available yet, defaulting Mastery Rank to 0:', profileRes.error);
-      }
-
       setCatalog(modsRes.data || []);
       setOwned(new Map((invRes.data || []).map(r => [r.mod_id, r])));
       setSlots(slotsRes.data || []);
       setMeta(metaRes.data || []);
-      setMasteryRankState(profileRes.data?.mastery_rank ?? 0);
       setLoading(false);
     }
 
@@ -169,17 +165,6 @@ export default function ModsLoadoutTab({ frame, color }) {
       });
   }
 
-  async function handleSetMasteryRank(value) {
-    const clamped = Math.max(0, Math.min(999, value));
-    setMasteryRankState(clamped);
-
-    const { error: upsertError } = await wfUser
-      .from('player_profile')
-      .upsert({ profile_id: 1, mastery_rank: clamped }, { onConflict: 'profile_id' });
-
-    if (upsertError) console.error('Failed to save Mastery Rank:', upsertError);
-  }
-
   if (loading) {
     return <p style={{ color: COLOR.mutedInk }}>Loading Loadout...</p>;
   }
@@ -187,24 +172,6 @@ export default function ModsLoadoutTab({ frame, color }) {
   return (
     <div>
       {error && <p className="text-red-400 mb-4">{error}</p>}
-
-      <div className="flex items-center gap-3 mb-6">
-        <label className="text-xs uppercase tracking-widest" style={{ color: COLOR.mutedInk }}>
-          Mastery Rank
-        </label>
-        <input
-          type="number"
-          min="0"
-          max="999"
-          value={masteryRank}
-          onChange={e => handleSetMasteryRank(Number(e.target.value) || 0)}
-          className="w-20 rounded-lg border px-2 py-1 text-sm outline-none"
-          style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
-        />
-        <span className="text-xs" style={{ color: COLOR.mutedInk }}>
-          (applies everywhere -- one value for your account, not per-build)
-        </span>
-      </div>
 
       {EQUIPMENT_TYPES.map(type => (
         <LoadoutEquipmentSection
@@ -216,7 +183,6 @@ export default function ModsLoadoutTab({ frame, color }) {
           auraMods={ownedAuraMods}
           ownedByModId={owned}
           modsById={modsById}
-          masteryRank={masteryRank}
           onSetMeta={patch => handleSetMeta(type, patch)}
           onSetSlot={(slotPosition, value) => handleSetSlot(type, slotPosition, value)}
           onSetRank={handleSetRank}
