@@ -31,6 +31,10 @@ export default function ModsPage() {
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedMod, setSelectedMod] = useState(null);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState(new Set());
+  const [bulkRankInput, setBulkRankInput] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   async function loadInventory() {
     setLoading(true);
@@ -126,6 +130,68 @@ export default function ModsPage() {
       });
   }
 
+  function toggleBulkMode() {
+    setBulkMode(v => !v);
+    setBulkSelected(new Set());
+    setBulkRankInput('');
+  }
+
+  function toggleBulkSelected(modId) {
+    setBulkSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(modId)) next.delete(modId);
+      else next.add(modId);
+      return next;
+    });
+  }
+
+  function selectAllVisibleForBulk() {
+    setBulkSelected(new Set(visibleMods.map(m => m.mod_id)));
+  }
+
+  // Shared by both bulk actions -- computeNextRank decides each mod's new
+  // rank from its own max_rank, since a mixed selection (augments cap at
+  // 3, most other mods cap at 10) can't share one flat target number.
+  async function applyBulkRank(computeNextRank) {
+    const targets = catalog.filter(m => bulkSelected.has(m.mod_id));
+    if (targets.length === 0) return;
+
+    setBulkSaving(true);
+
+    const updates = targets.map(mod => {
+      const cap = mod.max_rank ?? 0;
+      const nextRank = Math.max(0, Math.min(cap, computeNextRank(mod)));
+      return { mod, nextRank };
+    });
+
+    setOwned(prev => {
+      const next = new Map(prev);
+      updates.forEach(({ mod, nextRank }) => {
+        const current = next.get(mod.mod_id);
+        if (current) next.set(mod.mod_id, { ...current, owned_rank: nextRank });
+      });
+      return next;
+    });
+
+    await Promise.all(
+      updates.map(({ mod, nextRank }) =>
+        wfUser.from('mod_inventory').update({ owned_rank: nextRank }).eq('mod_id', mod.mod_id)
+      )
+    );
+
+    setBulkSaving(false);
+  }
+
+  function handleBulkMax() {
+    applyBulkRank(mod => mod.max_rank ?? 0);
+  }
+
+  function handleBulkSetRank() {
+    const n = Number(bulkRankInput);
+    if (!Number.isFinite(n)) return;
+    applyBulkRank(() => n);
+  }
+
   if (loading) {
     return <p style={{ color: COLOR.mutedInk }}>Loading Mods...</p>;
   }
@@ -159,9 +225,18 @@ export default function ModsPage() {
           ))}
         </div>
 
-        <Button variant="primary" color={COLOR.gold} onClick={() => setShowAddModal(true)}>
-          + Add Mod
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={bulkMode ? 'primary' : 'ghost'}
+            color={COLOR.gold}
+            onClick={toggleBulkMode}
+          >
+            {bulkMode ? 'Exit Bulk Edit' : 'Bulk Edit'}
+          </Button>
+          <Button variant="primary" color={COLOR.gold} onClick={() => setShowAddModal(true)}>
+            + Add Mod
+          </Button>
+        </div>
       </div>
 
       <input
@@ -209,6 +284,59 @@ export default function ModsPage() {
         </button>
       </div>
 
+      {bulkMode && (
+        <Panel accent={COLOR.gold} className="mb-4">
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <p className="text-xs" style={{ color: COLOR.mutedInk }}>
+              {bulkSelected.size} selected {bulkMode ? `of ${visibleMods.length} shown` : ''}
+            </p>
+            <div className="flex gap-3">
+              <button onClick={selectAllVisibleForBulk} className="text-xs" style={{ color: COLOR.gold }}>
+                Select All Shown
+              </button>
+              <button onClick={() => setBulkSelected(new Set())} className="text-xs" style={{ color: COLOR.mutedInk }}>
+                Clear Selection
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              variant="primary"
+              color={COLOR.gold}
+              size="sm"
+              disabled={bulkSelected.size === 0 || bulkSaving}
+              onClick={handleBulkMax}
+            >
+              Max All Selected
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <label className="text-xs" style={{ color: COLOR.mutedInk }}>Set rank to</label>
+              <input
+                type="number"
+                min="0"
+                value={bulkRankInput}
+                onChange={e => setBulkRankInput(e.target.value)}
+                placeholder="e.g. 2"
+                className="w-16 rounded-lg border px-2 py-1 text-sm outline-none"
+                style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={bulkSelected.size === 0 || bulkRankInput === '' || bulkSaving}
+                onClick={handleBulkSetRank}
+              >
+                Apply
+              </Button>
+            </div>
+
+            {bulkSaving && <span className="text-xs" style={{ color: COLOR.mutedInk }}>Saving...</span>}
+          </div>
+        </Panel>
+      )}
+
       {ownedMods.length === 0 && (
         <p style={{ color: COLOR.mutedInk }}>No mods in your inventory yet. Add one to get started.</p>
       )}
@@ -226,11 +354,28 @@ export default function ModsPage() {
           const augment = isAugment(mod);
           const effect = effectTextAtRank(mod, rank);
           const weapon = weaponTag(mod);
+          const checked = bulkSelected.has(mod.mod_id);
 
           return (
-            <Panel key={mod.mod_id} accent={COLOR.gold} interactive onClick={() => setSelectedMod(mod)}>
+            <Panel
+              key={mod.mod_id}
+              accent={COLOR.gold}
+              interactive
+              onClick={() => bulkMode ? toggleBulkSelected(mod.mod_id) : setSelectedMod(mod)}
+              style={bulkMode && checked ? { background: `${COLOR.gold}14` } : {}}
+            >
               <div className="flex items-start justify-between mb-2">
-                <div>
+                <div className="flex items-start gap-2">
+                  {bulkMode && (
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleBulkSelected(mod.mod_id)}
+                      onClick={e => e.stopPropagation()}
+                      className="mt-1"
+                    />
+                  )}
+                  <div>
                   <div className="flex items-center gap-1.5">
                     <PolaritySymbol polarity={mod.polarity} size={14} color={COLOR.mutedInk} />
                     <p className="font-bold" style={{ color: COLOR.ink }}>{mod.name}</p>
@@ -247,6 +392,7 @@ export default function ModsPage() {
                       ◆ {augmentTarget(mod) || 'Augment'} Augment
                     </p>
                   )}
+                  </div>
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); handleRemove(mod); }}
