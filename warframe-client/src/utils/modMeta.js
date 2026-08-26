@@ -49,6 +49,43 @@ export function modSetName(mod) {
   return match ? match[1] : null;
 }
 
+// Stat-group filtering (Health/Shield/Armor/Energy/... mods), for finding
+// "which of my owned mods boost X" while assembling a build. WFCD has no
+// stat-category field, so this scans the mod's own effect text for the
+// exact phrasing the game uses -- verified against real mods first
+// (Vitality -> "Health", Redirection -> "Shield Capacity", Steel Fiber ->
+// "Armor", Flow -> "Energy Max", Rush -> "Sprint Speed", Continuity ->
+// "Ability Duration", Streamline -> "Ability Efficiency", Stretch ->
+// "Ability Range", Intensify -> "Ability Strength") rather than guessed.
+// A mod can land in more than one group (Transient Fortitude is both
+// Strength and Duration), and this is a browsing aid, not a strict
+// classifier -- it'll occasionally catch an aura that debuffs enemy Armor
+// alongside real self-Armor mods, same tradeoff Armory's auto-tags make.
+const STAT_GROUP_KEYWORDS = {
+  Health: ['Health'],
+  Shield: ['Shield'],
+  Armor: ['Armor'],
+  Energy: ['Energy'],
+  'Sprint Speed': ['Sprint Speed'],
+  Duration: ['Ability Duration'],
+  Efficiency: ['Ability Efficiency'],
+  Range: ['Ability Range'],
+  Strength: ['Ability Strength'],
+};
+
+export const STAT_GROUPS = Object.keys(STAT_GROUP_KEYWORDS);
+
+export function statGroups(mod) {
+  const levels = mod.raw_json?.levelStats;
+  if (!levels || levels.length === 0) return [];
+
+  const text = levels.map(l => (l.stats || []).join(' ')).join(' ');
+
+  return STAT_GROUPS.filter(group =>
+    STAT_GROUP_KEYWORDS[group].some(keyword => text.includes(keyword))
+  );
+}
+
 export function effectTextAtRank(mod, rank) {
   const levels = mod.raw_json?.levelStats;
   if (!levels || levels.length === 0) return null;

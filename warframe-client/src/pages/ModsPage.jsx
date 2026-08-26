@@ -5,7 +5,7 @@ import Button from '../components/ui/Button';
 import ModalShell from '../components/ui/ModalShell';
 import AddModToInventoryModal from '../components/AddModToInventoryModal';
 import { COLOR } from '../constants/theme';
-import { isAugment, augmentTarget, effectTextAtRank, weaponTag } from '../utils/modMeta';
+import { isAugment, augmentTarget, effectTextAtRank, weaponTag, statGroups, STAT_GROUPS } from '../utils/modMeta';
 import PolaritySymbol from '../components/PolaritySymbol';
 
 // ============================================================================
@@ -28,6 +28,7 @@ export default function ModsPage() {
   const [auraOnly, setAuraOnly] = useState(false);
   const [exilusOnly, setExilusOnly] = useState(false);
   const [augmentOnly, setAugmentOnly] = useState(false);
+  const [statFilter, setStatFilter] = useState(null);
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedMod, setSelectedMod] = useState(null);
@@ -82,10 +83,11 @@ export default function ModsPage() {
       if (auraOnly && !m.is_aura) return false;
       if (exilusOnly && !m.is_exilus) return false;
       if (augmentOnly && !isAugment(m)) return false;
+      if (statFilter && !statGroups(m).includes(statFilter)) return false;
       if (q && !m.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, search]);
+  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, statFilter, search]);
 
   async function handleRemove(mod) {
     const confirmed = window.confirm(`Remove ${mod.name} from your inventory?`);
@@ -282,6 +284,23 @@ export default function ModsPage() {
         >
           Augment Only
         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {STAT_GROUPS.map(group => (
+          <button
+            key={group}
+            onClick={() => setStatFilter(statFilter === group ? null : group)}
+            className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
+            style={{
+              background: statFilter === group ? `${COLOR.gold}22` : 'transparent',
+              color: statFilter === group ? COLOR.gold : COLOR.mutedInk,
+              border: `1px solid ${statFilter === group ? COLOR.gold : COLOR.border}`,
+            }}
+          >
+            {group}
+          </button>
+        ))}
       </div>
 
       {bulkMode && (

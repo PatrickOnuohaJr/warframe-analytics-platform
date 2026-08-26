@@ -3,19 +3,22 @@ import ModalShell from './ui/ModalShell';
 import PolaritySymbol from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain } from '../utils/modCapacity';
+import { statGroups, STAT_GROUPS } from '../utils/modMeta';
 
 // Mod picker for a single loadout slot. `mods` is already pre-filtered by
 // the caller (right equipment category, aura-only / exilus-only as
 // appropriate) to owned mods only.
 export default function LoadoutSlotPickerModal({ mods, ownedByModId, slotPolarity, onSelect, onClear, onClose }) {
   const [search, setSearch] = useState('');
+  const [statFilter, setStatFilter] = useState(null);
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
     return mods
       .filter(m => !q || m.name.toLowerCase().includes(q))
+      .filter(m => !statFilter || statGroups(m).includes(statFilter))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [mods, search]);
+  }, [mods, search, statFilter]);
 
   return (
     <ModalShell onClose={onClose} accent={COLOR.gold} maxWidth="max-w-lg" zIndex={70}>
@@ -41,6 +44,34 @@ export default function LoadoutSlotPickerModal({ mods, ownedByModId, slotPolarit
       >
         Clear slot
       </button>
+
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        <button
+          onClick={() => setStatFilter(null)}
+          className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
+          style={{
+            background: !statFilter ? `${COLOR.gold}22` : 'transparent',
+            color: !statFilter ? COLOR.gold : COLOR.mutedInk,
+            border: `1px solid ${!statFilter ? COLOR.gold : COLOR.border}`,
+          }}
+        >
+          All
+        </button>
+        {STAT_GROUPS.map(group => (
+          <button
+            key={group}
+            onClick={() => setStatFilter(statFilter === group ? null : group)}
+            className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
+            style={{
+              background: statFilter === group ? `${COLOR.gold}22` : 'transparent',
+              color: statFilter === group ? COLOR.gold : COLOR.mutedInk,
+              border: `1px solid ${statFilter === group ? COLOR.gold : COLOR.border}`,
+            }}
+          >
+            {group}
+          </button>
+        ))}
+      </div>
 
       <div className="max-h-96 overflow-y-auto space-y-1">
         {results.length === 0 && (

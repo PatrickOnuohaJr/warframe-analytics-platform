@@ -37,7 +37,7 @@ export default function ModsLoadoutTab({ frame, color }) {
       setError(null);
 
       const [modsRes, invRes, slotsRes, metaRes, profileRes] = await Promise.all([
-        wfBase.from('mods').select('mod_id, name, category, polarity, base_drain, max_rank, is_aura, is_exilus'),
+        wfBase.from('mods').select('mod_id, name, category, polarity, base_drain, max_rank, is_aura, is_exilus, raw_json'),
         wfUser.from('mod_inventory').select('mod_id, owned_rank'),
         wfUser.from('loadout_slots').select('*').eq('my_frame_id', frame.my_frame_id),
         wfUser.from('loadout_meta').select('*').eq('my_frame_id', frame.my_frame_id),
