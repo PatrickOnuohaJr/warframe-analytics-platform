@@ -996,3 +996,62 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Aura/Exilus mismatch-polarity math (80% aura shrink, +25% regular-mod mismatch penalty mentioned by the wiki) implemented for the matched case only this session — mismatch-specific edge cases not yet live-verified against real gameplay
 
 ---
+
+### Session 012 — Loadout Tab Merge (Arsenal + Mods + Abilities → one screen), Mods Filtering Polish
+**Date:** 2026-08-26
+**Location:** Not recorded
+**Duration:** Not recorded — single long session, continued same day as Session 011
+**Status:** SHIPPED
+
+**Open Threads Closed**
+
+*What Was Done:*
+- Koumei dropdown bug — Patrick confirmed fixed, closed out for good.
+- Dread's 4-primaries 3-Weapon Rule violation — Patrick fixing directly in-app himself, not a code task.
+- Aura/Exilus mismatch-polarity math re-investigated against Frost Prime's real build: the matched-polarity math (aura doubling, regular-mod halving) computed exactly right against all 10 real slot numbers in Patrick's live game. The one discrepancy found (Icy Avalanche showing 9 instead of 5) turned out to be stale forma/polarity data from before Patrick added a forma mid-session, not a math bug — confirmed no fix needed.
+- Rivens and Fall Off dropped from the stat-groups scope per Patrick's call (Rivens needed real scoping — see below; Fall Off had no verified mod text to confirm keyword phrasing against).
+
+**Mods Loadout Tab — weapon labels + category-aware filtering**
+
+*What Was Done:*
+- Loadout builder's Primary/Secondary/Melee sections showed the literal words "Primary"/"Secondary"/"Melee" instead of the actual equipped weapon name, and rendered an empty section even when no weapon was equipped in that slot. Fixed: sections now show the real weapon name (`frame.primary_weapon` etc.) and don't render at all when that slot is empty.
+- `utils/modMeta.js`'s `statGroups()` was one flat Warframe-only list (Health/Shield/Armor/...) applied everywhere, including weapon mod pickers where none of those groups can ever match. Rebuilt as `STAT_GROUP_KEYWORDS` keyed by category, with `statGroupsFor(category)` returning the right group set per equipment type — verified against real mod effect text before shipping (Lethal Torrent → "Fire Rate", Blood Rush → "Critical Chance", Ammo Stock → "Magazine Capacity", etc.), plus an IPS group that keys off WFCD's own per-damage-type markup tags (`DT_SLASH_COLOR`/`DT_IMPACT_COLOR`/`DT_PUNCTURE_COLOR`) so it only catches Impact/Puncture/Slash mods, not every other element. Primary/Secondary: Fire Rate, Multishot, Magazine, Reload, Crit Chance, Crit Damage, Status, Punch Through, IPS. Melee: Attack Speed, Range, Chance, Damage, IPS (Patrick's own requested group names).
+- `ModsPage.jsx`: "Aura Only" toggle now hides for Primary/Secondary/Melee (confirmed 0 weapon mods in the catalog ever carry `is_aura`/`is_exilus`, so it was a dead filter for those categories). Stat-group chips now use `statGroupsFor(category)`; picking "All" shows a hint to pick a category instead of a meaningless mixed list.
+- `AddModToInventoryModal.jsx` got the same treatment: themed-set dropdown and type/stat dropdown are both now scoped to the active category (Primary shows its own weapon sets — Hawk/Hunter/Vigilante/etc — instead of every Warframe set too; Warframe still shows Aura/Exilus/Augment + its own 9 stat groups). Also fixed a real correctness bug in `selectGroup`: picking a themed set, Prime, or stat group pulled matches from *every* category regardless of which tab was active — e.g. clicking "Crit Chance" while browsing Primary silently added matching Secondary mods too, since Primary and Secondary share the same stat-group keyword map. Now filtered to the active category, matching the counts shown in each dropdown option.
+- `LoadoutSlotPickerModal.jsx` (the in-loadout mod picker) also switched to `statGroupsFor(category)`.
+
+**Loadout Tab Merge — the big one**
+
+*What Was Done:*
+- Patrick's direction: dissolve the separate Arsenal tab (weapon+Arcane, edited via a modal), Abilities tab (base kit + Helminth, edited via a separate modal), and Mods tab (already-inline mod grid) into one **Loadout** tab with **Warframe/Primary/Secondary/Melee** sub-tabs — click a piece, edit everything about it (mods, polarities, weapon choice, Arcanes, and for Warframe, Abilities/Helminth) right there, matching how the real game's Arsenal screen works.
+- `BuildDetailOverlay.jsx` tab bar is now Identity | Loadout | Archon Shards | Testing Log. `ModsLoadoutTab.jsx` (renders as the Loadout tab body) gained its own Warframe/Primary/Secondary/Melee sub-tab bar, showing only one equipment piece's panel at a time instead of stacking all four.
+- `LoadoutEquipmentSection.jsx` absorbed the weapon/Arcane editing fields directly (`WeaponInput`, `IncarnonToggle`, `CopyWeaponModal` all reused as-is) plus a new unique-weapon-trait line. Everything auto-saves per change via a new `hooks/useDebouncedField.js` (local-first value, writes ~600ms after the last change) instead of the old draft-then-Save-button model.
+- **Unique weapon traits**: `wf_base.weapons.raw_json.description` already holds real mechanical trait text for special weapons (Dual Coda Torxica's spore spread, Xoris's infinite combo chaining, Stropha's shockwave), not just flavor lore — confirmed before building, so this was a pure surfacing job (new `utils/weaponMeta.js`), not new data entry. Verified 0 duplicate weapon names in the catalog (665 rows) before trusting a plain name-keyed lookup. First pass rendered WFCD's raw `<DT_FREEZE_COLOR>`-style markup tags unstripped — fixed by reusing `modMeta.js`'s existing `cleanStatText`.
+- Abilities/Helminth editing extracted out of `App.jsx` (was ~180 lines of inline state + JSX tied to a standalone modal) into new `components/AbilitiesEditor.jsx`, rendered inline inside the Warframe sub-tab panel. Simplified its save path in the process — it now just calls `onSaved()` and lets the normal refetch-and-flow-down update it, instead of manually patching two separate copies of local state by hand.
+- `LoadoutTab.jsx` (the old Arsenal editor) deleted entirely. `ShardEditModal.jsx` simplified to Archon-Shards-only (dropped its now-pointless internal tab bar).
+- Verified live end-to-end: Frost Prime (all three weapons equipped, mods/Arcanes/Abilities all editable in place, capacity math unchanged) and Limbo Prime (no weapons equipped — only the Warframe sub-tab renders, matching the "no weapon in Arsenal → nothing to mod" rule).
+
+**Bugs Fixed:**
+- Icy Avalanche capacity math discrepancy — false alarm, was stale data from before a forma add, not a bug (see Open Threads above).
+- Mods loadout tab weapon sections showed generic "Primary/Secondary/Melee" labels instead of real weapon names, and rendered an empty section for unequipped slots instead of hiding them.
+- Stat-group and Aura-Only filters showed irrelevant options for weapon categories on both the Mods page and the Add Mods modal (Aura/Exilus/Augment can never apply to a weapon; Warframe-only stat groups like Health/Shield showed under Primary/Secondary/Melee).
+- Add Mods modal: selecting a themed set/Prime/stat group pulled matches from every category instead of just the active tab, silently over-selecting mods (e.g. Secondary mods got added while browsing Primary).
+- Weapon unique-trait text rendered WFCD's raw `<DT_*_COLOR>` markup tags unstripped.
+- **`useFrames.js` full-app-reset bug**: `refetchFrames()` forced `loading = true` on every call, and `App.jsx` unmounts its entire tree down to a loading spinner whenever `loading` is true. Once fields started auto-saving (this session's new Loadout tab), every single edit called `refetchFrames()` after its debounced write — so editing an Arcane looked exactly like "the whole app resets": kicked back to Home, tab/sub-tab selection lost, everything. Root-caused and fixed with a silent-refetch flag rather than working around it locally — this was a latent bug in a shared hook that benefits every existing call site (shard edits, Armory weapon drag-drop), not just the new code. Verified live: edited an Arcane, confirmed the app stayed exactly where it was and the write landed in the DB.
+
+**End-of-Session Status:**
+- Loadout tab merge fully shipped and verified live against both a fully-equipped frame (Frost Prime) and an edge case (Limbo Prime, no weapons equipped).
+- Mods page / Add Mods modal / Loadout mod picker are now consistently category-aware across the board.
+- Riven mod support fully scoped with Patrick but **not yet built** — deliberately deferred to a fresh session (see Next Targets).
+
+**Next Targets:**
+- **Riven mod support** — new `wf_user` table for a shared Riven inventory (weapon, capacity/polarity, up to 4 typed-in stat lines), equip into any of the 8 numbered slots like a regular mod, reusable across that weapon's other builds. Needs a migration file for Patrick to run manually. Capacity math confirmed reusing the existing formula unchanged — real Rivens drain 10 at rank 0 up to 18 at rank 8, the same flat +1/rank curve every other positive-drain mod already uses (`base_drain=10, max_rank=8`), so no new math needed, just the schema + a Riven-creation UI + slot-picker wiring.
+- **D.2–D.5 — Survivability Suite** — still at the top of the locked queue, further deferred this session in favor of the Loadout tab rework and Riven scoping (both came up organically from Patrick using the app, not planned in advance)
+- Fall Off (damage falloff) stat group — no verified real mod text yet to confirm keyword phrasing; add once a real example is checked
+- Open Granola audit decisions, still untouched: Dagath/Gara primary weapons, Wukong/Voruna/Ash slot swaps, Revenant's melee replacement, Khora's three empty slots, Atlas's utility primary
+- Companion tracking — still untracked, still unscoped
+- Two pending shard swaps + Revenant's shard goal — still pending, in-app UI task for Patrick to do directly
+- Aura/Exilus *mismatch*-polarity math (80% aura shrink, regular-mod mismatch) — still only the matched case is live-verified; mismatch math is coded but unconfirmed against real gameplay
+- Forma counter on each loadout piece — confirmed decorative (nothing reads the value back), tabled rather than wired up or removed, per Patrick's call
+
+---
