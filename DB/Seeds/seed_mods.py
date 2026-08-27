@@ -51,6 +51,59 @@ EXCLUDED_UNIQUE_NAMES = {
     "/Lotus/Upgrades/Mods/Pistol/Expert/WeaponPistolFactionDamageInfestedExpert",  # Primed Expel Infested -- discontinued, see Primed Cleanse Infested
     "/Lotus/Upgrades/Mods/Pistol/Expert/WeaponPistolFactionDamageCorruptedExpert",  # Primed Expel Orokin -- discontinued, see Primed Cleanse Orokin
     "/Lotus/Upgrades/Mods/Pistol/Expert/WeaponPistolFactionDamageMurmursExpert",  # Primed Expel The Murmur -- discontinued, see Primed Cleanse The Murmur
+    # Found 2026-08-26 during a Secondary/Primary mod audit: these three
+    # share a display name with a real, current rifle mod ("Bane of
+    # Corpus/Grineer/Infested", fusionLimit 5) but differ only by
+    # capitalizing "Of", which the by-exact-name dedup in build_targets()
+    # doesn't catch. Confirmed never-shipped -- no "introduced" release
+    # info (unlike the real lowercase-"of" version, which has one), and
+    # the wiki/Overframe only document a base tier (fusionLimit 5) and a
+    # Primed tier (fusionLimit 10, Legendary) -- no non-Primed 10-rank
+    # "Expert" tier exists in the live game.
+    "/Lotus/Upgrades/Mods/Rifle/Expert/WeaponFactionDamageCorpusExpert",  # "Bane Of Corpus" -- never released
+    "/Lotus/Upgrades/Mods/Rifle/Expert/WeaponFactionDamageGrineerExpert",  # "Bane Of Grineer" -- never released
+    "/Lotus/Upgrades/Mods/Rifle/Expert/WeaponFactionDamageInfestedExpert",  # "Bane Of Infested" -- never released
+    "/Lotus/Powersuits/Banshee/SonarPvPAugmentCard",  # "Augmented Sonar" -- unused Conclave mod, confirmed not obtainable by Patrick 2026-08-26
+    # Found the same day via the same "no introduced, no drops" heuristic --
+    # neither has a wiki page under this exact title NOR any hit in the
+    # wiki's own full-text search (42 and 178 results respectively, no
+    # exact match in either), no trade/drop-tracker presence anywhere.
+    # Same never-shipped Conclave-mod-data pattern as Augmented Sonar.
+    "/Lotus/Upgrades/Mods/PvPMods/Melee/GroundingMeleeMod",  # "Harrowed Hook" -- never released
+    "/Lotus/Upgrades/Mods/PvPMods/Melee/AirborneMeleeAutoTargetBonus",  # "Air Martial" -- never released
+}
+
+# Real bug found 2026-08-26: WFCD only sets "isExilus" on Warframe Mods.
+# Weapon Mods (Primary/Secondary/Melee) use a different field, "isUtility",
+# for the exact same concept -- reading only "isExilus" left every weapon
+# Exilus mod (Reflex Draw, Steady Hands, Trick Mag, Pistol Ammo Mutation,
+# the Canticle Tome mods, etc.) stored as is_exilus=false. Confirmed by
+# cross-checking wiki.warframe.com's Exilus Mods category against every
+# weapon-category mod in the DB: zero had is_exilus=true out of 670 rows.
+#
+# The four "Invocation" Tome mods (Ris/Vome/Netra/Xata) are a further
+# WFCD data gap on top of that: they're genuine Exilus mods in-game (per
+# wiki.warframe.com) but WFCD's own raw data sets neither isExilus nor
+# isUtility for them, so no field-name fix catches them -- keyed by
+# uniqueName, same pattern as EXCLUDED_UNIQUE_NAMES above.
+EXILUS_OVERRIDE_UNIQUE_NAMES = {
+    "/Lotus/Upgrades/Grimoire/RisStrikeMod",  # Ris Invocation
+    "/Lotus/Upgrades/Grimoire/VomeStrikeMod",  # Vome Invocation
+    "/Lotus/Upgrades/Grimoire/NetraStrikeMod",  # Netra Invocation
+    "/Lotus/Upgrades/Grimoire/XataStrikeMod",  # Xata Invocation
+}
+
+# Real bug found 2026-08-27: WFCD's own fusionLimit is wrong for at least
+# this one mod. Confirmed against wiki.warframe.com/w/Stabilizer (real max
+# rank 3, "15% per rank for a maximum of 60% at Rank 3") and against
+# Patrick's real Stabilizer (unranked cost 6, maxed at 9 after exactly 3
+# endo infusions -- matches base_drain=6 + 3 ranks, not WFCD's stored
+# fusionLimit=5). This surfaced because it silently broke live capacity
+# math: a maxed real Stabilizer (rank 3, cost 9, halved to 5 on a matching
+# Exilus polarity) was being computed as rank 5/cost 11-discounted-to-6
+# instead, a 1-point-of-capacity error on every build using it.
+MAX_RANK_OVERRIDES = {
+    "/Lotus/Upgrades/Mods/Rifle/Intermediate/WeaponRecoilReductionModIntermediate": 3,  # Stabilizer -- WFCD says fusionLimit 5, real is 3
 }
 
 
@@ -207,10 +260,14 @@ def seed_mods():
                     "category": category,
                     "polarity": mod.get("polarity"),
                     "base_drain": mod.get("baseDrain"),
-                    "max_rank": mod.get("fusionLimit"),
+                    "max_rank": MAX_RANK_OVERRIDES.get(mod.get("uniqueName"), mod.get("fusionLimit")),
                     "rarity": mod.get("rarity"),
                     "is_aura": mod.get("compatName") == "AURA",
-                    "is_exilus": bool(mod.get("isExilus")),
+                    "is_stance": mod.get("type") == "Stance Mod",
+                    "is_exilus": bool(mod.get("isExilus"))
+                    or bool(mod.get("isUtility"))
+                    or mod.get("uniqueName") in EXILUS_OVERRIDE_UNIQUE_NAMES,
+                    "is_conclave": "/PvPMods/" in (mod.get("uniqueName") or ""),
                     "raw_json": mod,
                 }
 

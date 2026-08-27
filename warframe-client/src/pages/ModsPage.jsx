@@ -8,6 +8,7 @@ import AddModToInventoryModal from '../components/AddModToInventoryModal';
 import { COLOR } from '../constants/theme';
 import { isAugment, augmentTarget, effectTextAtRank, weaponTag, statGroups, statGroupsFor } from '../utils/modMeta';
 import PolaritySymbol from '../components/PolaritySymbol';
+import ConclaveBadge from '../components/ConclaveBadge';
 
 // ============================================================================
 // ModsPage.jsx (Mods Inventory & DB -- first slice)
@@ -29,6 +30,7 @@ export default function ModsPage() {
   const [auraOnly, setAuraOnly] = useState(false);
   const [exilusOnly, setExilusOnly] = useState(false);
   const [augmentOnly, setAugmentOnly] = useState(false);
+  const [conclaveOnly, setConclaveOnly] = useState(false);
   const [statFilter, setStatFilter] = useState(null);
   const [notMaxedOnly, setNotMaxedOnly] = useState(false);
   const [search, setSearch] = useState('');
@@ -59,7 +61,7 @@ export default function ModsPage() {
     const { data: modRows, error: modsError } = await fetchAll(() =>
       wfBase
         .from('mods')
-        .select('mod_id, name, category, polarity, base_drain, max_rank, rarity, is_aura, is_exilus, raw_json')
+        .select('mod_id, name, category, polarity, base_drain, max_rank, rarity, is_aura, is_exilus, is_conclave, raw_json')
         .order('name', { ascending: true })
     );
 
@@ -89,6 +91,7 @@ export default function ModsPage() {
       if (auraOnly && !m.is_aura) return false;
       if (exilusOnly && !m.is_exilus) return false;
       if (augmentOnly && !isAugment(m)) return false;
+      if (conclaveOnly && !m.is_conclave) return false;
       if (statFilter && !statGroups(m).includes(statFilter)) return false;
       if (notMaxedOnly) {
         const rank = owned.get(m.mod_id)?.owned_rank ?? 0;
@@ -97,7 +100,7 @@ export default function ModsPage() {
       if (q && !m.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, statFilter, notMaxedOnly, owned, search]);
+  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, conclaveOnly, statFilter, notMaxedOnly, owned, search]);
 
   async function handleRemove(mod) {
     const confirmed = window.confirm(`Remove ${mod.name} from your inventory?`);
@@ -202,6 +205,35 @@ export default function ModsPage() {
     const n = Number(bulkRankInput);
     if (!Number.isFinite(n)) return;
     applyBulkRank(() => n);
+  }
+
+  async function handleBulkExclude() {
+    const targets = catalog.filter(m => bulkSelected.has(m.mod_id));
+    if (targets.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Remove ${targets.length} mod${targets.length === 1 ? '' : 's'} from your inventory?`
+    );
+    if (!confirmed) return;
+
+    setBulkSaving(true);
+
+    const ids = targets.map(m => m.mod_id);
+    const { error: deleteError } = await wfUser.from('mod_inventory').delete().in('mod_id', ids);
+
+    if (deleteError) {
+      console.error('Failed to bulk-exclude mods:', deleteError);
+      setBulkSaving(false);
+      return;
+    }
+
+    setOwned(prev => {
+      const next = new Map(prev);
+      ids.forEach(id => next.delete(id));
+      return next;
+    });
+    setBulkSelected(new Set());
+    setBulkSaving(false);
   }
 
   if (loading) {
@@ -315,6 +347,17 @@ export default function ModsPage() {
         >
           Not Maxed Only
         </button>
+        <button
+          onClick={() => setConclaveOnly(v => !v)}
+          className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
+          style={{
+            background: conclaveOnly ? `${COLOR.gold}22` : 'transparent',
+            color: conclaveOnly ? COLOR.gold : COLOR.mutedInk,
+            border: `1px solid ${conclaveOnly ? COLOR.gold : COLOR.border}`,
+          }}
+        >
+          Conclave Only
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-1.5 mb-4">
@@ -387,6 +430,15 @@ export default function ModsPage() {
               </Button>
             </div>
 
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={bulkSelected.size === 0 || bulkSaving}
+              onClick={handleBulkExclude}
+            >
+              Bulk Exclude (Remove from Inventory)
+            </Button>
+
             {bulkSaving && <span className="text-xs" style={{ color: COLOR.mutedInk }}>Saving...</span>}
           </div>
         </Panel>
@@ -433,6 +485,7 @@ export default function ModsPage() {
                   <div>
                   <div className="flex items-center gap-1.5">
                     <PolaritySymbol polarity={mod.polarity} size={14} color={COLOR.mutedInk} />
+                    {mod.is_conclave && <ConclaveBadge size={13} />}
                     <p className="font-bold" style={{ color: COLOR.ink }}>{mod.name}</p>
                   </div>
                   <p className="text-xs" style={{ color: COLOR.mutedInk }}>
@@ -441,6 +494,7 @@ export default function ModsPage() {
                     {' · '}{mod.rarity ?? '—'}
                     {mod.is_aura ? ' · Aura' : ''}
                     {mod.is_exilus ? ' · Exilus' : ''}
+                    {mod.is_conclave ? ' · Conclave' : ''}
                   </p>
                   {augment && (
                     <p className="text-xs mt-1" style={{ color: COLOR.gold }}>
@@ -525,12 +579,14 @@ export default function ModsPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <PolaritySymbol polarity={selectedMod.polarity} size={20} color={COLOR.gold} />
+                  {selectedMod.is_conclave && <ConclaveBadge size={18} />}
                   <h2 className="text-xl font-bold" style={{ color: COLOR.gold }}>{selectedMod.name}</h2>
                 </div>
                 <p className="text-xs" style={{ color: COLOR.mutedInk }}>
                   {selectedMod.category}
                   {weapon ? ` · ${weapon}` : ''}
                   {' · '}{selectedMod.rarity ?? '—'} · Rank {rank}/{cap}
+                  {selectedMod.is_conclave ? ' · Conclave' : ''}
                 </p>
               </div>
               <button onClick={() => setSelectedMod(null)} className="text-xl leading-none" style={{ color: COLOR.mutedInk }}>×</button>

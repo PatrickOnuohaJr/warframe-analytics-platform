@@ -4,6 +4,7 @@ import ModalShell from './ui/ModalShell';
 import { COLOR } from '../constants/theme';
 import { isAugment, isPrimeMod, modSetName, weaponTag, statGroups, statGroupsFor } from '../utils/modMeta';
 import PolaritySymbol from './PolaritySymbol';
+import ConclaveBadge from './ConclaveBadge';
 
 // Aura/Exilus/Augment are Warframe-only in the real data (confirmed
 // against the catalog: 0 weapon mods carry any of the three), so they
@@ -67,7 +68,10 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   // the Mods page and the Loadout mod picker already use.
   const showTypeGroups = category === 'All' || category === 'Warframe';
   const statGroupNames = category === 'All' ? [] : statGroupsFor(category);
-  const typeStatGroupNames = [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), ...statGroupNames];
+  // Conclave, unlike Aura/Exilus/Augment, isn't Warframe-only -- every
+  // weapon category has real Conclave-origin mods mixed in (WFCD
+  // uniqueName contains "/PvPMods/"), so it's always offered.
+  const typeStatGroupNames = [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), 'Conclave', ...statGroupNames];
 
   const typeStatCounts = useMemo(() => {
     const inCategory = catalog.filter(m => category === 'All' || m.category === category);
@@ -77,6 +81,7 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
       if (showTypeGroups && m.is_aura) counts.Aura += 1;
       if (showTypeGroups && m.is_exilus) counts.Exilus += 1;
       if (showTypeGroups && isAugment(m)) counts.Augment += 1;
+      if (m.is_conclave) counts.Conclave += 1;
       statGroups(m).forEach(g => { if (g in counts) counts[g] += 1; });
     });
     return counts;
@@ -86,6 +91,7 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
     if (group === 'Aura') return mod.is_aura;
     if (group === 'Exilus') return mod.is_exilus;
     if (group === 'Augment') return isAugment(mod);
+    if (group === 'Conclave') return mod.is_conclave;
     return statGroups(mod).includes(group);
   }
 
@@ -269,11 +275,12 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
               onChange={() => toggle(m.mod_id)}
             />
             <PolaritySymbol polarity={m.polarity} size={14} color={COLOR.mutedInk} />
+            {m.is_conclave && <ConclaveBadge size={13} />}
             <span style={{ color: COLOR.ink }} className="flex-1">{m.name}</span>
             <span className="text-xs" style={{ color: COLOR.mutedInk }}>
               {m.category}
               {weaponTag(m) ? ` · ${weaponTag(m)}` : ''}
-              {' '}{m.is_aura ? '· Aura' : ''}{m.is_exilus ? '· Exilus' : ''}
+              {' '}{m.is_aura ? '· Aura' : ''}{m.is_exilus ? '· Exilus' : ''}{m.is_conclave ? '· Conclave' : ''}
             </span>
           </label>
         ))}
