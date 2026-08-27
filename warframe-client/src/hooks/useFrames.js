@@ -5,8 +5,18 @@ export default function useFrames() {
   const [frames, setFrames] = useState([])
   const [loading, setLoading] = useState(true)
 
-  async function fetchFrames() {
-    setLoading(true)
+  // `silent` skips the loading flag -- used by refetchFrames after an
+  // edit (e.g. auto-saving an Arcane) so the fresh data swaps in in the
+  // background. Without this, every refetch flipped `loading` true/false,
+  // which unmounts the whole app down to the loading spinner in App.jsx
+  // and remounts it fresh on completion -- wiping every bit of local UI
+  // state (which frame/tab was open, which Loadout sub-tab, etc). That
+  // was tolerable when saves only happened on an explicit Save-button
+  // click (which closed the modal anyway), but auto-save-on-every-change
+  // fields (Arcanes, weapon name) call this on every debounced write,
+  // so it made editing an Arcane look like the whole app "reset".
+  async function fetchFrames({ silent = false } = {}) {
+    if (!silent) setLoading(true)
 
     const { data, error } = await wfUser
       .from('my_frames')
@@ -89,7 +99,7 @@ export default function useFrames() {
     }))
 
     setFrames(enriched)
-    setLoading(false)
+    if (!silent) setLoading(false)
   }
 
   useEffect(() => {
@@ -99,6 +109,6 @@ export default function useFrames() {
   return {
     frames,
     loading,
-    refetchFrames: fetchFrames,
+    refetchFrames: () => fetchFrames({ silent: true }),
   }
 }
