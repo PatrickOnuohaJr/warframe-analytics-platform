@@ -3,6 +3,13 @@
 // numbers are computed and shown, nothing here blocks an over-budget
 // loadout from being entered.
 
+// Every real Riven drains 10 at rank 0, +1/rank to 18 at rank 8 -- the
+// exact curve drainAtRank() already applies to every other mod, so a
+// Riven needs no math changes, just these two constants (confirmed with
+// Patrick 2026-08-27).
+export const RIVEN_BASE_DRAIN = 10;
+export const RIVEN_MAX_RANK = 8;
+
 // Drain magnitude grows by 1 per rank, in whichever direction baseDrain
 // already points: a positive (cost) mod gets MORE expensive (Serration
 // 4,5,6...14), a negative (aura refund) mod gets MORE negative (Steel

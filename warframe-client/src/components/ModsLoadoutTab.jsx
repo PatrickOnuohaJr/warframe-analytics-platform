@@ -48,6 +48,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
   const [owned, setOwned] = useState(new Map()); // mod_id -> { owned_rank }
   const [slots, setSlots] = useState([]); // raw loadout_slots rows for this frame
   const [meta, setMeta] = useState([]); // raw loadout_meta rows for this frame
+  const [rivens, setRivens] = useState([]); // raw wf_user.rivens rows, all of them
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeEquipment, setActiveEquipment] = useState('Warframe');
@@ -59,21 +60,22 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
       setLoading(true);
       setError(null);
 
-      const [modsRes, invRes, slotsRes, metaRes] = await Promise.all([
+      const [modsRes, invRes, slotsRes, metaRes, rivensRes] = await Promise.all([
         // Paged -- the mod catalog is past PostgREST's 1000-row default
         // cap, which silently truncates (see lib/fetchAll.js).
         fetchAll(() =>
-          wfBase.from('mods').select('mod_id, name, category, polarity, base_drain, max_rank, is_aura, is_exilus, raw_json')
+          wfBase.from('mods').select('mod_id, name, category, polarity, base_drain, max_rank, is_aura, is_exilus, is_stance, raw_json')
         ),
         wfUser.from('mod_inventory').select('mod_id, owned_rank'),
         wfUser.from('loadout_slots').select('*').eq('my_frame_id', frame.my_frame_id),
         wfUser.from('loadout_meta').select('*').eq('my_frame_id', frame.my_frame_id),
+        wfUser.from('rivens').select('*'),
       ]);
 
       if (cancelled) return;
 
-      if (modsRes.error || invRes.error || slotsRes.error || metaRes.error) {
-        console.error('Failed to load loadout data:', modsRes.error || invRes.error || slotsRes.error || metaRes.error);
+      if (modsRes.error || invRes.error || slotsRes.error || metaRes.error || rivensRes.error) {
+        console.error('Failed to load loadout data:', modsRes.error || invRes.error || slotsRes.error || metaRes.error || rivensRes.error);
         setError('Could not load loadout data.');
         setLoading(false);
         return;
@@ -83,6 +85,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
       setOwned(new Map((invRes.data || []).map(r => [r.mod_id, r])));
       setSlots(slotsRes.data || []);
       setMeta(metaRes.data || []);
+      setRivens(rivensRes.data || []);
       setLoading(false);
     }
 
@@ -91,12 +94,16 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
   }, [frame.my_frame_id]);
 
   const modsById = useMemo(() => new Map(catalog.map(m => [m.mod_id, m])), [catalog]);
+  const rivensById = useMemo(() => new Map(rivens.map(r => [r.riven_id, r])), [rivens]);
 
   const ownedByCategory = useMemo(() => {
     const map = new Map();
     EQUIPMENT_TYPES.forEach(type => map.set(type, []));
     catalog.forEach(m => {
-      if (!owned.has(m.mod_id) || m.is_aura) return;
+      // Aura and Stance each have their own dedicated slot in the real
+      // game -- a Stance mod can only go in the Stance slot, never one of
+      // Melee's 8 regular ones, same as Aura for Warframe.
+      if (!owned.has(m.mod_id) || m.is_aura || m.is_stance) return;
       if (map.has(m.category)) map.get(m.category).push(m);
     });
     return map;
@@ -107,11 +114,16 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
     [catalog, owned]
   );
 
+  const ownedStanceMods = useMemo(
+    () => catalog.filter(m => owned.has(m.mod_id) && m.is_stance),
+    [catalog, owned]
+  );
+
   const slotsByType = useMemo(() => {
     const map = new Map();
     EQUIPMENT_TYPES.forEach(type => map.set(type, new Map()));
     slots.forEach(s => {
-      map.get(s.equipment_type)?.set(s.slot_position, { mod_id: s.mod_id, polarity: s.polarity });
+      map.get(s.equipment_type)?.set(s.slot_position, { mod_id: s.mod_id, riven_id: s.riven_id, polarity: s.polarity });
     });
     return map;
   }, [slots]);
@@ -125,17 +137,17 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
     return map;
   }, [meta]);
 
-  async function handleSetSlot(equipmentType, slotPosition, { mod_id, polarity }) {
+  async function handleSetSlot(equipmentType, slotPosition, { mod_id, riven_id, polarity }) {
     setSlots(prev => {
       const next = prev.filter(s => !(s.equipment_type === equipmentType && s.slot_position === slotPosition));
-      next.push({ my_frame_id: frame.my_frame_id, equipment_type: equipmentType, slot_position: slotPosition, mod_id, polarity });
+      next.push({ my_frame_id: frame.my_frame_id, equipment_type: equipmentType, slot_position: slotPosition, mod_id, riven_id, polarity });
       return next;
     });
 
     const { error: upsertError } = await wfUser
       .from('loadout_slots')
       .upsert(
-        { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, slot_position: slotPosition, mod_id, polarity },
+        { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, slot_position: slotPosition, mod_id, riven_id, polarity },
         { onConflict: 'my_frame_id,equipment_type,slot_position' }
       );
 
@@ -183,6 +195,60 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
       });
   }
 
+  // A Riven's rank lives on its own row (not a shared catalog+inventory
+  // split like real mods) -- it's already a unique owned item, so ranking
+  // it up here only ever affects that one Riven.
+  function handleSetRivenRank(rivenId, nextRank) {
+    const current = rivensById.get(rivenId);
+    if (!current || current.owned_rank === nextRank) return;
+
+    setRivens(prev => prev.map(r => (r.riven_id === rivenId ? { ...r, owned_rank: nextRank } : r)));
+
+    wfUser
+      .from('rivens')
+      .update({ owned_rank: nextRank })
+      .eq('riven_id', rivenId)
+      .then(({ error: updateError }) => {
+        if (updateError) console.error('Failed to update riven rank:', updateError);
+      });
+  }
+
+  // Covers both create (no riven_id) and edit (existing riven_id).
+  async function handleSaveRiven(riven) {
+    const { data, error: upsertError } = await wfUser
+      .from('rivens')
+      .upsert(riven)
+      .select()
+      .single();
+
+    if (upsertError) {
+      console.error('Failed to save riven:', upsertError);
+      return null;
+    }
+
+    setRivens(prev => {
+      const rest = prev.filter(r => r.riven_id !== data.riven_id);
+      return [...rest, data];
+    });
+
+    return data;
+  }
+
+  async function handleDeleteRiven(rivenId) {
+    const { error: deleteError } = await wfUser.from('rivens').delete().eq('riven_id', rivenId);
+
+    if (deleteError) {
+      console.error('Failed to delete riven:', deleteError);
+      return;
+    }
+
+    setRivens(prev => prev.filter(r => r.riven_id !== rivenId));
+    // The FK's `on delete set null` already cleared riven_id on the DB
+    // side for any slot that held it -- mirror that locally so the UI
+    // doesn't keep pointing at a riven that no longer exists.
+    setSlots(prev => prev.map(s => (s.riven_id === rivenId ? { ...s, riven_id: null } : s)));
+  }
+
   if (loading) {
     return <p style={{ color: COLOR.mutedInk }}>Loading Loadout...</p>;
   }
@@ -219,11 +285,17 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
         slotsByPosition={slotsByType.get(activeType)}
         ownedMods={ownedByCategory.get(activeType)}
         auraMods={ownedAuraMods}
+        stanceMods={ownedStanceMods}
         ownedByModId={owned}
         modsById={modsById}
+        rivens={rivens}
+        rivensById={rivensById}
         onSetMeta={patch => handleSetMeta(activeType, patch)}
         onSetSlot={(slotPosition, value) => handleSetSlot(activeType, slotPosition, value)}
         onSetRank={handleSetRank}
+        onSetRivenRank={handleSetRivenRank}
+        onSaveRiven={handleSaveRiven}
+        onDeleteRiven={handleDeleteRiven}
         accent={color}
         frame={frame}
         frames={frames}
