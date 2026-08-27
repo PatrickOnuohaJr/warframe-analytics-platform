@@ -22,7 +22,6 @@ const PANEL_BG = '#4A443B'
 const BORDER = '#6F6A62'
 const INK = '#E8E4DC'
 const MUTED = '#B8B3AC'
-const AGED_INK = '#9C9890'
 const GOLD = '#FBBF24'
 
 function getSchools(frames) {
@@ -391,80 +390,30 @@ const filteredFrames =
               )}
           
 
-      {activePage === 'codex' && (      
-        <div className="flex flex-wrap gap-2">
-
+      {activePage === 'codex' && (
+        <select
+          value={selectedSchool}
+          onChange={e => setSelectedSchool(e.target.value)}
+          className="w-full sm:w-80 rounded-lg border px-3 py-2 text-[10px] uppercase font-bold tracking-[0.25em] outline-none"
+          style={{
+            background: PANEL_BG,
+            color: selectedSchool === 'All Schools' ? MUTED : schoolColor,
+            borderColor: selectedSchool === 'All Schools' ? BORDER : `${schoolColor}88`,
+          }}
+        >
           {schools.map(school => {
-            const active =
-              selectedSchool === school
-
-            const frame =
-              frames.find(
-                f =>
-                  f.cultivation_school === school &&
-                  f.cultivation_color
-              )
-
-            const color =
-              school === 'All Schools'
-                ? GOLD
-                : getReadableColor(frame?.cultivation_color ?? MUTED)
-
             const count =
               school === 'All Schools'
                 ? frames.length
-                : frames.filter(
-                    f =>
-                      f.cultivation_school === school
-                  ).length
+                : frames.filter(f => f.cultivation_school === school).length
 
             return (
-              <button
-                key={school}
-                onClick={() =>
-                  setSelectedSchool(school)
-                }
-                className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em] transition-all"
-                style={{
-                  background:
-                    active
-                      ? `${color}22`
-                      : PANEL_BG,
-
-                  color:
-                    active
-                      ? color
-                      : MUTED,
-
-                  borderColor:
-                    active
-                      ? `${color}88`
-                      : BORDER,
-
-                  boxShadow:
-                    active
-                      ? `0 0 18px ${color}18`
-                      : 'none',
-                }}
-              >
-                {school}
-
-                <span
-                  className="ml-2"
-                  style={{
-                    color:
-                      active
-                        ? color
-                        : AGED_INK,
-                  }}
-                >
-                  {count}
-                </span>
-              </button>
+              <option key={school} value={school}>
+                {school} ({count})
+              </option>
             )
           })}
-
-      </div>
+        </select>
     )}
       </div>
 
