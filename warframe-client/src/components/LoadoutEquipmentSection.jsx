@@ -1,11 +1,27 @@
 import { useState, useMemo } from 'react';
 import Panel from './ui/Panel';
+import Button from './ui/Button';
 import LoadoutSlotPickerModal from './LoadoutSlotPickerModal';
 import PolaritySymbol, { POLARITIES } from './PolaritySymbol';
+import WeaponInput from './WeaponInput';
+import IncarnonToggle from './IncarnonToggle';
+import CopyWeaponModal from './CopyWeaponModal';
+import AbilitiesEditor from './AbilitiesEditor';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain, pieceCapacity, isDiscounted } from '../utils/modCapacity';
+import { weaponTrait } from '../utils/weaponMeta';
+import { cleanValue } from '../utils/shardHelpers';
+import { wfUser } from '../lib/supabase';
+import useDebouncedField from '../hooks/useDebouncedField';
 
 const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
+// Maps each weapon equipment type to its three my_frames columns.
+const WEAPON_FIELDS = {
+  Primary: { weapon: 'primary_weapon', incarnon: 'primary_is_incarnon', arcane: 'primary_arcane', copySlot: 'primary' },
+  Secondary: { weapon: 'secondary_weapon', incarnon: 'secondary_is_incarnon', arcane: 'secondary_arcane', copySlot: 'secondary' },
+  Melee: { weapon: 'melee_weapon', incarnon: 'melee_is_incarnon', arcane: 'melee_arcane', copySlot: 'melee' },
+};
 
 function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRank, cost, discounted, accent }) {
   const cap = mod?.max_rank ?? 0;
@@ -92,6 +108,7 @@ function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRan
 
 export default function LoadoutEquipmentSection({
   equipmentType,
+  displayName,
   meta,
   slotsByPosition,
   ownedMods,
@@ -102,10 +119,65 @@ export default function LoadoutEquipmentSection({
   onSetSlot,
   onSetRank,
   accent,
+  frame,
+  frames,
+  weapons,
+  arcanes,
+  onSaved,
 }) {
   const [picker, setPicker] = useState(null); // { slotPosition, pool }
+  const [showCopyWeapon, setShowCopyWeapon] = useState(false);
+  const [arcaneCopyTarget, setArcaneCopyTarget] = useState('');
+  const [copyingArcanes, setCopyingArcanes] = useState(false);
 
   const isWarframe = equipmentType === 'Warframe';
+  const weaponFields = WEAPON_FIELDS[equipmentType];
+
+  // Every write here goes straight to my_frames/ability_configs (not the
+  // mod tables ModsLoadoutTab already manages locally), so it reports up
+  // through onSaved instead -- same refetch-and-flow-back-down path every
+  // other frame edit in the app already uses.
+  async function saveFrameField(patch) {
+    const { error } = await wfUser.from('my_frames').update(patch).eq('my_frame_id', frame.my_frame_id);
+    if (error) { console.error('Failed to save loadout field:', error); return; }
+    onSaved();
+  }
+
+  const [weaponName, setWeaponName] = useDebouncedField(
+    weaponFields ? (frame[weaponFields.weapon] ?? '') : '',
+    v => saveFrameField({ [weaponFields.weapon]: cleanValue(v) })
+  );
+  const [weaponArcaneValue, setWeaponArcaneValue] = useDebouncedField(
+    weaponFields ? (frame[weaponFields.arcane] ?? '') : '',
+    v => saveFrameField({ [weaponFields.arcane]: cleanValue(v) })
+  );
+  const [arcane1, setArcane1] = useDebouncedField(
+    frame.arcane_1 ?? '', v => saveFrameField({ arcane_1: cleanValue(v) })
+  );
+  const [arcane2, setArcane2] = useDebouncedField(
+    frame.arcane_2 ?? '', v => saveFrameField({ arcane_2: cleanValue(v) })
+  );
+
+  const otherFrames = frames.filter(f => f.my_frame_id !== frame.my_frame_id);
+
+  async function copyArcaneSetup() {
+    if (!arcaneCopyTarget) return;
+    setCopyingArcanes(true);
+
+    const { error } = await wfUser
+      .from('my_frames')
+      .update({ arcane_1: cleanValue(arcane1), arcane_2: cleanValue(arcane2) })
+      .eq('my_frame_id', arcaneCopyTarget);
+
+    setCopyingArcanes(false);
+
+    if (error) {
+      console.error('Failed to copy arcane setup:', error);
+      return;
+    }
+
+    onSaved();
+  }
 
   const capacity = pieceCapacity({ hasCatalyst: meta.has_catalyst });
 
@@ -139,7 +211,7 @@ export default function LoadoutEquipmentSection({
   return (
     <Panel accent={accent} className="mb-6">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: accent }}>{equipmentType}</h3>
+        <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: accent }}>{displayName ?? equipmentType}</h3>
 
         <div className="flex items-center gap-4 text-xs" style={{ color: COLOR.mutedInk }}>
           <label className="flex items-center gap-2">
@@ -172,6 +244,95 @@ export default function LoadoutEquipmentSection({
           </span>
         </div>
       </div>
+
+      {isWarframe && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <WeaponInput
+            label="Arcane 1"
+            value={arcane1}
+            onChange={setArcane1}
+            weapons={arcanes}
+            slot="Warframe"
+            placeholder="Arcane Reaper"
+          />
+          <WeaponInput
+            label="Arcane 2"
+            value={arcane2}
+            onChange={setArcane2}
+            weapons={arcanes}
+            slot="Warframe"
+            placeholder="Molt Augmented"
+          />
+
+          <div className="sm:col-span-2 rounded-xl p-3" style={{ background: COLOR.surface2, border: `1px solid ${accent}30` }}>
+            <p className="text-[10px] uppercase tracking-widest mb-2 font-bold" style={{ color: accent }}>
+              Copy Arcane Setup
+            </p>
+            <div className="flex gap-2">
+              <select
+                value={arcaneCopyTarget}
+                onChange={e => setArcaneCopyTarget(e.target.value)}
+                className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+                style={{ background: COLOR.surface1, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+              >
+                <option value="">Select target Warframe...</option>
+                {otherFrames.map(f => (
+                  <option key={f.my_frame_id} value={f.my_frame_id}>{f.warframe_name}</option>
+                ))}
+              </select>
+              <Button
+                variant="primary"
+                color={accent}
+                onClick={copyArcaneSetup}
+                disabled={!arcaneCopyTarget || copyingArcanes}
+              >
+                Copy
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isWarframe && weaponFields && (
+        <div className="space-y-3 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <WeaponInput
+                label={`${equipmentType} Weapon`}
+                value={weaponName}
+                onChange={setWeaponName}
+                weapons={weapons}
+                slot={equipmentType}
+                placeholder={`e.g. ${equipmentType === 'Melee' ? 'Praedos' : 'Torid'}`}
+              />
+              <IncarnonToggle
+                checked={frame[weaponFields.incarnon] ?? false}
+                onChange={checked => saveFrameField({ [weaponFields.incarnon]: checked })}
+                color={accent}
+              />
+            </div>
+
+            <WeaponInput
+              label={`${equipmentType} Arcane`}
+              value={weaponArcaneValue}
+              onChange={setWeaponArcaneValue}
+              weapons={arcanes}
+              slot={equipmentType}
+              placeholder="e.g. Primary Merciless"
+            />
+          </div>
+
+          {weaponTrait(weapons, frame[weaponFields.weapon]) && (
+            <p className="text-xs italic" style={{ color: COLOR.mutedInk }}>
+              {weaponTrait(weapons, frame[weaponFields.weapon])}
+            </p>
+          )}
+
+          <Button variant="info" size="sm" onClick={() => setShowCopyWeapon(true)}>
+            Copy Weapon To Other Builds
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
         {isWarframe && (
@@ -229,6 +390,7 @@ export default function LoadoutEquipmentSection({
       {picker && (
         <LoadoutSlotPickerModal
           mods={picker.pool}
+          category={equipmentType}
           ownedByModId={ownedByModId}
           slotPolarity={picker.slot.polarity}
           onSelect={modId => {
@@ -240,6 +402,25 @@ export default function LoadoutEquipmentSection({
             setPicker(null);
           }}
           onClose={() => setPicker(null)}
+        />
+      )}
+
+      {isWarframe && <AbilitiesEditor frame={frame} onSaved={onSaved} color={accent} key={frame.my_frame_id} />}
+
+      {showCopyWeapon && weaponFields && (
+        <CopyWeaponModal
+          frame={frame}
+          frames={frames}
+          sourceWeapons={{
+            primary: { name: frame.primary_weapon, incarnon: frame.primary_is_incarnon },
+            secondary: { name: frame.secondary_weapon, incarnon: frame.secondary_is_incarnon },
+            melee: { name: frame.melee_weapon, incarnon: frame.melee_is_incarnon },
+          }}
+          onClose={() => setShowCopyWeapon(false)}
+          onCopied={() => {
+            setShowCopyWeapon(false);
+            onSaved();
+          }}
         />
       )}
     </Panel>

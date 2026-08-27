@@ -10,7 +10,7 @@ export default function useWeapons() {
 
     const { data, error } = await wfBase
       .from('weapons')
-      .select('weapon_id, name, category, weapon_type, mastery_rank, slot')
+      .select('weapon_id, name, category, weapon_type, mastery_rank, slot, raw_json')
       .order('name', { ascending: true })
 
     if (error) {

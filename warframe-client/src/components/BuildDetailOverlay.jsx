@@ -97,25 +97,6 @@ function getConstitutionLabel(shards) {
   return null
 }
 
-function WeaponValue({ name, incarnon }) {
-  if (!name) {
-    return <p className="text-[#E8E4DC]">—</p>
-  }
-
-  return (
-    <p className="text-[#E8E4DC] flex items-center gap-2 flex-wrap">
-      <span>{name}</span>
-
-      {incarnon && (
-        <span className="text-[9px] uppercase tracking-widest px-2 py-0.5 rounded border text-amber-700 border-amber-700/35 bg-amber-600/10">
-          Incarnon
-        </span>
-      )}
-    </p>
-  )
-}
-
-
 function ShardLine({ label, shards, muted = false }) {
   return (
     <div>
@@ -157,9 +138,9 @@ function ShardLine({ label, shards, muted = false }) {
 
 export default function BuildDetailOverlay({
   frame,
+  frames = [],
+  weapons = [],
   onClose,
-  onEditArsenal,
-  onEditAbilities,
   onEditShards,
   onSaved,
 }) {
@@ -171,13 +152,7 @@ export default function BuildDetailOverlay({
   const targetShards = getShards(frame.target_shards)
   const currentConstitution = getConstitutionLabel(currentShards)
   const targetConstitution = getConstitutionLabel(targetShards)
-  const [activeAbilityConfig] = useState('A')
   const [activeTab, setActiveTab] = useState('identity')
-
-  const selectedConfig =
-    frame?.ability_configs?.find(
-      c => c.config_slot === activeAbilityConfig
-    ) ?? null
 
   return (
     <div
@@ -298,11 +273,9 @@ export default function BuildDetailOverlay({
         {/* Tab bar */}
         <div className="flex gap-2 mb-6">
           <TabButton active={activeTab === 'identity'} color={color} onClick={() => setActiveTab('identity')}>Identity</TabButton>
-          <TabButton active={activeTab === 'arsenal'} color={color} onClick={() => setActiveTab('arsenal')}>Arsenal</TabButton>
+          <TabButton active={activeTab === 'loadout'} color={color} onClick={() => setActiveTab('loadout')}>Loadout</TabButton>
           <TabButton active={activeTab === 'shards'} color={color} onClick={() => setActiveTab('shards')}>Archon Shards</TabButton>
-          <TabButton active={activeTab === 'abilities'} color={color} onClick={() => setActiveTab('abilities')}>Abilities</TabButton>
           <TabButton active={activeTab === 'testing'} color={color} onClick={() => setActiveTab('testing')}>Testing Log</TabButton>
-          <TabButton active={activeTab === 'mods'} color={color} onClick={() => setActiveTab('mods')}>Mods</TabButton>
         </div>
 
         {/* Identity tab */}
@@ -315,55 +288,10 @@ export default function BuildDetailOverlay({
           <TestingLogTab frame={frame} />
         )}
 
-        {/* Mods tab */}
-        {activeTab === 'mods' && (
-          <ModsLoadoutTab frame={frame} color={color} />
-        )}
-
-        {/* Arsenal tab */}
-        {activeTab === 'arsenal' && (
-          <Panel onClick={onEditArsenal} interactive accent={color} className="max-w-2xl">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Arsenal</h2>
-              <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">Click to Edit</span>
-            </div>
-            <div className="space-y-4 text-sm">
-              <div>
-                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Primary</p>
-                <WeaponValue name={frame.primary_weapon} incarnon={frame.primary_is_incarnon} />
-                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px] mt-2">
-                Primary Arcane
-              </p>
-              <p className="text-[#E8E4DC]">{frame.primary_arcane ?? '-'}</p>
-              </div>
-              <div>
-                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Secondary</p>
-                <WeaponValue name={frame.secondary_weapon} incarnon={frame.secondary_is_incarnon} />
-                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px] mt-2">
-                Secondary Arcane
-              </p>
-              <p className="text-[#E8E4DC]">{frame.secondary_arcane ?? '-'}</p>
-              </div>
-              <div>
-                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Melee</p>
-                <WeaponValue name={frame.melee_weapon} incarnon={frame.melee_is_incarnon} />
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div>
-                  <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Arcane 1</p>
-                  <p className="text-[#E8E4DC]">{frame.arcane_1 ?? '—'}</p>
-                </div>
-                <div>
-                  <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Arcane 2</p>
-                  <p className="text-[#E8E4DC]">{frame.arcane_2 ?? '—'}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Melee Arcane</p>
-                <p className="text-[#E8E4DC]">{frame.melee_arcane ?? '—'}</p>
-              </div>
-            </div>
-          </Panel>
+        {/* Loadout tab -- Warframe/Primary/Secondary/Melee, each with its
+            weapon+Arcane info, mod grid, and (Warframe only) Abilities */}
+        {activeTab === 'loadout' && (
+          <ModsLoadoutTab frame={frame} frames={frames} weapons={weapons} color={color} onSaved={onSaved} />
         )}
 
         {/* Shards tab */}
@@ -389,37 +317,6 @@ export default function BuildDetailOverlay({
                     Goal Constitution: {targetConstitution}
                   </p>
                 )}
-              </div>
-            </div>
-          </Panel>
-        )}
-
-        {/* Abilities tab */}
-        {activeTab === 'abilities' && (
-          <Panel onClick={onEditAbilities} interactive accent={color} className="max-w-2xl">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Abilities</h2>
-              <span className="text-[10px] text-[#B8B3AC] uppercase tracking-widest">Click to View</span>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div>
-                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Base Kit</p>
-                <div className="space-y-1 font-semibold">
-                  {frame.abilities?.length > 0 ? (
-                    frame.abilities.map(ability => (
-                      <p key={ability.ability_slot}>{ability.ability_slot}. {ability.ability_name}</p>
-                    ))
-                  ) : (
-                    <p className="text-[#B8B3AC]">No ability data yet</p>
-                  )}
-                </div>
-              </div>
-              <div>
-                <p className="text-[#B8B3AC] uppercase tracking-widest text-[10px]">Helminth</p>
-                <p className="mt-2 font-semibold">{selectedConfig?.subsumed_ability || 'No subsume'}</p>
-                <p className="text-sm opacity-70">
-                  {selectedConfig?.subsumed_slot ? `Replaced Slot ${selectedConfig.subsumed_slot}` : ''}
-                </p>
               </div>
             </div>
           </Panel>

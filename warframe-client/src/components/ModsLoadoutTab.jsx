@@ -2,16 +2,27 @@ import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
 import { fetchAll } from '../lib/fetchAll';
 import LoadoutEquipmentSection from './LoadoutEquipmentSection';
+import useArcanes from '../hooks/useArcanes';
 import { COLOR } from '../constants/theme';
 
 // ============================================================================
-// ModsLoadoutTab.jsx (Mods Inventory & DB -- loadout builder slice)
+// ModsLoadoutTab.jsx (Loadout tab -- Warframe/Primary/Secondary/Melee)
 // ============================================================================
-// Rendered inside BuildDetailOverlay when activeTab === 'mods'. Per build:
-// 4 equipment pieces (Warframe/Primary/Secondary/Melee), each with an
-// 8-slot grid + aura (Warframe only) + exilus, forma count, catalyst/
-// reactor toggle, and live capacity/drain math (utils/modCapacity.js).
-// Informational only -- nothing here blocks an over-budget loadout.
+// Rendered inside BuildDetailOverlay when activeTab === 'loadout'. One
+// equipment piece at a time (sub-tab bar below), each panel combining:
+// weapon/Arcane pickers + Incarnon + unique-trait line (weapon pieces) or
+// Arcane 1/2 + Abilities/Helminth (Warframe piece), and always the 8-slot
+// mod grid + aura (Warframe only) + exilus, forma count, catalyst/reactor
+// toggle, and live capacity/drain math (utils/modCapacity.js). Mod grid is
+// informational only -- nothing here blocks an over-budget loadout.
+//
+// Everything auto-saves on change (mods directly here, weapon/Arcane/
+// Abilities fields via LoadoutEquipmentSection/AbilitiesEditor) -- no
+// separate edit modal or Save button, per Patrick's "click it and edit it
+// right there" direction. This tab used to be Mods-only; Arsenal (weapon+
+// Arcane editing) and Abilities (base kit + Helminth) were separate tabs
+// that opened separate modals -- both folded in here so editing one piece
+// of a build doesn't mean bouncing between three UI surfaces.
 //
 // No Mastery Rank input here on purpose: its only mod-capacity effect is
 // a minimum floor while an item is still leveling up from rank 0, which
@@ -26,13 +37,20 @@ import { COLOR } from '../constants/theme';
 
 const EQUIPMENT_TYPES = ['Warframe', 'Primary', 'Secondary', 'Melee'];
 
-export default function ModsLoadoutTab({ frame, color }) {
+// Maps each weapon equipment type to the column on my_frames holding the
+// actual weapon name -- a frame with that slot unequipped has no sub-tab
+// to mod at all, since there's nothing there to put mods on.
+const WEAPON_FIELD = { Primary: 'primary_weapon', Secondary: 'secondary_weapon', Melee: 'melee_weapon' };
+
+export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved }) {
+  const { arcanes } = useArcanes();
   const [catalog, setCatalog] = useState([]);
   const [owned, setOwned] = useState(new Map()); // mod_id -> { owned_rank }
   const [slots, setSlots] = useState([]); // raw loadout_slots rows for this frame
   const [meta, setMeta] = useState([]); // raw loadout_meta rows for this frame
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeEquipment, setActiveEquipment] = useState('Warframe');
 
   useEffect(() => {
     let cancelled = false;
@@ -169,26 +187,50 @@ export default function ModsLoadoutTab({ frame, color }) {
     return <p style={{ color: COLOR.mutedInk }}>Loading Loadout...</p>;
   }
 
+  const visibleTypes = EQUIPMENT_TYPES.filter(type => type === 'Warframe' || frame[WEAPON_FIELD[type]]);
+  const activeType = visibleTypes.includes(activeEquipment) ? activeEquipment : 'Warframe';
+
   return (
     <div>
       {error && <p className="text-red-400 mb-4">{error}</p>}
 
-      {EQUIPMENT_TYPES.map(type => (
-        <LoadoutEquipmentSection
-          key={type}
-          equipmentType={type}
-          meta={metaByType.get(type)}
-          slotsByPosition={slotsByType.get(type)}
-          ownedMods={ownedByCategory.get(type)}
-          auraMods={ownedAuraMods}
-          ownedByModId={owned}
-          modsById={modsById}
-          onSetMeta={patch => handleSetMeta(type, patch)}
-          onSetSlot={(slotPosition, value) => handleSetSlot(type, slotPosition, value)}
-          onSetRank={handleSetRank}
-          accent={color}
-        />
-      ))}
+      <div className="flex gap-2 mb-6">
+        {visibleTypes.map(type => (
+          <button
+            key={type}
+            onClick={() => setActiveEquipment(type)}
+            className="py-2 px-4 rounded-lg text-sm font-semibold transition-colors"
+            style={{
+              background: activeType === type ? `${color}18` : COLOR.surface2,
+              border: `1px solid ${activeType === type ? `${color}55` : COLOR.border}`,
+              color: activeType === type ? color : COLOR.mutedInk,
+            }}
+          >
+            {type === 'Warframe' ? 'Warframe' : frame[WEAPON_FIELD[type]]}
+          </button>
+        ))}
+      </div>
+
+      <LoadoutEquipmentSection
+        key={activeType}
+        equipmentType={activeType}
+        displayName={activeType === 'Warframe' ? undefined : frame[WEAPON_FIELD[activeType]]}
+        meta={metaByType.get(activeType)}
+        slotsByPosition={slotsByType.get(activeType)}
+        ownedMods={ownedByCategory.get(activeType)}
+        auraMods={ownedAuraMods}
+        ownedByModId={owned}
+        modsById={modsById}
+        onSetMeta={patch => handleSetMeta(activeType, patch)}
+        onSetSlot={(slotPosition, value) => handleSetSlot(activeType, slotPosition, value)}
+        onSetRank={handleSetRank}
+        accent={color}
+        frame={frame}
+        frames={frames}
+        weapons={weapons}
+        arcanes={arcanes}
+        onSaved={onSaved}
+      />
     </div>
   );
 }
