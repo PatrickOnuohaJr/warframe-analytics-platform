@@ -6,7 +6,7 @@ import Button from '../components/ui/Button';
 import ModalShell from '../components/ui/ModalShell';
 import AddModToInventoryModal from '../components/AddModToInventoryModal';
 import { COLOR } from '../constants/theme';
-import { isAugment, augmentTarget, effectTextAtRank, weaponTag, statGroups, STAT_GROUPS } from '../utils/modMeta';
+import { isAugment, augmentTarget, effectTextAtRank, weaponTag, statGroups, statGroupsFor } from '../utils/modMeta';
 import PolaritySymbol from '../components/PolaritySymbol';
 
 // ============================================================================
@@ -224,7 +224,15 @@ export default function ModsPage() {
           {CATEGORY_FILTERS.map(c => (
             <button
               key={c}
-              onClick={() => setCategoryFilter(c)}
+              onClick={() => {
+                setCategoryFilter(c);
+                // Aura and stat groups are category-specific (a weapon can
+                // never be Aura, and its relevant stat groups differ from a
+                // Warframe's) -- stale selections from the old category
+                // would otherwise silently filter to nothing.
+                if (c !== 'Warframe' && c !== 'All') setAuraOnly(false);
+                setStatFilter(null);
+              }}
               className="rounded-xl px-4 py-2 text-[10px] uppercase font-bold tracking-[0.25em] transition-colors"
               style={{
                 background: categoryFilter === c ? `${COLOR.gold}18` : COLOR.surface1,
@@ -261,17 +269,19 @@ export default function ModsPage() {
       />
 
       <div className="flex flex-wrap gap-2 mb-4">
-        <button
-          onClick={() => setAuraOnly(v => !v)}
-          className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
-          style={{
-            background: auraOnly ? `${COLOR.gold}22` : 'transparent',
-            color: auraOnly ? COLOR.gold : COLOR.mutedInk,
-            border: `1px solid ${auraOnly ? COLOR.gold : COLOR.border}`,
-          }}
-        >
-          Aura Only
-        </button>
+        {(categoryFilter === 'All' || categoryFilter === 'Warframe') && (
+          <button
+            onClick={() => setAuraOnly(v => !v)}
+            className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
+            style={{
+              background: auraOnly ? `${COLOR.gold}22` : 'transparent',
+              color: auraOnly ? COLOR.gold : COLOR.mutedInk,
+              border: `1px solid ${auraOnly ? COLOR.gold : COLOR.border}`,
+            }}
+          >
+            Aura Only
+          </button>
+        )}
         <button
           onClick={() => setExilusOnly(v => !v)}
           className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
@@ -308,7 +318,12 @@ export default function ModsPage() {
       </div>
 
       <div className="flex flex-wrap gap-1.5 mb-4">
-        {STAT_GROUPS.map(group => (
+        {categoryFilter === 'All' && (
+          <span className="text-[10px] uppercase tracking-widest self-center" style={{ color: COLOR.mutedInk }}>
+            Pick a category above to filter by stat
+          </span>
+        )}
+        {statGroupsFor(categoryFilter).map(group => (
           <button
             key={group}
             onClick={() => setStatFilter(statFilter === group ? null : group)}

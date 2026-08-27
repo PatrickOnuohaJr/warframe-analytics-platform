@@ -49,40 +49,86 @@ export function modSetName(mod) {
   return match ? match[1] : null;
 }
 
-// Stat-group filtering (Health/Shield/Armor/Energy/... mods), for finding
-// "which of my owned mods boost X" while assembling a build. WFCD has no
-// stat-category field, so this scans the mod's own effect text for the
-// exact phrasing the game uses -- verified against real mods first
-// (Vitality -> "Health", Redirection -> "Shield Capacity", Steel Fiber ->
-// "Armor", Flow -> "Energy Max", Rush -> "Sprint Speed", Continuity ->
-// "Ability Duration", Streamline -> "Ability Efficiency", Stretch ->
-// "Ability Range", Intensify -> "Ability Strength") rather than guessed.
-// A mod can land in more than one group (Transient Fortitude is both
-// Strength and Duration), and this is a browsing aid, not a strict
-// classifier -- it'll occasionally catch an aura that debuffs enemy Armor
-// alongside real self-Armor mods, same tradeoff Armory's auto-tags make.
+// Stat-group filtering, for finding "which of my owned mods boost X" while
+// assembling a build. WFCD has no stat-category field, so this scans the
+// mod's own effect text for the exact phrasing the game uses -- verified
+// against real mods first, never guessed. The relevant groups differ by
+// equipment category (a Warframe cares about Health/Shield/Armor; a weapon
+// never has any of those mods at all), so keywords are keyed by
+// mod.category and only that category's groups apply to a given mod.
+//
+// Warframe, verified against: Vitality -> "Health", Redirection -> "Shield
+// Capacity", Steel Fiber -> "Armor", Flow -> "Energy Max", Rush -> "Sprint
+// Speed", Continuity -> "Ability Duration", Streamline -> "Ability
+// Efficiency", Stretch -> "Ability Range", Intensify -> "Ability Strength".
+//
+// Primary/Secondary, verified against: Lethal Torrent -> "Fire Rate",
+// Split Chamber -> "Multishot", Ammo Stock -> "Magazine Capacity", Tactical
+// Pump -> "Reload Speed", Blood Rush -> "Critical Chance", Vital Sense ->
+// "Critical Damage", Malignant Force -> "Status Chance", Seeking Fury ->
+// "Punch Through". IPS keys off WFCD's own per-damage-type markup tags
+// (DT_SLASH_COLOR / DT_IMPACT_COLOR / DT_PUNCTURE_COLOR) rather than the
+// element name text, so it only catches Impact/Puncture/Slash mods and not
+// every other elemental (Poison, Electricity, ...) mod that also reads
+// "+N% <color>Element".
+//
+// Melee mods reuse the same text (Attack Speed, Range, Status Chance,
+// Damage) under Patrick's own group names for that category ("Chance"
+// instead of "Status", no separate Crit Chance/Damage split).
+//
+// A mod can land in more than one group in its own category (Transient
+// Fortitude is both Strength and Duration), and this is a browsing aid,
+// not a strict classifier -- it'll occasionally catch a debuff mod that
+// affects enemy stats alongside real self-buff mods, same tradeoff
+// Armory's auto-tags make.
 const STAT_GROUP_KEYWORDS = {
-  Health: ['Health'],
-  Shield: ['Shield'],
-  Armor: ['Armor'],
-  Energy: ['Energy'],
-  'Sprint Speed': ['Sprint Speed'],
-  Duration: ['Ability Duration'],
-  Efficiency: ['Ability Efficiency'],
-  Range: ['Ability Range'],
-  Strength: ['Ability Strength'],
+  Warframe: {
+    Health: ['Health'],
+    Shield: ['Shield'],
+    Armor: ['Armor'],
+    Energy: ['Energy'],
+    'Sprint Speed': ['Sprint Speed'],
+    Duration: ['Ability Duration'],
+    Efficiency: ['Ability Efficiency'],
+    Range: ['Ability Range'],
+    Strength: ['Ability Strength'],
+  },
+  Primary: {
+    'Fire Rate': ['Fire Rate'],
+    Multishot: ['Multishot'],
+    Magazine: ['Magazine Capacity'],
+    Reload: ['Reload Speed'],
+    'Crit Chance': ['Critical Chance'],
+    'Crit Damage': ['Critical Damage'],
+    Status: ['Status Chance'],
+    'Punch Through': ['Punch Through'],
+    IPS: ['DT_SLASH_COLOR', 'DT_IMPACT_COLOR', 'DT_PUNCTURE_COLOR'],
+  },
+  Melee: {
+    'Attack Speed': ['Attack Speed'],
+    Range: ['Range'],
+    Chance: ['Status Chance'],
+    Damage: ['Damage'],
+    IPS: ['DT_SLASH_COLOR', 'DT_IMPACT_COLOR', 'DT_PUNCTURE_COLOR'],
+  },
 };
+STAT_GROUP_KEYWORDS.Secondary = STAT_GROUP_KEYWORDS.Primary;
 
-export const STAT_GROUPS = Object.keys(STAT_GROUP_KEYWORDS);
+// Groups relevant to a given equipment category, in display order. Falls
+// back to [] for an unrecognized category rather than throwing.
+export function statGroupsFor(category) {
+  return Object.keys(STAT_GROUP_KEYWORDS[category] ?? {});
+}
 
 export function statGroups(mod) {
+  const keywords = STAT_GROUP_KEYWORDS[mod.category];
   const levels = mod.raw_json?.levelStats;
-  if (!levels || levels.length === 0) return [];
+  if (!keywords || !levels || levels.length === 0) return [];
 
   const text = levels.map(l => (l.stats || []).join(' ')).join(' ');
 
-  return STAT_GROUPS.filter(group =>
-    STAT_GROUP_KEYWORDS[group].some(keyword => text.includes(keyword))
+  return Object.keys(keywords).filter(group =>
+    keywords[group].some(keyword => text.includes(keyword))
   );
 }
 

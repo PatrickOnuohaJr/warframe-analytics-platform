@@ -2,10 +2,14 @@ import { useState, useMemo } from 'react';
 import { wfUser } from '../lib/supabase';
 import ModalShell from './ui/ModalShell';
 import { COLOR } from '../constants/theme';
-import { isAugment, isPrimeMod, modSetName, weaponTag, statGroups } from '../utils/modMeta';
-
-const TYPE_STAT_GROUPS = ['Aura', 'Exilus', 'Augment', 'Health', 'Shield', 'Armor', 'Energy'];
+import { isAugment, isPrimeMod, modSetName, weaponTag, statGroups, statGroupsFor } from '../utils/modMeta';
 import PolaritySymbol from './PolaritySymbol';
+
+// Aura/Exilus/Augment are Warframe-only in the real data (confirmed
+// against the catalog: 0 weapon mods carry any of the three), so they
+// only belong in the type/stat picker when browsing All or Warframe --
+// showing them under Primary/Secondary/Melee would just be a menu option
+// that always selects nothing.
 
 const CATEGORIES = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee'];
 
@@ -34,11 +38,14 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   // Real WFCD data behind "groupable": isAugment flag, isPrime flag, and
   // modSet (parsed to a human name, e.g. "Umbra", "Augur", "Strain") --
   // whatever sets actually exist in the catalog, not a guessed list.
+  // Scoped to the active category so browsing Primary doesn't list Umbra/
+  // Augur/etc sets that belong entirely to Warframe mods.
   const groups = useMemo(() => {
+    const inCategory = catalog.filter(m => category === 'All' || m.category === category);
     let primeCount = 0;
     const setCounts = new Map();
 
-    catalog.forEach(m => {
+    inCategory.forEach(m => {
       if (isPrimeMod(m)) primeCount += 1;
       const set = modSetName(m);
       if (set) setCounts.set(set, (setCounts.get(set) || 0) + 1);
@@ -48,23 +55,32 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
       primeCount,
       sets: [...setCounts.entries()].sort((a, b) => a[0].localeCompare(b[0])),
     };
-  }, [catalog]);
+  }, [catalog, category]);
 
   // Mod type / stat groups -- a separate menu from the themed-set one
   // above, since "what kind of mod is this" (Aura/Exilus/Augment) and
-  // "what stat does it boost" (Health/Shield/...) are a different
-  // grouping axis than "which themed set is it part of."
+  // "what stat does it boost" (Health/Shield/... or Fire Rate/Multishot/
+  // ... or Attack Speed/Range/...) is a different grouping axis than
+  // "which themed set is it part of." Both halves are category-scoped:
+  // Aura/Exilus/Augment only for All/Warframe (see note above), and the
+  // stat groups themselves via statGroupsFor, same category-aware list
+  // the Mods page and the Loadout mod picker already use.
+  const showTypeGroups = category === 'All' || category === 'Warframe';
+  const statGroupNames = category === 'All' ? [] : statGroupsFor(category);
+  const typeStatGroupNames = [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), ...statGroupNames];
+
   const typeStatCounts = useMemo(() => {
+    const inCategory = catalog.filter(m => category === 'All' || m.category === category);
     const counts = {};
-    TYPE_STAT_GROUPS.forEach(g => { counts[g] = 0; });
-    catalog.forEach(m => {
-      if (m.is_aura) counts.Aura += 1;
-      if (m.is_exilus) counts.Exilus += 1;
-      if (isAugment(m)) counts.Augment += 1;
+    typeStatGroupNames.forEach(g => { counts[g] = 0; });
+    inCategory.forEach(m => {
+      if (showTypeGroups && m.is_aura) counts.Aura += 1;
+      if (showTypeGroups && m.is_exilus) counts.Exilus += 1;
+      if (showTypeGroups && isAugment(m)) counts.Augment += 1;
       statGroups(m).forEach(g => { if (g in counts) counts[g] += 1; });
     });
     return counts;
-  }, [catalog]);
+  }, [catalog, category, typeStatGroupNames, showTypeGroups]);
 
   function matchesTypeStatGroup(mod, group) {
     if (group === 'Aura') return mod.is_aura;
@@ -74,14 +90,23 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   }
 
   function selectGroup(groupKey) {
+    // Scoped to the active category, matching the counts shown next to
+    // each option -- otherwise "All Prime Mods (21)" for Primary would
+    // actually pull in Prime mods from every category.
+    const inCategory = m => category === 'All' || m.category === category;
+
     let matches;
-    if (groupKey === 'prime') matches = catalog.filter(isPrimeMod);
+    if (groupKey === 'prime') matches = catalog.filter(m => isPrimeMod(m) && inCategory(m));
     else if (groupKey.startsWith('set:')) {
       const setName = groupKey.slice(4);
-      matches = catalog.filter(m => modSetName(m) === setName);
+      matches = catalog.filter(m => modSetName(m) === setName && inCategory(m));
     } else if (groupKey.startsWith('typestat:')) {
+      // Primary and Secondary share the same stat-group names (Crit
+      // Chance, Fire Rate, ...), so this needs the category filter too --
+      // otherwise picking "Crit Chance" while browsing Primary would
+      // silently pull in Secondary mods as well.
       const group = groupKey.slice(9);
-      matches = catalog.filter(m => matchesTypeStatGroup(m, group));
+      matches = catalog.filter(m => matchesTypeStatGroup(m, group) && inCategory(m));
     } else {
       return;
     }
@@ -190,7 +215,7 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
         style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
       >
         <option value="">Select a mod type or stat to add...</option>
-        {TYPE_STAT_GROUPS.map(group => (
+        {typeStatGroupNames.map(group => (
           <option key={group} value={`typestat:${group}`}>{group} ({typeStatCounts[group]})</option>
         ))}
       </select>

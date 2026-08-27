@@ -3,14 +3,17 @@ import ModalShell from './ui/ModalShell';
 import PolaritySymbol from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain, isDiscounted } from '../utils/modCapacity';
-import { statGroups, STAT_GROUPS } from '../utils/modMeta';
+import { statGroups, statGroupsFor } from '../utils/modMeta';
 
 // Mod picker for a single loadout slot. `mods` is already pre-filtered by
 // the caller (right equipment category, aura-only / exilus-only as
-// appropriate) to owned mods only.
-export default function LoadoutSlotPickerModal({ mods, ownedByModId, slotPolarity, onSelect, onClear, onClose }) {
+// appropriate) to owned mods only. `category` picks which stat-group chips
+// apply -- a weapon slot never offers Health/Shield/Armor, a Warframe slot
+// never offers Fire Rate/Multishot.
+export default function LoadoutSlotPickerModal({ mods, category, ownedByModId, slotPolarity, onSelect, onClear, onClose }) {
   const [search, setSearch] = useState('');
   const [statFilter, setStatFilter] = useState(null);
+  const groups = statGroupsFor(category);
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -57,7 +60,7 @@ export default function LoadoutSlotPickerModal({ mods, ownedByModId, slotPolarit
         >
           All
         </button>
-        {STAT_GROUPS.map(group => (
+        {groups.map(group => (
           <button
             key={group}
             onClick={() => setStatFilter(statFilter === group ? null : group)}
