@@ -1,10 +1,11 @@
 # Cephalon Gu — Master Roadmap
-*As of August 25, 2026 — Claude Code context sync (Session 009, in progress)*
+*As of August 27, 2026 — Claude Code context sync (Session 013)*
 
 > **Note on this file:** This is a context-bridge update for Claude Code, not a formal
-> `reconcile`-triggered regeneration (no full lettered shipment has closed since the
-> Aug 19 version). It reflects everything shipped in Session 008 plus open threads
-> carried into Session 009, so Claude Code isn't working from an 6-day-stale picture.
+> `reconcile`-triggered regeneration. It reflects the Mods Inventory & DB arc (locked-queue
+> #1) shipping to completion across Sessions 010-013 -- mods, the Loadout builder,
+> capacity/drain math, and Riven support are all live -- so Claude Code isn't working
+> from a stale picture of that arc as "not yet started."
 
 ---
 
@@ -30,49 +31,52 @@
 - **Design system pass** ✅ *(Session 010)* — Cinzel/Outfit fonts, custom favicon, app renamed to Cephalon Gu, shared `ui/Panel` / `ui/Button` / `ui/ModalShell` primitives + `constants/theme.js` rolled out across every page and modal, cultivation-color contrast fix (`utils/color.js` lifts unreadable dark identity colors to a legible floor without touching stored data), ArchonShardsPage's off-palette colors fixed
 - **Arsenal Search Suite — COMPLETE** ✅ *(Session 010)* — Weapon Stat Threshold Search shipped as a second tab on `ArsenalSearchPage.jsx` (`WeaponStatSearchTab.jsx`). Turned out **no new table was needed** — `wf_base.weapons.raw_json` already carries every stat (crit chance/multiplier, status chance, fire rate, multishot, magazine size for guns; range, combo duration, heavy attack damage, attack speed for melee) from the existing WFCD seed. Client-side threshold filtering across all 665 weapons, category-aware stat sets, slider + type-in per stat with live-computed min/max bounds.
 - **D.1 — Armory** ✅ *(Session 010)* — new `wf_user.weapon_inventory` table (real ownership tracking, independent of what's equipped), `ArmoryPage.jsx` with category + auto-derived personality-tag filters (`utils/weaponTags.js`, rules-based off `raw_json` stats), live 3-Weapon Rule validation (a primary/melee weapon on more than 3 warframes gets flagged — secondary exempt, see project memory for the rule's definition), and native drag/drop reassignment onto `ArmoryFrameRoster.jsx`'s per-frame slot targets. Verified live end-to-end including a real DB write via actual drag/drop.
+- **B1 — School Navigation Cleanup** ✅ *(Session 013)* — the 14-button school-filter row in `App.jsx`'s Codex header collapsed into a single `<select>` (schools + build counts as options), matching the dropdown pattern already used in `ShardsTab.jsx`/`CopyWeaponModal.jsx`. Verified live: filtering, build count, and header re-title all still work correctly.
+- **Locked-Queue #1 — Mods Inventory & DB — COMPLETE** ✅ *(Sessions 010-013)* — the full arc: `wf_base.mods` (1082-row WFCD-seeded catalog) + `wf_user.mod_inventory` ownership/rank tracking (`ModsPage.jsx`, bulk rank editing, stat-group/Aura/Exilus/Augment/Conclave filters); the 8-slot Loadout builder (`ModsLoadoutTab.jsx`/`LoadoutEquipmentSection.jsx`/`LoadoutSlotPickerModal.jsx`) merging Arsenal, Abilities, and Mods into one Warframe/Primary/Secondary/Melee tabbed surface with live capacity/drain math (`utils/modCapacity.js`, matched-vs-mismatched polarity discount, Omni Forma universal polarity); a full mod-catalog data-quality audit (fixed a bug where `is_exilus` was `false` for every non-Warframe mod, removed 6 confirmed never-shipped ghost catalog rows, tagged all 131 Conclave-origin mods with a bulk-exclude workflow); and **Riven mod support** (`wf_user.rivens`, `RivenEditorModal.jsx`) — user-created, weapon-bound mods with hand-typed stats that slot into the same picker/capacity pipeline as real mods with zero formula changes. This was the hard prerequisite for D.2-D.5 below, which is now unblocked.
 
 ---
 
 ## 🔴 THE LOCKED QUEUE (in order)
 
-### 1. Mods Inventory & DB
-Own dedicated multi-session arc — hundreds of mods, polarity matching, drain/capacity math, 8-slot loadout schema with forma count. **Hard prerequisite** for everything below it — including giving A3 (#4) complete build-state visibility.
+### ~~1. Mods Inventory & DB~~ ✅ COMPLETE — see SHIPPED above
 
-### 2. D.2–D.5 — Survivability Suite
-Survivability Analytics, Report Card, Survivability Profiles, Resilience metric. **Blocked until Mods DB exists.**
+### 1. D.2–D.5 — Survivability Suite
+Survivability Analytics, Report Card, Survivability Profiles, Resilience metric. Was **blocked until Mods DB exists** — that block is cleared. **Next up.**
 
-### 3. D.7 — Build Recommendation / Flow / Doctrine Adjacency
+### 2. D.7 — Build Recommendation / Flow / Doctrine Adjacency
 Flow metric (how well a build chains movement/combat/buffs), doctrine adjacency modeling (structured sister-art/cross-school relationship data, currently only in codex prose).
 
-### 4. A3 — Predictive Build Crafting / Build Intelligence Layer
-Locked queue position unchanged since Aug 19 scoping. Full Bayesian confidence-scoring mechanism and benchmark-gated intervention logic already finalized (see prior roadmap version / PM Update doc for full spec) — implementation still gated on #1 and #3 above. Acceptance test remains the Citrine build (infer Health Tank archetype from observation alone, correctly benchmark against Jade Light).
+### 3. A3 — Predictive Build Crafting / Build Intelligence Layer
+Locked queue position unchanged since Aug 19 scoping. Full Bayesian confidence-scoring mechanism and benchmark-gated intervention logic already finalized (see prior roadmap version / PM Update doc for full spec) — implementation still gated on #1 and #2 above. Acceptance test remains the Citrine build (infer Health Tank archetype from observation alone, correctly benchmark against Jade Light).
 
 Also folded in: **Ideal Invigoration Profile** — inferred ideal weekly Helminth Invigoration per loadout based on detected build direction/bottleneck. No new infrastructure; consumes A3's existing Observe→Infer→Model→Detect→Simulate→Intervene pipeline.
 
-### 5. Shipment C — Shareable Build URL
+### 4. Shipment C — Shareable Build URL
 Read-only build link.
 
-### 6. Shipment E — OAuth / User Profiles
+### 5. Shipment E — OAuth / User Profiles
 
-### 7. Shipment F — Tools
+### 6. Shipment F — Tools
 Proportions calculator, build math utilities.
 
 ---
 
 ## 🧩 FLEX ITEM (no dependencies, insert whenever convenient)
 
-- **B1 — School Navigation Cleanup** — top bar crowded with 14 separate school tabs, probably collapses into a dropdown. Zero prerequisites.
+*(none open — B1 shipped, see SHIPPED above)*
 
 ---
 
-## 🟡 OPEN THREADS — carried from Session 008 into Session 009
+## 🟡 OPEN THREADS
 
 Not locked-queue shipments, but active loose ends:
 
 - **Two pending shard swaps + Revenant's shard goal** — need applying via in-app UI (not a code task, Patrick does this directly).
-- **Open Granola audit decisions** — in-game vs. Gu arsenal audit surfaced pending review items on: Dagath, Gara, Wukong, Voruna, Ash, Revenant, Khora, Atlas.
-- **Companion tracking scoping** — pets/sentinels currently untracked in Gu at all; needs a scoping pass before it can even join the queue.
-- **Koumei dropdown bug** — confirmed **no longer reproducing** as of Session 008. Candidate to close out as resolved, pending one more confirmation.
+- **Open Granola audit decisions** — in-game vs. Gu arsenal audit surfaced pending review items on: Dagath, Gara, Wukong, Voruna, Ash, Revenant, Khora, Atlas. Patrick working through these himself.
+- **Companion tracking scoping** — pets/sentinels currently untracked in Gu at all; needs a scoping pass before it can even join the queue. *(Scoping planned for end of Session 013.)*
+- **Koumei dropdown bug** — confirmed fixed by Patrick, Session 012. Closed.
+- **Dread's 4-primaries 3-Weapon Rule violation** — Patrick fixing directly in-app, not a code task.
+- ~~**Fall Off (damage falloff) stat group**~~ — cut, Session 013. Unessential.
 
 ---
 
