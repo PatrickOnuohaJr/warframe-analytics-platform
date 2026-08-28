@@ -15,11 +15,11 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 WFCD_URL = "https://api.warframestat.us/mods"
 
 # Scope matches every other boundary in this app: Warframe + the 3 weapon
-# slots only. Shotgun Mod folds into Primary (same as weapon slot
-# normalization in seed_weapons.py); Stance Mod folds into Melee (it's a
-# melee-exclusive slot). Everything else (Companion, Focus, Plexus,
-# Arch-Gun/Melee, Necramech, K-Drive, Railjack, Archwing, Parazon, etc.)
-# is out of scope and skipped.
+# slots, plus Companion as of Session 014. Shotgun Mod folds into Primary
+# (same as weapon slot normalization in seed_weapons.py); Stance Mod
+# folds into Melee (it's a melee-exclusive slot). Everything else (Focus,
+# Plexus, Arch-Gun/Melee, Necramech, K-Drive, Railjack, Archwing, Parazon,
+# etc.) is still out of scope and skipped.
 TYPE_TO_CATEGORY = {
     "Warframe Mod": "Warframe",
     "Primary Mod": "Primary",
@@ -27,6 +27,16 @@ TYPE_TO_CATEGORY = {
     "Secondary Mod": "Secondary",
     "Melee Mod": "Melee",
     "Stance Mod": "Melee",
+    "Companion Mod": "Companion",
+    # Posture Mod is its own WFCD type, distinct from Companion Mod --
+    # a Beast Claws-exclusive (compatName "Claws") mod slotting into a
+    # dedicated Posture slot that ADDS capacity via matching polarity,
+    # confirmed against the wiki and Patrick's baseDrain math (-2 base,
+    # doubled at max rank 3 on a matched-polarity slot = -10, exactly the
+    # 60->70 he saw live). Mechanically identical to a Warframe's Aura
+    # slot, hence folded into the same "Companion" category and flagged
+    # is_aura below rather than getting its own category.
+    "Posture Mod": "Companion",
 }
 
 # WFCD's dataset includes mods DE coded but never actually shipped
@@ -262,12 +272,24 @@ def seed_mods():
                     "base_drain": mod.get("baseDrain"),
                     "max_rank": MAX_RANK_OVERRIDES.get(mod.get("uniqueName"), mod.get("fusionLimit")),
                     "rarity": mod.get("rarity"),
-                    "is_aura": mod.get("compatName") == "AURA",
+                    "is_aura": mod.get("compatName") == "AURA" or mod.get("type") == "Posture Mod",
                     "is_stance": mod.get("type") == "Stance Mod",
                     "is_exilus": bool(mod.get("isExilus"))
                     or bool(mod.get("isUtility"))
                     or mod.get("uniqueName") in EXILUS_OVERRIDE_UNIQUE_NAMES,
                     "is_conclave": "/PvPMods/" in (mod.get("uniqueName") or ""),
+                    # WFCD's Companion Mod entries carry no is_aura/is_exilus-
+                    # style flag distinguishing an ability mod (Precept, e.g.
+                    # Vacuum/Guardian/Sacrifice) from a plain stat mod --
+                    # every one of the 158 has identical baseDrain/fusionLimit
+                    # shape either way. compat_name is stored as-is so the
+                    # Companion tab's Precept/Posture slot filtering (still
+                    # open, needs wiki + live-game verification before it
+                    # touches capacity math, same rigor as the Exilus/
+                    # Stabilizer bugs this project already found) has the raw
+                    # ROBOTIC/BEAST/Claws/Sentinel/named-exclusive value to
+                    # work from.
+                    "compat_name": mod.get("compatName"),
                     "raw_json": mod,
                 }
 
