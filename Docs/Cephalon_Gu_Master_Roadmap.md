@@ -71,12 +71,14 @@ Proportions calculator, build math utilities.
 
 Not locked-queue shipments, but active loose ends:
 
-- **Two pending shard swaps + Revenant's shard goal** — need applying via in-app UI (not a code task, Patrick does this directly).
 - **Open Granola audit decisions** — in-game vs. Gu arsenal audit surfaced pending review items on: Dagath, Gara, Wukong, Voruna, Ash, Revenant, Khora, Atlas. Patrick working through these himself.
 - **Companion tracking scoping** — pets/sentinels currently untracked in Gu at all; needs a scoping pass before it can even join the queue. *(Scoping planned for end of Session 013.)*
 - **Koumei dropdown bug** — confirmed fixed by Patrick, Session 012. Closed.
-- **Dread's 4-primaries 3-Weapon Rule violation** — Patrick fixing directly in-app, not a code task.
+- **Revenant's shard goal (2 Crimson, energy-on-spawn)** — done, per Patrick, 2026-08-29. Closed.
+- **Dread's 4-primaries 3-Weapon Rule violation** — confirmed fixed by Patrick, 2026-08-29. Closed.
 - ~~**Fall Off (damage falloff) stat group**~~ — cut, Session 013. Unessential.
+
+*(Cyte-09/Harrow Archon Shard swaps, previously tracked here, dropped from tracking 2026-08-29 per Patrick — he's handling those directly, no longer needs Gu to carry them as an open thread.)*
 
 ---
 

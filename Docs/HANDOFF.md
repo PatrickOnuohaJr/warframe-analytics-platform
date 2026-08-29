@@ -36,10 +36,10 @@ The locked queue's #1 item is now complete. Per the roadmap, #2 is **D.7 — Bui
 Loose ends from this session, none blocking:
 
 - **`benchmark_tiers` content** — the 4 Survivability Profiles have real descriptive text but no numeric thresholds yet. Needs Patrick's own live-game judgment on what counts as "Strong"/"Adequate"/etc. for each archetype before the Report Card's benchmark comparison does anything beyond "no tiers authored yet."
-- **Service-role grant gap** — `rivens`, `build_tests`, `weapon_inventory`, `survivability_goals` aren't readable by the service-role key ad-hoc scripts use. Pre-existing, not urgent, doesn't affect the real app.
+- **Service-role grant gap — fixed 2026-08-29, pending Patrick running it**: `DB/Migrations/20260829_grant_service_role_wf_user.sql` grants `service_role` read access on `rivens`, `build_tests`, `weapon_inventory`, `survivability_goals`. Needs Patrick to run it manually in the Supabase SQL Editor (data-plane key can't do grants).
 - **Mark Companion/Posture mods as owned** — the Companion tab's picker correctly shows "No owned mods match this slot" for everything right now since nothing in `mod_inventory` is flagged owned for `category = 'Companion'` yet. Expected, not a bug — just needs Patrick to do a Mods-page pass.
 - Moa/Hound companion scope decision, Nautilus Prime's possible 10-slot bonus — both carried from Session 014, still unconfirmed.
-- Stat-group filter chips for Companion mods in the picker — cosmetic, `modMeta.js` has no `Companion`/`CompanionWeapon` entry yet.
+- ~~Stat-group filter chips for Companion mods in the picker~~ — shipped 2026-08-29 (`Companion`/`CompanionWeapon` entries added to `modMeta.js`, verified live in both sub-tabs' pickers).
 
 ## Things a fresh session should know without digging
 
@@ -55,13 +55,14 @@ Loose ends from this session, none blocking:
 ## Open threads (not blocking, just not forgotten)
 
 - `benchmark_tiers` for the 4 Survivability Profiles — needs Patrick's real numeric thresholds.
-- Service-role grant gap on several `wf_user` tables — pre-existing, cosmetic to scripting only.
+- Service-role grant gap on several `wf_user` tables — migration written 2026-08-29 (`DB/Migrations/20260829_grant_service_role_wf_user.sql`), pending Patrick running it in the Supabase SQL Editor.
 - Moa/Hound companion scope decision — still unconfirmed.
 - Nautilus Prime's "10 total slots" — still unconfirmed; Companion tab renders 8 uniformly.
 - Companion/Posture mod ownership not yet marked in `mod_inventory` — tab works but will look empty until Patrick does that pass.
 - Open Granola audit decisions: Dagath/Gara primary weapons, Wukong/Voruna/Ash slot swaps, Revenant's melee replacement, Khora's three empty slots, Atlas's utility primary — Patrick working through these himself.
-- Two pending shard swaps + Revenant's shard goal — Patrick does these directly in-app.
-- Dread's 4-primaries 3-Weapon Rule violation — Patrick fixing directly in-app.
+- Dread's 4-primaries 3-Weapon Rule violation — confirmed fixed by Patrick, 2026-08-29. Closed.
+- Revenant's shard goal (2 Crimson, energy-on-spawn) — done, per Patrick, 2026-08-29. Closed.
+- Cyte-09/Harrow Archon Shard swaps — dropped from tracking 2026-08-29 per Patrick, he's handling directly.
 - Forma counter on each loadout piece — confirmed decorative, tabled per Patrick's call.
 - Fall Off (damage falloff) stat group — cut in Session 013, unessential.
 

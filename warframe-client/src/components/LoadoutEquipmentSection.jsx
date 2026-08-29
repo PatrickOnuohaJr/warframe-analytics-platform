@@ -8,9 +8,12 @@ import IncarnonToggle from './IncarnonToggle';
 import CopyWeaponModal from './CopyWeaponModal';
 import AbilitiesEditor from './AbilitiesEditor';
 import RivenEditorModal from './RivenEditorModal';
+import WarframeModdedStatsPanel from './WarframeModdedStatsPanel';
+import WeaponModdedStatsPanel from './WeaponModdedStatsPanel';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain, pieceCapacity, isDiscounted, RIVEN_BASE_DRAIN, RIVEN_MAX_RANK } from '../utils/modCapacity';
 import { weaponTrait } from '../utils/weaponMeta';
+import { getShardBonusTexts } from '../utils/survivability';
 import { cleanValue } from '../utils/shardHelpers';
 import { wfUser } from '../lib/supabase';
 import useDebouncedField from '../hooks/useDebouncedField';
@@ -54,6 +57,7 @@ export default function LoadoutEquipmentSection({
   modsById,
   rivens,
   rivensById,
+  warframeStats,
   onSetMeta,
   onSetSlot,
   onSetRank,
@@ -76,6 +80,8 @@ export default function LoadoutEquipmentSection({
   const isWarframe = equipmentType === 'Warframe';
   const isMelee = equipmentType === 'Melee';
   const weaponFields = WEAPON_FIELDS[equipmentType];
+
+  const shardBonusTexts = useMemo(() => getShardBonusTexts(frame), [frame]);
 
   // Rivens are weapon-specific, never Warframe/Exilus/Aura -- only the
   // numbered-slot pool for a weapon type ever includes them, filtered to
@@ -425,6 +431,30 @@ export default function LoadoutEquipmentSection({
           </div>
         );
       })()}
+
+      {isWarframe && (
+        <WarframeModdedStatsPanel
+          baseStats={warframeStats}
+          slotsByPosition={slotsByPosition}
+          modsById={modsById}
+          ownedByModId={ownedByModId}
+          shardBonusTexts={shardBonusTexts}
+          accent={accent}
+        />
+      )}
+
+      {!isWarframe && weaponFields && (
+        <WeaponModdedStatsPanel
+          weapons={weapons}
+          weaponName={equippedWeaponName}
+          category={equipmentType}
+          slotsByPosition={slotsByPosition}
+          modsById={modsById}
+          ownedByModId={ownedByModId}
+          rivensById={rivensById}
+          accent={accent}
+        />
+      )}
 
       {picker && (
         <LoadoutSlotPickerModal

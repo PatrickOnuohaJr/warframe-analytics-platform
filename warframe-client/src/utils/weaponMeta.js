@@ -16,6 +16,14 @@ import { cleanStatText } from './modMeta';
 // earlier this session.
 export function weaponTrait(weapons, name) {
   if (!name) return null;
-  const match = weapons.find(w => w.name === name);
+  const match = weaponByName(weapons, name);
   return cleanStatText(match?.raw_json?.description ?? null);
+}
+
+// Same exact-name lookup weaponTrait already relies on, exported so other
+// callers (the Loadout tab's modded-stats panel) share one canonical
+// lookup instead of re-typing `weapons.find(w => w.name === name)`.
+export function weaponByName(weapons, name) {
+  if (!name) return null;
+  return weapons.find(w => w.name === name) ?? null;
 }

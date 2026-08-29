@@ -49,6 +49,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
   const [slots, setSlots] = useState([]); // raw loadout_slots rows for this frame
   const [meta, setMeta] = useState([]); // raw loadout_meta rows for this frame
   const [rivens, setRivens] = useState([]); // raw wf_user.rivens rows, all of them
+  const [warframeStats, setWarframeStats] = useState(null); // wf_base.warframes base-stat row
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeEquipment, setActiveEquipment] = useState('Warframe');
@@ -60,7 +61,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
       setLoading(true);
       setError(null);
 
-      const [modsRes, invRes, slotsRes, metaRes, rivensRes] = await Promise.all([
+      const [modsRes, invRes, slotsRes, metaRes, rivensRes, warframeStatsRes] = await Promise.all([
         // Paged -- the mod catalog is past PostgREST's 1000-row default
         // cap, which silently truncates (see lib/fetchAll.js).
         fetchAll(() =>
@@ -70,12 +71,17 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
         wfUser.from('loadout_slots').select('*').eq('my_frame_id', frame.my_frame_id),
         wfUser.from('loadout_meta').select('*').eq('my_frame_id', frame.my_frame_id),
         wfUser.from('rivens').select('*'),
+        // Feeds WarframeModdedStatsPanel -- skipped when no Warframe is
+        // assigned yet, same guard SurvivabilityTab already uses.
+        frame.warframe_id
+          ? wfBase.from('warframes').select('warframe_id, health, shield, armor, energy, sprint_speed').eq('warframe_id', frame.warframe_id).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
       ]);
 
       if (cancelled) return;
 
-      if (modsRes.error || invRes.error || slotsRes.error || metaRes.error || rivensRes.error) {
-        console.error('Failed to load loadout data:', modsRes.error || invRes.error || slotsRes.error || metaRes.error || rivensRes.error);
+      if (modsRes.error || invRes.error || slotsRes.error || metaRes.error || rivensRes.error || warframeStatsRes.error) {
+        console.error('Failed to load loadout data:', modsRes.error || invRes.error || slotsRes.error || metaRes.error || rivensRes.error || warframeStatsRes.error);
         setError('Could not load loadout data.');
         setLoading(false);
         return;
@@ -86,12 +92,13 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
       setSlots(slotsRes.data || []);
       setMeta(metaRes.data || []);
       setRivens(rivensRes.data || []);
+      setWarframeStats(warframeStatsRes.data || null);
       setLoading(false);
     }
 
     load();
     return () => { cancelled = true; };
-  }, [frame.my_frame_id]);
+  }, [frame.my_frame_id, frame.warframe_id]);
 
   const modsById = useMemo(() => new Map(catalog.map(m => [m.mod_id, m])), [catalog]);
   const rivensById = useMemo(() => new Map(rivens.map(r => [r.riven_id, r])), [rivens]);
@@ -290,6 +297,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
         modsById={modsById}
         rivens={rivens}
         rivensById={rivensById}
+        warframeStats={warframeStats}
         onSetMeta={patch => handleSetMeta(activeType, patch)}
         onSetSlot={(slotPosition, value) => handleSetSlot(activeType, slotPosition, value)}
         onSetRank={handleSetRank}

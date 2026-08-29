@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
 import Panel from './ui/Panel';
-import { computeResilience, pickBenchmarkTier } from '../utils/survivability';
+import { computeResilience, pickBenchmarkTier, getShardBonusTexts } from '../utils/survivability';
 import { COLOR } from '../constants/theme';
 
 // ============================================================================
@@ -39,12 +39,6 @@ const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 const SPECIAL_SLOTS = ['aura', 'exilus'];
 
 const METRIC_LABEL = { effective_health: 'Effective Health', effective_shield: 'Effective Shield' };
-
-function getShardBonusTexts(frame) {
-  const slots = frame.shard_slots;
-  if (!slots) return [];
-  return [1, 2, 3, 4, 5].map(i => slots[`shard_${i}_bonus`]).filter(Boolean);
-}
 
 export default function SurvivabilityTab({ frame, color }) {
   const [baseStats, setBaseStats] = useState(null);
@@ -330,13 +324,9 @@ export default function SurvivabilityTab({ frame, color }) {
       </Panel>
 
       <Panel accent={color}>
-        <h3 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color }}>Base Stats</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-4" style={{ color: COLOR.ink }}>
-          <p><span style={{ color: COLOR.mutedInk }}>Health</span> {result.baseHealth}</p>
-          <p><span style={{ color: COLOR.mutedInk }}>Shield</span> {result.baseShield}</p>
-          <p><span style={{ color: COLOR.mutedInk }}>Armor</span> {result.baseArmor}</p>
-          <p><span style={{ color: COLOR.mutedInk }}>Energy</span> {baseStats.energy}</p>
-        </div>
+        <p className="text-xs italic mb-4" style={{ color: COLOR.mutedInk }}>
+          Base stats now live on the Loadout tab, right alongside the mods that modify them.
+        </p>
 
         {(result.countedMods.length > 0 || result.countedShards.length > 0) && (
           <>
