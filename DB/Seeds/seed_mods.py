@@ -223,6 +223,11 @@ def seed_mods():
 
     existing_rows = fetch_existing()
     existing_by_name = {r["name"]: r for r in existing_rows}
+    existing_by_unique_name = {}
+    for r in existing_rows:
+        uid = (r.get("raw_json") or {}).get("uniqueName")
+        if uid:
+            existing_by_unique_name[uid] = r
 
     # Group targets back by their original collision name so, for a
     # genuine multi-mod split, we know which target should reuse the
@@ -236,29 +241,36 @@ def seed_mods():
     skipped = 0
 
     for original_name, group in by_original_name.items():
-        existing_row = existing_by_name.get(original_name)
-        existing_unique_name = None
-        if existing_row:
-            existing_unique_name = (existing_row.get("raw_json") or {}).get("uniqueName")
-
-        # Whichever target matches the pre-existing row's own uniqueName
-        # gets updated in place (preserves mod_id, so any inventory FK
-        # referencing it survives untouched). If nothing matches, the
-        # existing row is holding a tier WFCD has since dropped entirely
-        # (seen live: Vitality/Redirection/Steel Fiber had a 3rd
-        # "Intermediate" tier in old seeded data that's gone from the
-        # current API) -- fall back to the highest-fusionLimit target
-        # (the regular, non-"Flawed" mod), since that's what a player
-        # almost always means, rather than an arbitrary pick.
-        reuse_index = None
+        # Match each target to its OWN pre-existing row by uniqueName --
+        # not just a single shared row looked up by the pre-split WFCD
+        # name. A genuinely-split collision group (e.g. WFCD name "Ammo
+        # Drum" splitting into DB rows "Ammo Drum" and "Flawed Ammo
+        # Drum") has one existing row per member, each stored under its
+        # own display name -- keying only by original_name could only
+        # ever find one of them, leaving every other member to be
+        # re-inserted (and fail on the unique constraint) on every run.
+        reuse = {}
         for i, (_, mod) in enumerate(group):
-            if mod.get("uniqueName") == existing_unique_name:
-                reuse_index = i
-                break
-        if reuse_index is None:
-            reuse_index = max(range(len(group)), key=lambda i: group[i][1].get("fusionLimit") or 0)
+            existing_row = existing_by_unique_name.get(mod.get("uniqueName"))
+            if existing_row:
+                reuse[i] = existing_row
+
+        # Fallback for a tier WFCD has since dropped entirely (seen live:
+        # Vitality/Redirection/Steel Fiber had a 3rd "Intermediate" tier
+        # in old seeded data that's gone from the current API): if no
+        # target matched any existing row above, but a row still sits in
+        # the DB under the original collision name, fold it onto the
+        # highest-fusionLimit target (the regular, non-"Flawed" mod)
+        # instead of leaving it stranded, since that's what a player
+        # almost always means, rather than an arbitrary pick.
+        if not reuse:
+            orphan = existing_by_name.get(original_name)
+            if orphan:
+                winner_index = max(range(len(group)), key=lambda i: group[i][1].get("fusionLimit") or 0)
+                reuse[winner_index] = orphan
 
         for i, (display_name, mod) in enumerate(group):
+            existing_row = reuse.get(i)
             try:
                 category = TYPE_TO_CATEGORY.get(mod.get("type"))
                 if category is None:
@@ -293,7 +305,7 @@ def seed_mods():
                     "raw_json": mod,
                 }
 
-                if existing_row and i == reuse_index:
+                if existing_row:
                     supabase.schema("wf_base").table("mods").update(payload).eq(
                         "mod_id", existing_row["mod_id"]
                     ).execute()
