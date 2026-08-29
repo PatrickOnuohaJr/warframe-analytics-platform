@@ -5,6 +5,7 @@ import CompanionEquipmentSection from './CompanionEquipmentSection';
 import useCompanions from '../hooks/useCompanions';
 import useCompanionWeapons from '../hooks/useCompanionWeapons';
 import { COLOR } from '../constants/theme';
+import { CLAWS_COMPAT_NAMES } from '../utils/modMeta';
 
 // ============================================================================
 // CompanionTab.jsx (Companion tab -- Companion / Companion Weapon)
@@ -41,11 +42,6 @@ import { COLOR } from '../constants/theme';
 const EQUIPMENT_TYPES = ['Companion', 'CompanionWeapon'];
 const IDENTITY_FIELD = { Companion: 'companion', CompanionWeapon: 'companion_weapon' };
 const LABEL = { Companion: 'Companion', CompanionWeapon: 'Companion Weapon' };
-
-// Compat names that belong to the Companion Weapon (Claws) rather than the
-// Companion body -- three breed-exclusive pools plus the universal pool
-// Predasite/Vulpaphyla currently share. Per DB/Seeds/seed_companion_weapons.py.
-const CLAWS_COMPAT_NAMES = new Set(['Claws', 'Kubrow Claws', 'Kavat Claws', 'Helminth Claws']);
 
 function humanize(slug) {
   if (!slug) return '';

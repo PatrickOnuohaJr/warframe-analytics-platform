@@ -111,8 +111,40 @@ const STAT_GROUP_KEYWORDS = {
     Damage: ['Damage'],
     IPS: ['DT_SLASH_COLOR', 'DT_IMPACT_COLOR', 'DT_PUNCTURE_COLOR'],
   },
+  // Companion body, verified against: Enhanced Vitality -> "Health",
+  // Calculated Redirection -> "Shield Capacity", Metal Fiber -> "Armor"
+  // (same three the Link-prefixed variants that scale off the Warframe's
+  // own stats also use). No Energy/Sprint Speed/ability-stat mods exist for
+  // Companions, so unlike Warframe those groups aren't offered here.
+  Companion: {
+    Health: ['Health'],
+    Shield: ['Shield'],
+    Armor: ['Armor'],
+  },
+  // Companion Weapon (Claws), verified against: Bite -> "Critical Chance"
+  // + "Critical Damage" (kept split, unlike Melee's merged scheme, because
+  // real Claws mods exist that grant only one of the two -- e.g. Radon
+  // Claws is Crit Damage only), Flame Gland -> "Status Chance", Brute
+  // Conditioning -> "Melee Damage", Swipe -> "Attack Range". IPS reuses
+  // Melee's own DT_*_COLOR tag check. No Attack Speed mods exist for
+  // Claws, so that Melee group is dropped here.
+  CompanionWeapon: {
+    'Crit Chance': ['Critical Chance'],
+    'Crit Damage': ['Critical Damage'],
+    Status: ['Status Chance'],
+    Damage: ['Melee Damage'],
+    Range: ['Attack Range'],
+    IPS: ['DT_SLASH_COLOR', 'DT_IMPACT_COLOR', 'DT_PUNCTURE_COLOR'],
+  },
 };
 STAT_GROUP_KEYWORDS.Secondary = STAT_GROUP_KEYWORDS.Primary;
+
+// wf_base.mods has no separate category for Companion Weapon -- both
+// Companion-body and Claws mods are stored as category='Companion', split
+// client-side by compat_name (see CompanionTab.jsx). Exported so that split
+// is defined in exactly one place instead of drifting between here and
+// CompanionTab.jsx.
+export const CLAWS_COMPAT_NAMES = new Set(['Claws', 'Kubrow Claws', 'Kavat Claws', 'Helminth Claws']);
 
 // Groups relevant to a given equipment category, in display order. Falls
 // back to [] for an unrecognized category rather than throwing.
@@ -121,7 +153,16 @@ export function statGroupsFor(category) {
 }
 
 export function statGroups(mod) {
-  const keywords = STAT_GROUP_KEYWORDS[mod.category];
+  // A Claws mod's own category column reads 'Companion', same as a
+  // Companion-body mod -- resolve it to 'CompanionWeapon' here so the same
+  // compat_name split used everywhere else (picking which chips display,
+  // which mods list under which sub-tab) also applies to which chips a
+  // given mod actually matches.
+  const effectiveCategory =
+    mod.category === 'Companion' && CLAWS_COMPAT_NAMES.has(mod.compat_name)
+      ? 'CompanionWeapon'
+      : mod.category;
+  const keywords = STAT_GROUP_KEYWORDS[effectiveCategory];
   const levels = mod.raw_json?.levelStats;
   if (!keywords || !levels || levels.length === 0) return [];
 
