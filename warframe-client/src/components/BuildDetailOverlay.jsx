@@ -5,6 +5,7 @@ import { wfUser } from '../lib/supabase'
 import TestingLogTab from './TestingLogTab'
 import IdentityTab from './IdentityTab'
 import ModsLoadoutTab from './ModsLoadoutTab'
+import CompanionTab from './CompanionTab'
 import { getReadableColor } from '../utils/color'
 import Panel from './ui/Panel'
 
@@ -274,6 +275,7 @@ export default function BuildDetailOverlay({
         <div className="flex gap-2 mb-6">
           <TabButton active={activeTab === 'identity'} color={color} onClick={() => setActiveTab('identity')}>Identity</TabButton>
           <TabButton active={activeTab === 'loadout'} color={color} onClick={() => setActiveTab('loadout')}>Loadout</TabButton>
+          <TabButton active={activeTab === 'companion'} color={color} onClick={() => setActiveTab('companion')}>Companion</TabButton>
           <TabButton active={activeTab === 'shards'} color={color} onClick={() => setActiveTab('shards')}>Archon Shards</TabButton>
           <TabButton active={activeTab === 'testing'} color={color} onClick={() => setActiveTab('testing')}>Testing Log</TabButton>
         </div>
@@ -292,6 +294,12 @@ export default function BuildDetailOverlay({
             weapon+Arcane info, mod grid, and (Warframe only) Abilities */}
         {activeTab === 'loadout' && (
           <ModsLoadoutTab frame={frame} frames={frames} weapons={weapons} color={color} onSaved={onSaved} />
+        )}
+
+        {/* Companion tab -- identity + mod grid for the Companion piece and
+            its Companion Weapon, sibling to Loadout. */}
+        {activeTab === 'companion' && (
+          <CompanionTab frame={frame} color={color} onSaved={onSaved} />
         )}
 
         {/* Shards tab */}
