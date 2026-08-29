@@ -6,6 +6,7 @@ import TestingLogTab from './TestingLogTab'
 import IdentityTab from './IdentityTab'
 import ModsLoadoutTab from './ModsLoadoutTab'
 import CompanionTab from './CompanionTab'
+import SurvivabilityTab from './SurvivabilityTab'
 import { getReadableColor } from '../utils/color'
 import Panel from './ui/Panel'
 
@@ -276,6 +277,7 @@ export default function BuildDetailOverlay({
           <TabButton active={activeTab === 'identity'} color={color} onClick={() => setActiveTab('identity')}>Identity</TabButton>
           <TabButton active={activeTab === 'loadout'} color={color} onClick={() => setActiveTab('loadout')}>Loadout</TabButton>
           <TabButton active={activeTab === 'companion'} color={color} onClick={() => setActiveTab('companion')}>Companion</TabButton>
+          <TabButton active={activeTab === 'survivability'} color={color} onClick={() => setActiveTab('survivability')}>Survivability</TabButton>
           <TabButton active={activeTab === 'shards'} color={color} onClick={() => setActiveTab('shards')}>Archon Shards</TabButton>
           <TabButton active={activeTab === 'testing'} color={color} onClick={() => setActiveTab('testing')}>Testing Log</TabButton>
         </div>
@@ -300,6 +302,13 @@ export default function BuildDetailOverlay({
             its Companion Weapon, sibling to Loadout. */}
         {activeTab === 'companion' && (
           <CompanionTab frame={frame} color={color} onSaved={onSaved} />
+        )}
+
+        {/* Survivability tab -- D.2-D.5 Report Card: Resilience metric
+            (effective Health/Shield) computed from base stats + equipped
+            mods + equipped shards. */}
+        {activeTab === 'survivability' && (
+          <SurvivabilityTab frame={frame} color={color} />
         )}
 
         {/* Shards tab */}
