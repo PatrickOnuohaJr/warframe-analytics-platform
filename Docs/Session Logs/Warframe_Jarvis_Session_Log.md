@@ -1055,3 +1055,226 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Forma counter on each loadout piece — confirmed decorative (nothing reads the value back), tabled rather than wired up or removed, per Patrick's call
 
 ---
+
+*Sessions 013-015 below were reconstructed 2026-08-29 during Session 016's reconcile — they shipped real work (confirmed via git history and preserved HANDOFF.md snapshots from each session's own end-of-session commit) but were never appended to this log at the time. Reconstructed from those sources rather than live memory, so some blow-by-blow detail (exact timestamps, minor back-and-forth) that a same-session write-up would normally capture isn't recoverable — the substance and outcomes are accurate, sourced directly from each session's own words.*
+
+### Session 013 — Riven Mod Support, Mod-Catalog Audit, Real Arsenal Grid Layout, B1 Nav Cleanup
+**Date:** 2026-08-27
+**Location:** Not recorded
+**Duration:** Not recorded
+**Status:** SHIPPED
+
+**Riven Mod Support**
+
+*What Was Done:*
+- New `wf_user.rivens` table — weapon-bound, hand-typed stats, independent rank on the row itself (no separate catalog/inventory split, since a Riven is already a unique owned item, unlike a real mod).
+- Create/edit lives inside the numbered-slot picker itself ("+ Create New Riven" plus a pencil-edit icon per Riven row) rather than a separate page.
+- Stats are structured dropdowns pulled from WFCD's own `upgradeEntries` data (real per-category stat pools, not guessed), with sign toggles enforcing the real Riven rules: 2-4 stats, a negative only possible as the 3rd/4th, only one negative ever, positive-only stats (elemental damage, Punch Through, Range, etc.) locked to `+`.
+
+*Outcome:*
+- Verified live end-to-end against Patrick's real Vectis Prime Riven.
+
+**Mod-Catalog Audit**
+
+*What Was Done:*
+- Found `is_exilus` was `false` for every single non-Warframe mod — root cause: WFCD only sets `isExilus` on Warframe mods, weapon Exilus mods use `isUtility` instead.
+- Removed 6 confirmed never-shipped ghost catalog rows (3 "Bane Of X" capital-O duplicates, Augmented Sonar, Harrowed Hook, Air Martial).
+- Tagged all 131 Conclave-origin mods (`is_conclave`, real wiki sigil badge, bulk-exclude workflow added to the Mods page).
+
+**Two Capacity-Math Bugs (found via live-game verification with Patrick)**
+
+*What Was Done:*
+- Exilus was excluded from `used` capacity entirely — wrong. Confirmed on the wiki: Exilus is just a 9th slot restricted to Exilus-tagged mods, its cost comes from the same pool as the other 8. Fixed in `LoadoutEquipmentSection.jsx`.
+- Stabilizer's `max_rank` was 5 (WFCD's `fusionLimit`), real max is 3 — confirmed on the wiki and against Patrick's real mod. Added a `MAX_RANK_OVERRIDES` dict to `seed_mods.py` for this class of WFCD data error.
+
+*Outcome:*
+- Both bugs together, verified against Patrick's real Vectis Prime: Gu was showing 55/60, real game showed 0/60 (fully used) — now matches exactly.
+- Aura/Exilus *matched*-polarity math re-confirmed correct (Steel Charge, Sprint Boost) with zero code change needed.
+
+**Real Arsenal Mod-Grid Layout + Stance Slot**
+
+*What Was Done:*
+- Pixel-verified with Patrick: Primary/Secondary get a 4x2 grid for the 8 numbered slots with Exilus as its own slot to the right; Warframe gets a "2-4-4" formation (Aura + Exilus centered in the top row, 8 numbered slots below); Melee gets the same 2-4-4 formation but with a real **Stance slot** in place of Aura.
+- Added `is_stance` to `wf_base.mods` (migration + `seed_mods.py`), excluded Stance mods from the regular 8-slot Melee pool (a Stance mod can only go in the Stance slot, same as Aura for Warframe), Stance costs capacity like Exilus (not free like Aura).
+
+**B1 — School Navigation Cleanup**
+
+*What Was Done:*
+- The 14-button school-filter row in `App.jsx`'s Codex header collapsed into a single `<select>` with build counts per option, matching the dropdown pattern already used in `ShardsTab.jsx`/`CopyWeaponModal.jsx`.
+
+**Roadmap Refresh / Companion Tracking Scoped**
+
+*What Was Done:*
+- `Docs/Cephalon_Gu_Master_Roadmap.md` was stale, still listing the entire Mods DB arc as "not started" — refreshed to reflect it shipped, unblocking D.2-D.5 Survivability Suite as the real next locked-queue item.
+- Real scoping research for Companion tracking done ahead of building it: Sentinels.json (17) + SentinelWeapons.json (24) catalogs identified; Pets.json (66 raw rows) needs real filtering (mixes real breeds with DNA-stabilizer crafting components and Khora's exalted Venari); Companion Mod type (158 entries) identified for `wf_base.mods` with a new `Companion` category.
+
+**Bugs Fixed:**
+- `is_exilus` false for every non-Warframe mod (WFCD field-name mismatch).
+- 6 fake/never-shipped ghost catalog rows.
+- Stabilizer's `max_rank` wrong (5 vs. real 3).
+- Exilus excluded from `used` capacity entirely.
+- Koumei dropdown bug — confirmed fixed by Patrick, closed for good.
+
+**End-of-Session Status:**
+- Riven mod support, mod-catalog audit, real Arsenal grid layout + Stance slot, and B1 nav cleanup all shipped and verified live.
+- Roadmap refreshed; Companion tracking fully scoped and ready to build next.
+
+**Next Targets:**
+- Companion tracking: DB schema + catalog seeding (Sentinels/beasts, Sentinel Weapons/Claws, Companion mods), then the Companion tab UI.
+- D.2-D.5 Survivability Suite — locked queue's real #1 item once Companion tracking clears.
+
+---
+
+### Session 014 — Companion Tracking: DB Schema, Catalog, and Mod Seeding
+**Date:** 2026-08-28
+**Location:** Not recorded
+**Duration:** Not recorded
+**Status:** SHIPPED (DB foundation + catalog only — UI not started)
+
+**Companion Tracking — DB Foundation and Catalog**
+
+*What Was Done:*
+- Migration `DB/Migrations/20260828_add_companion_schema.sql` (run by Patrick): added `wf_base.companions` (Sentinels + beasts, one table with a `companion_class` discriminator, mirroring `wf_base.weapons`'s pattern) and `wf_base.companion_weapons` (Sentinel Weapons + Claws, same pattern). Added `my_frames.companion`/`my_frames.companion_weapon` free-text identity columns (same convention as `primary_weapon`/etc.). Added `wf_base.mods.compat_name` for Companion-mod slot filtering. No changes needed to `loadout_slots`/`loadout_meta` — both already use unconstrained text for `equipment_type`/`slot_position`.
+- `DB/Seeds/seed_companions.py`: 17 Sentinels + 15 real beast breeds, filtered from Pets.json's 66 raw rows by `productCategory == 'KubrowPets'` — cleanly drops DNA-stabilizer crafting components and Khora's Venari/Venari Prime in one pass.
+- `DB/Seeds/seed_companion_weapons.py`: 24 Sentinel Weapons imported from WFCD + 5 hand-authored Claws rows (no WFCD catalog file for Claws exists at all — verified against the repo's full file listing).
+- Extended `DB/Seeds/seed_mods.py` with two new WFCD types: `"Companion Mod"` (158 entries) → `category: "Companion"`, `compat_name` = WFCD's `compatName`; `"Posture Mod"` (6 entries: Assassin/Balanced/Elusive/Frenzied/Persistent/Protector Posture) → also `category: "Companion"`, flagged `is_aura: true`. 164 Companion-category mods total.
+
+**Research Correction — Precept Slot**
+
+*What Was Done:*
+- Previous session's handoff described the companion's own Precept slot as working like Aura, a dedicated slot type. Corrected: the wiki confirms Sentinels have **no dedicated Precept slot** — Precept mods (Vacuum, Guardian, Sacrifice, etc.) just occupy whichever regular numbered slot you put them in. Every real Precept-type mod's `uniqueName` contains `"Precept"` (checked all 105), useful for a later UI badge but not a capacity-math flag.
+
+**Posture Mod Confirmation**
+
+*What Was Done:*
+- Patrick supplied a wiki screenshot confirming Posture Mods are their own type, exclusive to Beast Claws, slot into a dedicated Posture slot, capacity bonus doubles on a polarity match.
+- Verified against real data: `base_drain: -2`, `max_rank: 3`, `polarity: penjaga` — at max rank with matched polarity, `effectiveDrain(mod, 3, 'penjaga', isAuraSlot=true)` computes exactly the 60→70 capacity jump Patrick saw live on both a Panzer Vulpaphyla and a Raksa Kubrow. Zero changes needed to `utils/modCapacity.js` — reuses the existing Aura-slot math exactly.
+
+**Bugs Fixed:**
+- None new this session (DB/schema/seed work) — `seed_mods.py`'s split-collision idempotency bug (found Session 013) was noted as still open, fix already started in a parallel session (`task_6e01ca99`), not landed yet.
+
+**End-of-Session Status:**
+- Companion tracking DB foundation and catalog fully shipped; Companion tab UI itself not started.
+- Moa/Hound companion scope decision surfaced but not resolved (real robotic companions, mistagged `productCategory: "Pistols"` in WFCD's data, same bucket as junk the beast filter drops).
+- Nautilus Prime's "10 total slots" observation from Session 013 still unconfirmed as a Prime-only bonus-slot perk.
+
+**Next Targets:**
+- Companion tab UI: identity pickers for both pieces, numbered-slot grids, Posture slot on the weapon piece, mod picker split by `compat_name`.
+- Resolve Moa/Hound scope decision and Nautilus Prime's slot count with Patrick before finalizing the tab's rendering.
+- Check whether `task_6e01ca99`'s `seed_mods.py` fix landed before touching that file again.
+
+---
+
+### Session 015 — Companion Tab UI Shipped, D.2-D.5 Survivability Suite Shipped
+**Date:** 2026-08-29
+**Location:** Not recorded
+**Duration:** Not recorded
+**Status:** SHIPPED
+
+**`seed_mods.py` Idempotency Fix — Merged**
+
+*What Was Done:*
+- A parallel fork (`task_6e01ca99`) had already written and tested the fix for Session 013's split-collision idempotency bug (verified: second run updates all 1082 rows, 0 duplicate-key errors) but left it uncommitted. Merged into `main`, worktree/branch cleaned up.
+
+**Companion Tab UI**
+
+*What Was Done:*
+- New "Companion" tab, sibling to Loadout in `BuildDetailOverlay`, with two sub-tabs (Companion, Companion Weapon), each with an identity picker, an 8-slot mod grid, and (Companion Weapon only) a Posture special slot.
+- New files: `CompanionTab.jsx`, `CompanionEquipmentSection.jsx`, `SlotBox.jsx` (extracted out of `LoadoutEquipmentSection.jsx` so both tabs share the mod-slot tile instead of duplicating it), `hooks/useCompanions.js` + `hooks/useCompanionWeapons.js`.
+- Identity is free-text into `my_frames.companion`/`companion_weapon` via the existing `WeaponInput` autocomplete, reused as-is. Both sub-tabs always visible (unlike weapon pieces' Armory-gated visibility).
+- Mod split by `compat_name`: Claws-family values → Companion Weapon; everything else → Companion body. Posture mods (the Claws-family subset with `is_aura = true`) get their own slot, reusing the existing `isAuraSlot=true` path verbatim.
+- Companion body confirmed to have no special slot (Sentinels have no dedicated Precept slot, per Session 014's research) — just a plain 8-slot grid.
+
+*Outcome:*
+- Real bug caught and fixed during verification: `WeaponInput`'s dropdown row key fell back to `weapon_id ?? arcane_id`, both undefined for a companion row — fixed by aliasing an id onto the mapped rows in `CompanionTab.jsx`, not by touching the shared component.
+- Also fixed, unrelated: dev server port 5173 was being squatted by an unrelated app on this machine. `vite.config.js` now reads `PORT` from env, `.claude/launch.json` has `"autoPort": true`.
+
+**D.2-D.5 Survivability Suite**
+
+*What Was Done:*
+- **Base Warframe stats**: `wf_base.warframes` never carried Health/Shield/Armor/Energy/Sprint Speed columns. Migration `20260829_add_warframe_base_stats.sql` + seed `seed_warframe_stats.py` backfilled all 117 catalog rows from WFCD by name-match, update-only. Ran clean: 117/117, 0 misses.
+- **D.5 Resilience metric** (`utils/survivability.js`): Effective Health = `Health × (Armor + 300) / 300` (real in-game armor mitigation curve), Effective Shield = flat (no armor mitigation on shields). Deliberately narrow v1 scope — only flat (shard) or plain `+N%` (mod) Health/Shield/Armor bonuses counted; conditional/proc effects, Overguard, Energy, and Arcanes explicitly excluded (no effect-text data exists for those anywhere in this DB).
+- **D.2/D.3 Report Card**: new Survivability tab, sibling to Companion/Loadout, computing live from base stats + the Warframe piece's equipped mods + equipped Archon Shard bonus text.
+- **D.4 Survivability Profiles**: `wf_base.survivability_profiles`, a reusable reference catalog (Health/Shield/Overguard/Hybrid Tank) separate from per-build data, per Patrick's explicit direction. `benchmark_tiers` deliberately left NULL on every row — no fabricated numeric thresholds. Per-build comparison choice + optional goal override lives in new `wf_user.survivability_goals`.
+- Deliberately archetype-free: Resilience never infers or labels a build's archetype — that stays A3's job.
+
+*Outcome:*
+- Verified live end-to-end: Frost Prime (Umbral Fiber +100% Armor, Umbral Vitality +100% Health) computes to exactly 1674 effective health, hand-checked against its known base stats. Garuda Prime correctly reports "no countable defensive mods/shards" rather than guessing. Profile selection and goal-state inputs persist correctly across reload.
+- Real pre-existing gap found while verifying: several `wf_user` tables (`rivens`, `build_tests`, `weapon_inventory`, `survivability_goals`) aren't readable by the service-role key ad-hoc debug/seed scripts use — doesn't affect the real app, just scripting.
+
+**Bugs Fixed:**
+- `seed_mods.py` split-collision idempotency bug — merged from parallel fork.
+- `WeaponInput`'s dropdown row key collision for companion rows (undefined `weapon_id`/`arcane_id`).
+- Dev server port 5173 squatted by an unrelated app — `autoPort` fix.
+
+**End-of-Session Status:**
+- The locked queue's #1 item (D.2-D.5 Survivability Suite) is complete. Companion tab UI shipped as a parallel scoped feature.
+- Per the roadmap, next up is #2 D.7 (Build Recommendation / Flow / Doctrine Adjacency), then #3 A3 (Predictive Build Crafting / Build Intelligence Layer).
+
+**Next Targets:**
+- `benchmark_tiers` content for the 4 Survivability Profiles — needs Patrick's real numeric thresholds.
+- Service-role grant gap on several `wf_user` tables.
+- Mark Companion/Posture mods as owned in `mod_inventory` (Patrick's Mods-page pass).
+- Moa/Hound companion scope decision, Nautilus Prime's slot count — still carried from Session 014.
+- Stat-group filter chips for Companion mods in the picker — `modMeta.js` has no `Companion`/`CompanionWeapon` entry yet.
+- D.7 — Build Recommendation / Flow / Doctrine Adjacency, not yet scoped in detail.
+
+---
+
+### Session 016 — Live Modded Stats Panels (Warframe + Weapons), Companion Chip Fix, Loose-End Closures
+**Date:** 2026-08-29
+**Location:** Not recorded
+**Duration:** Single session, continued same day as Session 015
+**Status:** SHIPPED
+
+**Technical To-Do Closure**
+
+*What Was Done:*
+- `utils/modMeta.js` had no `Companion`/`CompanionWeapon` entries in `STAT_GROUP_KEYWORDS`, so the Companion mod picker showed no filter chips at all. Added both (Health/Shield/Armor for the body; Crit Chance/Crit Damage/Status/Damage/Range/IPS for Claws), verified against real mod text pulled live from the DB.
+- Fixed a real bug this surfaced: `statGroups()` keyed off `mod.category`, which reads `'Companion'` for both body and Claws mods — a Claws mod would've silently matched the wrong group set. Resolved via `compat_name`, and `CLAWS_COMPAT_NAMES` promoted into `modMeta.js` as the single source of truth instead of being duplicated in `CompanionTab.jsx`.
+- Wrote migration `20260829_grant_service_role_wf_user.sql` for Session 015's service-role grant gap (`rivens`, `weapon_inventory`, `build_tests`, `survivability_goals`) — Patrick ran it this session.
+
+**Live Modded Stats Panels — Warframe**
+
+*What Was Done:*
+- Patrick's ask: see a stat actually move the moment a mod goes on, same as the real game's Arsenal, on the modding screen itself — not buried in a separate tab. Also folded Survivability's static "Base Stats" block into Loadout for the same reason, keeping Resilience/profile-comparison/goals on their own tab per Patrick's explicit call.
+- New `computeModdedWarframeStats()` in `survivability.js` — sign-aware (unlike the original `\+`-only regex) since real dual-effect mods grant one stat and take another away (Fleeting Expertise, Overextended, Blind Rage, Transient Fortitude, Narrow Minded, all verified against real text). Covers Health/Shield/Armor/Energy/Sprint Speed plus Ability Duration/Efficiency/Range/Strength (no per-Warframe base column for the four ability stats — universal 100% baseline, mods stack additively). Archon Shard percentage-based Ability Strength/Duration bonuses (Crimson) added alongside the existing flat-number shapes.
+- New `WarframeModdedStatsPanel.jsx`, wired into `LoadoutEquipmentSection.jsx`'s Warframe branch, fed by one new query added to `ModsLoadoutTab.jsx`'s existing `Promise.all` (zero other new fetches — mods/ranks/slots were already loaded there).
+- `SurvivabilityTab.jsx`'s "Base Stats" grid removed; "Counted Toward Resilience" and the Resilience/Compared Against panels unchanged.
+
+*Outcome:*
+- Verified live: Frost Prime's Ability Duration hits exactly 155% off a maxed Primed Continuity (100 × 1.55) — Patrick's own example number. Blind Rage's negative Efficiency line correctly pulled Efficiency below 100%, confirming the sign-widening fix.
+
+**Live Modded Stats Panels — Weapons**
+
+*What Was Done:*
+- Same idea for Primary/Secondary/Melee: new `weaponStats.js` extracts base stats from `wf_base.weapons.raw_json` (field audit this session confirmed consistent top-level fields across a hitscan rifle, pistol, AoE launcher, bow, and melee weapon — no `attacks[]` fallback needed) and combines them with catalog-mod and Riven bonuses via a new `computeModdedWeaponStats()`.
+- Mod-text patterns verified against real cards, including trailing conditional qualifiers not seen on the Warframe side (Speed Trigger/Shred's "(x2 for Bows)", True Steel/Sacrificial Steel's "(x2 for Heavy Attacks)") — the always-active base % is counted, the conditional multiplier isn't. Reload Speed correctly combines as a reduction (`base / (1+pct/100)`), not a multiply. Riven contributions reuse `rivenStats.js`'s existing tag list rather than re-parsing label text.
+- `parseStat()` promoted out of `survivability.js` into a shared `statPatterns.js` so the Warframe and weapon regex-matching loops don't drift apart. New `WeaponModdedStatsPanel.jsx` wired into `LoadoutEquipmentSection.jsx`'s weapon branch.
+- Multishot added after initial ship — left off the first tile list even though the data (`raw_json.multishot`, real text like Lethal Torrent's "+60% Multishot") was already there.
+
+*Outcome:*
+- Verified live two ways: Okina Prime (melee, unmodded) matches its raw catalog stats exactly (Attack Speed 1.17, Damage 184, Crit Chance 30%, Crit Damage 260%, Status Chance 24%, Range 1.7m). Vectis Prime (heavily modded, includes a Riven) matches hand-calculated totals exactly on Fire Rate/Magazine/Reload/Crit Chance/Status/Punch Through, with Crit Damage's remainder fully explained by its equipped Riven — and Multishot (1.8) matches base 1 × Galvanized Chamber's +80% exactly.
+- Explicitly out of scope, documented, not attempted: ability tooltip numbers (e.g. Nourish's heal amount) — `warframe_abilities` stores names only, no effect text to scale.
+
+**Loose-End Closures**
+
+*What Was Done:*
+- Dread's 4-primaries 3-Weapon Rule violation — Patrick fixed directly in-app, confirmed and closed.
+- Revenant's shard goal (2 Crimson, energy-on-spawn) — done, per Patrick, closed.
+- Cyte-09/Harrow Archon Shard swaps — dropped from tracking per Patrick, he's handling directly.
+
+**Bugs Fixed:**
+- `statGroups()` would have resolved Companion Weapon (Claws) mods against the wrong stat-group set (Companion body's) had it shipped un-fixed — caught before shipping, not a live regression.
+
+**End-of-Session Status:**
+- Live modded stats panels shipped and verified for both Warframe and weapon Loadout pieces. Companion mod picker filter chips shipped. Service-role grant gap closed (migration run by Patrick). Three loose ends closed per Patrick's direction. Sessions 013-015 backfilled into this log during reconcile.
+
+**Next Targets:**
+- D.7 — Build Recommendation / Flow / Doctrine Adjacency — per Patrick, the app should be in better shape for this now that live modded stats exist as a foundation. Not yet scoped in detail.
+- `benchmark_tiers` content for the 4 Survivability Profiles — still needs Patrick's real numeric thresholds.
+- Mark Companion/Posture mods as owned in `mod_inventory` — still needs Patrick's Mods-page pass.
+- Moa/Hound companion scope decision, Nautilus Prime's slot count — still carried, still unconfirmed.
+- Ability tooltip numbers (Nourish, etc.) — blocked on a real data source for ability effect text; not scheduled until one exists.
+
+---
