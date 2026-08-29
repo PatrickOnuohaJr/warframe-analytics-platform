@@ -30,6 +30,7 @@ export function extractBaseWeaponStats(weaponRow) {
     punchThrough: rj.punchThrough ?? 0,
     range: rj.range ?? null,
     damage: rj.totalDamage ?? null,
+    multishot: rj.multishot ?? null,
   };
 }
 
@@ -39,7 +40,8 @@ export function extractBaseWeaponStats(weaponRow) {
 // computeModdedWeaponStats as base/(1+pct/100), not multiplied), Point
 // Strike -> "+275% Critical Chance", Vital Sense -> "+220% Critical
 // Damage", Malignant Force -> "+60% Status Chance", Seeking Fury -> "+15%
-// Reload Speed" + "+1.2 Punch Through" (flat number, not a percent).
+// Reload Speed" + "+1.2 Punch Through" (flat number, not a percent),
+// Lethal Torrent -> "+60% Fire Rate" + "+60% Multishot".
 //
 // Real cards carry trailing conditional qualifiers the label-only text
 // doesn't capture: Speed Trigger/Shred -> "+30% Fire Rate (x2 for Bows)",
@@ -60,6 +62,7 @@ const GUN_MOD_STAT_PATTERNS = {
     { key: 'criticalChance', re: /^([+-][\d.]+)% Critical Chance(?: \(.*\))?$/ },
     { key: 'criticalMultiplier', re: /^([+-][\d.]+)% Critical Damage$/ },
     { key: 'procChance', re: /^([+-][\d.]+)% Status Chance$/ },
+    { key: 'multishot', re: /^([+-][\d.]+)% Multishot$/ },
   ],
   flat: [
     { key: 'punchThrough', re: /^([+-][\d.]+) Punch Through$/ },
@@ -97,6 +100,7 @@ const RIVEN_TAG_TO_KEY = {
     WeaponCritDamageMod: 'criticalMultiplier',
     WeaponStunChanceMod: 'procChance',
     WeaponPunctureDepthMod: 'punchThrough',
+    WeaponFireIterationsMod: 'multishot',
   },
   Melee: {
     WeaponMeleeDamageMod: 'damage',
@@ -170,6 +174,7 @@ export function computeModdedWeaponStats({ baseStats, equippedMods = [], equippe
   const punchThrough = (baseStats.punchThrough ?? 0) + flat('punchThrough');
   const range = baseStats.range != null ? baseStats.range + flat('range') : null;
   const damage = baseStats.damage != null ? baseStats.damage * (1 + pct('damage') / 100) : null;
+  const multishot = baseStats.multishot != null ? baseStats.multishot * (1 + pct('multishot') / 100) : null;
 
   const round2 = v => (v == null ? null : Math.round(v * 100) / 100);
 
@@ -183,5 +188,6 @@ export function computeModdedWeaponStats({ baseStats, equippedMods = [], equippe
     punchThrough: round2(punchThrough),
     range: round2(range),
     damage: damage != null ? Math.round(damage) : null,
+    multishot: round2(multishot),
   };
 }

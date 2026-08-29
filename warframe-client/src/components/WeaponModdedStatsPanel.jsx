@@ -45,6 +45,7 @@ const GUN_TILES = [
   { key: 'criticalMultiplier', label: 'Crit Damage', format: v => (v == null ? '—' : `${v}%`) },
   { key: 'procChance', label: 'Status Chance', format: v => (v == null ? '—' : `${v}%`) },
   { key: 'punchThrough', label: 'Punch Through', format: v => (v == null ? '—' : v) },
+  { key: 'multishot', label: 'Multishot', format: v => (v == null ? '—' : v) },
 ];
 
 const MELEE_TILES = [
