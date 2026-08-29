@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
 import Panel from './ui/Panel';
-import { computeResilience } from '../utils/survivability';
+import { computeResilience, pickBenchmarkTier } from '../utils/survivability';
 import { COLOR } from '../constants/theme';
 
 // ============================================================================
@@ -17,6 +17,17 @@ import { COLOR } from '../constants/theme';
 // (frame.shard_slots, already present on the frame prop via useFrames.js
 // -- no extra fetch needed).
 //
+// D.4 Survivability Profiles (added later in Session 015, per Patrick's
+// explicit direction to keep this separate from per-build data): a
+// reusable reference catalog (wf_base.survivability_profiles -- Health
+// Tank/Shield Tank/Overguard Tank/Hybrid Tank) that this build can be
+// manually compared against. Nothing here infers or auto-labels an
+// archetype -- that stays A3's job (see this session's scoping
+// discussion) -- picking a profile to compare against is an explicit
+// per-build choice, stored in wf_user.survivability_goals along with an
+// optional manual goal override. Field-tested results already have a
+// home (wf_user.build_tests, D.6, shipped) and aren't duplicated here.
+//
 // v1, informational only, same as the Loadout tab's capacity math --
 // nothing here blocks anything. Deliberately narrow scope: see
 // utils/survivability.js's header comment for exactly what is and isn't
@@ -27,6 +38,8 @@ import { COLOR } from '../constants/theme';
 const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 const SPECIAL_SLOTS = ['aura', 'exilus'];
 
+const METRIC_LABEL = { effective_health: 'Effective Health', effective_shield: 'Effective Shield' };
+
 function getShardBonusTexts(frame) {
   const slots = frame.shard_slots;
   if (!slots) return [];
@@ -36,6 +49,8 @@ function getShardBonusTexts(frame) {
 export default function SurvivabilityTab({ frame, color }) {
   const [baseStats, setBaseStats] = useState(null);
   const [equippedMods, setEquippedMods] = useState([]); // [{ mod, rank }]
+  const [profiles, setProfiles] = useState([]);
+  const [goal, setGoal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -45,6 +60,23 @@ export default function SurvivabilityTab({ frame, color }) {
     async function load() {
       setLoading(true);
       setError(null);
+
+      const [profilesRes, goalRes] = await Promise.all([
+        wfBase.from('survivability_profiles').select('*').order('name'),
+        wfUser.from('survivability_goals').select('*').eq('my_frame_id', frame.my_frame_id).maybeSingle(),
+      ]);
+
+      if (cancelled) return;
+
+      if (profilesRes.error || goalRes.error) {
+        console.error('Failed to load Survivability profile data:', profilesRes.error || goalRes.error);
+        setError('Could not load Survivability data.');
+        setLoading(false);
+        return;
+      }
+
+      setProfiles(profilesRes.data || []);
+      setGoal(goalRes.data || null);
 
       if (!frame.warframe_id) {
         setBaseStats(null);
@@ -116,6 +148,38 @@ export default function SurvivabilityTab({ frame, color }) {
     return computeResilience({ baseStats, equippedMods, shardBonusTexts });
   }, [baseStats, equippedMods, shardBonusTexts]);
 
+  async function saveGoal(patch) {
+    const next = {
+      my_frame_id: frame.my_frame_id,
+      target_profile_id: goal?.target_profile_id ?? null,
+      target_effective_health: goal?.target_effective_health ?? null,
+      target_effective_shield: goal?.target_effective_shield ?? null,
+      notes: goal?.notes ?? null,
+      ...patch,
+    };
+
+    setGoal(next);
+
+    const { data, error: upsertError } = await wfUser
+      .from('survivability_goals')
+      .upsert(next, { onConflict: 'my_frame_id' })
+      .select()
+      .single();
+
+    if (upsertError) { console.error('Failed to save Survivability goal:', upsertError); return; }
+    setGoal(data);
+  }
+
+  const selectedProfile = useMemo(
+    () => profiles.find(p => p.profile_id === goal?.target_profile_id) ?? null,
+    [profiles, goal]
+  );
+
+  const benchmarkTier = useMemo(
+    () => (selectedProfile && result ? pickBenchmarkTier(selectedProfile.benchmark_tiers, result) : null),
+    [selectedProfile, result]
+  );
+
   if (loading) {
     return <p style={{ color: COLOR.mutedInk }}>Loading Survivability...</p>;
   }
@@ -170,6 +234,99 @@ export default function SurvivabilityTab({ frame, color }) {
           Only flat or plain percentage Health/Shield/Armor bonuses are counted -- conditional or proc-based defensive effects
           (Adaptation, Rolling Guard, Quick Thinking, Brief Respite, etc.), Overguard, Energy, and Arcanes are not reflected here.
         </p>
+      </Panel>
+
+      <Panel accent={color} className="mb-6">
+        <h3 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color }}>Compared Against</h3>
+
+        <select
+          value={goal?.target_profile_id ?? ''}
+          onChange={e => saveGoal({ target_profile_id: e.target.value ? Number(e.target.value) : null })}
+          className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm outline-none mb-4"
+          style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+        >
+          <option value="">No profile selected</option>
+          {profiles.map(p => (
+            <option key={p.profile_id} value={p.profile_id}>{p.name}</option>
+          ))}
+        </select>
+
+        {selectedProfile && (
+          <div className="space-y-3 mb-4">
+            {benchmarkTier ? (
+              <span
+                className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg"
+                style={{ background: `${color}22`, border: `1px solid ${color}55`, color }}
+              >
+                Benchmark: {benchmarkTier}
+              </span>
+            ) : (
+              <p className="text-xs italic" style={{ color: COLOR.mutedInk }}>
+                {selectedProfile.benchmark_tiers ? 'Below this profile’s lowest benchmark tier.' : 'No benchmark tiers authored yet for this profile.'}
+              </p>
+            )}
+
+            {selectedProfile.defensive_layers && (
+              <p className="text-sm leading-relaxed" style={{ color: COLOR.ink }}>{selectedProfile.defensive_layers}</p>
+            )}
+
+            {selectedProfile.relevant_metrics?.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {selectedProfile.relevant_metrics.map(m => (
+                  <span
+                    key={m}
+                    className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
+                    style={{ background: COLOR.surface2, color: COLOR.mutedInk, border: `1px solid ${COLOR.border}` }}
+                  >
+                    {METRIC_LABEL[m] ?? m}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {selectedProfile.dependencies && (
+              <p className="text-xs leading-relaxed italic" style={{ color: COLOR.mutedInk }}>{selectedProfile.dependencies}</p>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-3 max-w-sm">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: COLOR.mutedInk }}>Goal: Effective Health</p>
+            <input
+              type="number"
+              min="0"
+              value={goal?.target_effective_health ?? ''}
+              onChange={e => saveGoal({ target_effective_health: e.target.value ? Number(e.target.value) : null })}
+              placeholder="No goal set"
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+              style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+            />
+            {goal?.target_effective_health != null && (
+              <p className="text-xs mt-1" style={{ color: result.effectiveHealth >= goal.target_effective_health ? COLOR.success : COLOR.mutedInk }}>
+                {result.effectiveHealth - goal.target_effective_health >= 0 ? '+' : ''}{result.effectiveHealth - goal.target_effective_health} vs goal
+              </p>
+            )}
+          </div>
+
+          <div>
+            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: COLOR.mutedInk }}>Goal: Effective Shield</p>
+            <input
+              type="number"
+              min="0"
+              value={goal?.target_effective_shield ?? ''}
+              onChange={e => saveGoal({ target_effective_shield: e.target.value ? Number(e.target.value) : null })}
+              placeholder="No goal set"
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+              style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+            />
+            {goal?.target_effective_shield != null && (
+              <p className="text-xs mt-1" style={{ color: result.effectiveShield >= goal.target_effective_shield ? COLOR.success : COLOR.mutedInk }}>
+                {result.effectiveShield - goal.target_effective_shield >= 0 ? '+' : ''}{result.effectiveShield - goal.target_effective_shield} vs goal
+              </p>
+            )}
+          </div>
+        </div>
       </Panel>
 
       <Panel accent={color}>

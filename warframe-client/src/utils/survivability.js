@@ -97,3 +97,27 @@ export function computeResilience({ baseStats, equippedMods = [], shardBonusText
     countedShards,
   };
 }
+
+// A profile's benchmark_tiers is authored strictest-first (e.g. Elite
+// before Strong before Adequate) -- returns the first tier whose min_*
+// thresholds are all met by `result`, or null if none are (including the
+// common case of a profile with no tiers authored yet). Threshold keys
+// are 'min_effective_health' / 'min_effective_shield', matching
+// computeResilience()'s own field names with a 'min_' prefix.
+export function pickBenchmarkTier(tiers, result) {
+  if (!Array.isArray(tiers) || tiers.length === 0 || !result) return null;
+
+  for (const tier of tiers) {
+    const checks = Object.entries(tier).filter(([key]) => key.startsWith('min_'));
+    if (checks.length === 0) continue;
+
+    const passes = checks.every(([key, threshold]) => {
+      const resultKey = key.slice(4).replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      return (result[resultKey] ?? 0) >= threshold;
+    });
+
+    if (passes) return tier.tier ?? null;
+  }
+
+  return null;
+}
