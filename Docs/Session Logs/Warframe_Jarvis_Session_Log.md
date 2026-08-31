@@ -1221,11 +1221,11 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 
 ---
 
-### Session 016 — Live Modded Stats Panels (Warframe + Weapons), Companion Chip Fix, Loose-End Closures
-**Date:** 2026-08-29
+### Session 016 — Live Modded Stats Panels, Canonical Ability Data Pipeline (Full Catalog), D.7 Scoping Begun
+**Date:** 2026-08-29 to 2026-08-31
 **Location:** Not recorded
-**Duration:** Single session, continued same day as Session 015
-**Status:** SHIPPED
+**Duration:** Long session, continued across multiple real-world days from Session 015; reconcile was run once mid-session (see below) before the ability-data pipeline and D.7 scoping happened, so this entry was amended rather than split into a new session number -- no real session boundary was crossed.
+**Status:** SHIPPED (Live Modded Stats, Ability Data Pipeline) / IN PROGRESS (D.7 scoping, not shipped)
 
 **Technical To-Do Closure**
 
@@ -1264,17 +1264,60 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Revenant's shard goal (2 Crimson, energy-on-spawn) — done, per Patrick, closed.
 - Cyte-09/Harrow Archon Shard swaps — dropped from tracking per Patrick, he's handling directly.
 
+**Mid-Session Reconcile (documented for continuity, not a real session boundary)**
+
+*What Was Done:*
+- Backfilled Sessions 013-015 into this log (their own "docs: log Session NNN" commits only ever updated `HANDOFF.md`, never this file) and regenerated `Cephalon_Gu_Master_Roadmap.md` (stale since Session 013 -- D.2-D.5 and Companion tracking were still listed as upcoming despite shipping).
+- Immediately after, Patrick asked "now we're prepped for D7?" and the session continued into D.7 scoping and then a full build-accuracy scrutiny pass -- both below. `recon` later in the session correctly flagged that this reconcile had only captured the first half of the session's work, prompting this amended entry rather than a new Session 017 for what was still one continuous session.
+
+**D.7 Scoping — Doctrine Adjacency Taxonomy (IN PROGRESS, not shipped)**
+
+*What Was Done:*
+- Real research, not guessing: read all 60 build doctrine texts in full and found **10 explicit cross-Warframe relationship instances** already authored in Patrick's own lore prose (Caliban's Dual Citizenship with Ironclad Mountain Hall, Harrow's Cross-School Bridge between Hallowed Path and Crimson Sanguinary, Uriel's Inverse/Shadow relationship to Hallowed Path naming Harrow and Baruuk specifically, Volt/Gyre's explicit "sister arts," Mesa/Cyte-09's Shared Lineage, and four same-school sibling-differentiation clusters (Moonless Veil's Ash/Loki/Ivara/Mirage, Tidal Abyss's Citrine/Gara/Frost, Plague Garden's Saryn/Nidus/Nokko/Oraxia, Storm Heaven's Styanax/Zephyr)) -- corrected an initial 4-case undercount from a keyword-only scan.
+- Landed on 5 provisional relationship types with real evidence behind each: Sibling/Differentiation (modeled as a named cluster of 2-4 Arts per school, not forced pairwise edges -- the actual text often doesn't support clean pairwise claims), Sister Art, Cross-School Bridge, Dual Citizenship, Inverse/Shadow (kept separate from Bridge per Patrick's explicit call).
+- Resolved a real design ambiguity discovered mid-conversation: an Art was assumed 1:1 with its Warframe, but Patrick confirmed that's incidental (only one build per Warframe exists today) not a rule -- he wants to support multiple distinct builds per Warframe eventually (different Art/School per build, config-based mod+ability setups). Landed on: Art/School definitions as canonical `wf_base` reference data with stable IDs, separate from which Art a specific build currently embodies (`wf_user`, build-level assignment) -- relationships attach to the canonical IDs, never to a build or `my_frame_id`.
+- Decided provenance (which doctrine text asserted a claim) must be tracked separately from relationship meaning, extensible to future evidence sources beyond doctrine prose -- citations as the base truth, not flattened into an assumed-symmetric fact.
+- **Not yet done:** table schema itself, Flow metric definition/output shape (component tiles vs. a combined score -- explicitly left open, "let's figure it out together"), and the actual D.7 build. This whole thread paused here when Patrick pivoted to a live build-accuracy scrutiny pass instead ("we can pivot and iron these kinks out before returning to D7").
+
+**Build-Accuracy Scrutiny Pass — Quick Fixes**
+
+*What Was Done:*
+- Renamed "Modded Stats" → "Stats" on both panels (redundant qualifier -- it's just the build's current stats, equals base with nothing equipped).
+- Mod/Riven effect-text descriptions added directly to every slot card (`SlotBox.jsx` + `CompanionEquipmentSection.jsx`) -- Patrick's example, Blind Rage's card now shows "+99% Ability Strength -55% Ability Efficiency" instead of just its bare name. Reused the existing `effectTextAtRank()` from `modMeta.js`, never previously wired into the slot UI itself.
+- Arcane effect-text tooltips added to Arcane 1/2 and weapon Arcane fields (new `arcaneMeta.js`, same exact-name-lookup pattern as `weaponMeta.js`). Surfaced a real seeded-data bug in the process: `wf_base.arcanes`' Arcane Persistence text was missing its shield-removal clause entirely -- confirmed against the real wiki tooltip (Patrick supplied a screenshot) and corrected in the DB.
+- Arcane Persistence's shield removal wired into `computeModdedWarframeStats` as an explicit named special case (`SHIELD_REMOVING_ARCANES`) rather than a generic parser, since arcane effect text is full natural language with no consistent "+N% Stat" shape the way mods have.
+
+**Canonical Ability Data Pipeline — Frost Pilot, then Full Catalog**
+
+*What Was Done:*
+- Patrick's build-accuracy pass surfaced that Gu showed zero real ability numbers anywhere (`wf_base.warframe_abilities` only ever stored `ability_name`). Investigated real upstream sources rather than guessing or hand-authoring: confirmed WFCD (this app's universal source for everything else) genuinely has no numeric ability fields at all, even at its raw GitHub source. Found and verified two real sources instead -- **DE's own Public Export** (via `calamity-inc/warframe-public-export-plus`, the same data Overframe/Warframe Market use, higher authority than WFCD) for Energy cost, the only numeric field it has; and the **Warframe Wiki's raw per-ability wikitext** (`?action=raw`, no HTML scraping) for Duration/Range/Strength, which DE doesn't expose. Confirmed via the wiki's own documentation that ability rank auto-maxes with Warframe level (same "every build is fully leveled" convention already used elsewhere), so only a single maxed scalar needs storing per parameter, not a 4-value progression.
+- New `wf_base.ability_catalog`/`ability_parameters` schema (migration `20260831_add_ability_parameters.sql`), keyed by ability identity/name rather than warframe-slot, since a Helminth ability like Nourish belongs to no single frame. Per-parameter provenance (`source`: de_public_export/wiki/manual), a `formula_key` registry-slug for irregular abilities (mirrors `seed_mods.py`'s `MAX_RANK_OVERRIDES` transparency), and a `context` column (`base`/`subsumed`) for the real discovery that a Helminth-subsumed cast can genuinely differ from an ability's home-frame cast on specific parameters.
+- Two real irregularities hand-verified and encoded as explicit overrides: Snow Globe's health depends on Frost's own base Armor via a compound formula (verified against the wiki's own worked numeric example), and Nourish's subsumed cast provides zero healing, 1 Viral stack instead of 10, and a different energy-multiplier formula entirely -- confirmed via its "| helminth =" wiki prose, and Patrick's own stated example (25s base duration × 1.55 Duration = 38.75s) matched exactly on the first live test.
+- New `utils/abilityStats.js` + `abilityFormulas.js` (named-registry overrides, mirrors `computeModdedWarframeStats`'s existing shape, consumes its Duration/Efficiency/Range/Strength/Armor output rather than recomputing). `AbilitiesEditor.jsx` replaced its bare name-only ability list with live computed stats per ability; "Not on file yet" for anything not ingested.
+- Verified end-to-end on the 5-ability Frost pilot (Freeze/Ice Wave/Avalanche generic scaling, Snow Globe's formula, Nourish base+subsumed) before touching the full catalog, per the reviewed plan. Two bugs caught during pilot verification: a comma-thousands-separator parsing bug (`1,000,000` silently became `1`), and an infinite render loop from lifting the stats panel's result into parent state while an arcane-names array prop was a fresh literal every render. Also caught a display bug post-fix: Snow Globe's `armor_multiplier` (a formula input constant) was independently and wrongly Strength-scaled for display even though the formula itself already used the correct raw value.
+- Expanded to the full catalog (266 distinct abilities, resolved via DE frame-name matching, no manual per-ability scope list beyond the two hand-verified overrides). The larger dataset surfaced 4 more real bugs: a regex using `\s*` (matches newlines) let an empty field bleed the *entire next line's field* into its own capture, corrupting both (root cause of most of the first run's 65 failures); real ability text containing infinity/≤/≥ characters crashed a bare `print()` under Windows' console codepage; the same wiki label can legitimately appear twice under different fields for one ability (Molt's "movement speed buff" is both a % magnitude and its own separate duration) violating the parameter uniqueness constraint, fixed with an automatic disambiguating suffix; and "N/A"/bare-infinity field values were rendering as nonsensical "— N/A" / "— &infin;" tiles instead of being dropped as the real "doesn't apply"/"unlimited" values they are.
+
+*Outcome:*
+- **255/266 abilities (95.9%) ingested with real computed stats.** The remaining 11 are wiki-title mismatches this app's naive name-to-title convention can't derive (e.g. "Shroud Of Dynar" vs. the real page's casing) -- logged as failures per the established "never guess an alternate title" rule, not silently dropped. 161 abilities still have at least one field surfaced as unknown ("—") rather than guessed -- expected, per this project's "real overrides only after a human reads the actual wiki prose" rule, not a shortfall of this pass.
+- Verified live: Loki Prime's 4 abilities (previously "Not on file yet") now show real computed stats end-to-end with no console errors.
+
 **Bugs Fixed:**
 - `statGroups()` would have resolved Companion Weapon (Claws) mods against the wrong stat-group set (Companion body's) had it shipped un-fixed — caught before shipping, not a live regression.
+- `wf_base.arcanes`' seeded Arcane Persistence effect text was missing its real shield-removal clause entirely.
+- Infinite render loop in `LoadoutEquipmentSection.jsx` from an unmemoized array prop combined with the new stats-lifting `useEffect`.
+- Ability-data parser: comma-thousands-separator numbers, `\s*`-across-newlines field bleed, Windows console Unicode crash, duplicate parameter-key collisions on shared wiki labels, "N/A"/infinity values rendering as broken pseudo-stat tiles, and Snow Globe's `armor_multiplier` display (the formula itself was always correct).
 
 **End-of-Session Status:**
-- Live modded stats panels shipped and verified for both Warframe and weapon Loadout pieces. Companion mod picker filter chips shipped. Service-role grant gap closed (migration run by Patrick). Three loose ends closed per Patrick's direction. Sessions 013-015 backfilled into this log during reconcile.
+- Live modded stats panels, Companion filter chips, and the full canonical ability-data pipeline are all shipped and verified live. D.7 is genuinely mid-scope, not shipped -- the relationship taxonomy and Art/School canonical-data decisions are settled, but no schema, no Flow definition, and no code exist yet.
 
 **Next Targets:**
-- D.7 — Build Recommendation / Flow / Doctrine Adjacency — per Patrick, the app should be in better shape for this now that live modded stats exist as a foundation. Not yet scoped in detail.
+- **D.7** — resume where scoping paused: design the Doctrine Adjacency schema (Art/School canonical tables + typed relationship table, provenance-as-citation), then define Flow's actual output shape (component tiles vs. combined score -- still an open question for Patrick).
+- Ability-data catalog: 11 wiki-title mismatches to hand-curate (`Shroud Of Dynar`, `Fangs Of Raksh`, `Rest & Rage`, `Coronal Ejection / Gravitic Slash`, etc.), and a long tail of the 161 "needs review" abilities to progressively verify and override as Patrick scrutinizes specific builds (same organic discovery pattern as Snow Globe/Nourish).
+- Multi-build-per-Warframe support and the 3→6 Loadout Config expansion (mods + abilities per config) — both newly confirmed real requirements this session, neither scoped or started.
 - `benchmark_tiers` content for the 4 Survivability Profiles — still needs Patrick's real numeric thresholds.
 - Mark Companion/Posture mods as owned in `mod_inventory` — still needs Patrick's Mods-page pass.
 - Moa/Hound companion scope decision, Nautilus Prime's slot count — still carried, still unconfirmed.
-- Ability tooltip numbers (Nourish, etc.) — blocked on a real data source for ability effect text; not scheduled until one exists.
+- Ability tooltip *description text* scaling (e.g. rewriting "heals 1000 health" inline in prose) remains out of scope -- the numeric data pipeline now exists, but rewriting descriptions live was never part of this ask.
+- Patrick's own parallel "Static Data" pipeline for Arcanes (separate migrations/diagnostics/tests, untouched by this session) is still in progress on his end -- worth reconciling scope with the ability-data pipeline's own provenance/override conventions once both are further along, since they're solving adjacent problems for different catalogs.
 
 ---
