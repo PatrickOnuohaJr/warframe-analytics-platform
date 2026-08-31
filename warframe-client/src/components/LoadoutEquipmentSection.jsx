@@ -81,6 +81,7 @@ export default function LoadoutEquipmentSection({
   frames,
   weapons,
   arcanes,
+  abilityCanonicalByName,
   onSaved,
 }) {
   const [picker, setPicker] = useState(null); // { slotPosition, pool, slot }
@@ -88,6 +89,10 @@ export default function LoadoutEquipmentSection({
   const [showCopyWeapon, setShowCopyWeapon] = useState(false);
   const [arcaneCopyTarget, setArcaneCopyTarget] = useState('');
   const [copyingArcanes, setCopyingArcanes] = useState(false);
+  // Lifted out of WarframeModdedStatsPanel so AbilitiesEditor can reuse
+  // the same already-computed Duration/Efficiency/Range/Strength/Armor
+  // instead of recomputing them a second time.
+  const [warframeStatsResult, setWarframeStatsResult] = useState(null);
 
   const isWarframe = equipmentType === 'Warframe';
   const isMelee = equipmentType === 'Melee';
@@ -151,6 +156,12 @@ export default function LoadoutEquipmentSection({
   const [arcane2, setArcane2] = useDebouncedField(
     frame.arcane_2 ?? '', v => saveFrameField({ arcane_2: cleanValue(v) })
   );
+  // Referentially stable across renders unless the arcanes actually
+  // change -- required now that WarframeModdedStatsPanel lifts its result
+  // up via onResult -> setState; a fresh array literal every render would
+  // recompute that result every render, which would re-fire the lift's
+  // useEffect every render, which triggers this render again (infinite loop).
+  const equippedArcaneNames = useMemo(() => [arcane1, arcane2], [arcane1, arcane2]);
 
   const otherFrames = frames.filter(f => f.my_frame_id !== frame.my_frame_id);
 
@@ -470,8 +481,9 @@ export default function LoadoutEquipmentSection({
           modsById={modsById}
           ownedByModId={ownedByModId}
           shardBonusTexts={shardBonusTexts}
-          equippedArcaneNames={[arcane1, arcane2]}
+          equippedArcaneNames={equippedArcaneNames}
           accent={accent}
+          onResult={setWarframeStatsResult}
         />
       )}
 
@@ -547,7 +559,16 @@ export default function LoadoutEquipmentSection({
         />
       )}
 
-      {isWarframe && <AbilitiesEditor frame={frame} onSaved={onSaved} color={accent} key={frame.my_frame_id} />}
+      {isWarframe && (
+        <AbilitiesEditor
+          frame={frame}
+          onSaved={onSaved}
+          color={accent}
+          abilityCanonicalByName={abilityCanonicalByName}
+          buildStats={warframeStatsResult}
+          key={frame.my_frame_id}
+        />
+      )}
 
       {showCopyWeapon && weaponFields && (
         <CopyWeaponModal

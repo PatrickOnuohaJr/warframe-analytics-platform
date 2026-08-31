@@ -102,7 +102,7 @@ function getFramePhysique(slots) {
 }
 
 export default function App() {
-  const { frames, loading, refetchFrames } = useFrames()
+  const { frames, loading, refetchFrames, abilityCanonicalByName } = useFrames()
   const { weapons, loadingWeapons } = useWeapons()
   const [editingFrame, setEditingFrame] = useState(null)
   const [detailFrame, setDetailFrame] = useState(null)
@@ -464,6 +464,7 @@ const filteredFrames =
           frame={detailFrame}
           frames={frames}
           weapons={weapons}
+          abilityCanonicalByName={abilityCanonicalByName}
           onClose={() =>
             setDetailFrame(null)
           }

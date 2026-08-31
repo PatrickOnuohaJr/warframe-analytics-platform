@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import Panel from './ui/Panel';
 import { computeModdedWarframeStats } from '../utils/survivability';
 import { COLOR } from '../constants/theme';
@@ -46,6 +46,7 @@ export default function WarframeModdedStatsPanel({
   shardBonusTexts,
   equippedArcaneNames,
   accent,
+  onResult,
 }) {
   const equippedMods = useMemo(
     () => resolveEquippedMods(slotsByPosition, modsById, ownedByModId),
@@ -56,6 +57,13 @@ export default function WarframeModdedStatsPanel({
     if (!baseStats) return null;
     return computeModdedWarframeStats({ baseStats, equippedMods, shardBonusTexts, equippedArcaneNames });
   }, [baseStats, equippedMods, shardBonusTexts, equippedArcaneNames]);
+
+  // Lifts the already-computed result up to the parent (LoadoutEquipmentSection)
+  // so AbilitiesEditor can reuse the same Duration/Efficiency/Range/Strength/
+  // Armor instead of resolving equipped mods and recomputing a second time.
+  useEffect(() => {
+    onResult?.(result);
+  }, [result, onResult]);
 
   if (!result) {
     return (

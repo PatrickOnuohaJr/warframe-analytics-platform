@@ -142,6 +142,7 @@ export default function BuildDetailOverlay({
   frame,
   frames = [],
   weapons = [],
+  abilityCanonicalByName = {},
   onClose,
   onEditShards,
   onSaved,
@@ -295,7 +296,7 @@ export default function BuildDetailOverlay({
         {/* Loadout tab -- Warframe/Primary/Secondary/Melee, each with its
             weapon+Arcane info, mod grid, and (Warframe only) Abilities */}
         {activeTab === 'loadout' && (
-          <ModsLoadoutTab frame={frame} frames={frames} weapons={weapons} color={color} onSaved={onSaved} />
+          <ModsLoadoutTab frame={frame} frames={frames} weapons={weapons} abilityCanonicalByName={abilityCanonicalByName} color={color} onSaved={onSaved} />
         )}
 
         {/* Companion tab -- identity + mod grid for the Companion piece and

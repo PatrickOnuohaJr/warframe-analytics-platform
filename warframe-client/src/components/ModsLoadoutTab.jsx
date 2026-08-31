@@ -42,7 +42,7 @@ const EQUIPMENT_TYPES = ['Warframe', 'Primary', 'Secondary', 'Melee'];
 // to mod at all, since there's nothing there to put mods on.
 const WEAPON_FIELD = { Primary: 'primary_weapon', Secondary: 'secondary_weapon', Melee: 'melee_weapon' };
 
-export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved }) {
+export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonicalByName, color, onSaved }) {
   const { arcanes } = useArcanes();
   const [catalog, setCatalog] = useState([]);
   const [owned, setOwned] = useState(new Map()); // mod_id -> { owned_rank }
@@ -309,6 +309,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, color, onSaved 
         frames={frames}
         weapons={weapons}
         arcanes={arcanes}
+        abilityCanonicalByName={abilityCanonicalByName}
         onSaved={onSaved}
       />
     </div>

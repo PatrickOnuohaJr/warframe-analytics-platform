@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { wfUser } from '../lib/supabase'
 import { COLOR } from '../constants/theme'
 import ModalShell from './ui/ModalShell'
+import { computeAbilityStats } from '../utils/abilityStats'
 
 // Base kit + Helminth subsume editor for the Warframe piece of the Loadout
 // tab. Extracted from App.jsx's old standalone Abilities modal -- same
@@ -20,7 +21,7 @@ const HELMINTH_ABILITIES = [
   'Thermal Sunder', 'Warcry', 'Wrathful Advance',
 ]
 
-export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold }) {
+export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, abilityCanonicalByName = {}, buildStats }) {
   const configs = frame.ability_configs ?? []
   const sortedConfigs = configs.slice().sort((a, b) => a.config_slot.localeCompare(b.config_slot))
 
@@ -96,30 +97,72 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold }) 
 
       <div className="space-y-2">
         {frame.abilities?.length > 0 ? (
-          frame.abilities.map(ability => (
-            <div
-              key={ability.ability_slot}
-              onClick={() => setSelectedAbilitySlot(ability.ability_slot)}
-              className="rounded-lg border p-3 cursor-pointer transition-colors"
-              style={{
-                borderColor: selectedAbilitySlot === ability.ability_slot ? color : COLOR.border,
-                background: selectedAbilitySlot === ability.ability_slot ? `${color}18` : COLOR.surface2,
-                color: COLOR.ink,
-              }}
-            >
-              {ability.ability_slot}. {
-                activeConfig?.subsumed_slot === ability.ability_slot
-                  ? activeConfig.subsumed_ability
-                  : ability.ability_name
-              }
+          frame.abilities.map(ability => {
+            const isSubsumed = activeConfig?.subsumed_slot === ability.ability_slot
+            const displayedName = isSubsumed ? activeConfig.subsumed_ability : ability.ability_name
+            const castContext = isSubsumed ? 'subsumed' : 'base'
+            const canonical = abilityCanonicalByName?.[displayedName]
 
-              {activeConfig?.subsumed_slot === ability.ability_slot && (
-                <span className="ml-2 text-xs uppercase tracking-widest" style={{ color }}>
-                  Helminth
-                </span>
-              )}
-            </div>
-          ))
+            // computeAbilityStats reuses computeModdedWarframeStats's own
+            // field names (abilityDuration/abilityEfficiency/etc, already
+            // 100-baseline percentages) -- no restatement needed beyond
+            // this rename, see utils/survivability.js.
+            const moddedStats = canonical && buildStats
+              ? computeAbilityStats({
+                  parameters: canonical.parameters,
+                  buildStats: {
+                    duration: buildStats.abilityDuration,
+                    efficiency: buildStats.abilityEfficiency,
+                    range: buildStats.abilityRange,
+                    strength: buildStats.abilityStrength,
+                    armor: buildStats.armor,
+                  },
+                  context: castContext,
+                })
+              : null
+
+            return (
+              <div
+                key={ability.ability_slot}
+                onClick={() => setSelectedAbilitySlot(ability.ability_slot)}
+                className="rounded-lg border p-3 cursor-pointer transition-colors"
+                style={{
+                  borderColor: selectedAbilitySlot === ability.ability_slot ? color : COLOR.border,
+                  background: selectedAbilitySlot === ability.ability_slot ? `${color}18` : COLOR.surface2,
+                  color: COLOR.ink,
+                }}
+              >
+                <div>
+                  {ability.ability_slot}. {displayedName}
+
+                  {isSubsumed && (
+                    <span className="ml-2 text-xs uppercase tracking-widest" style={{ color }}>
+                      Helminth
+                    </span>
+                  )}
+                </div>
+
+                {!canonical && (
+                  <p className="mt-1 text-xs italic" style={{ color: COLOR.mutedInk }}>Not on file yet</p>
+                )}
+
+                {canonical && !moddedStats && (
+                  <p className="mt-1 text-xs italic" style={{ color: COLOR.mutedInk }}>Waiting on build stats...</p>
+                )}
+
+                {moddedStats && moddedStats.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1" onClick={e => e.stopPropagation()}>
+                    {moddedStats.map(stat => (
+                      <span key={stat.parameterKey} className="text-xs" style={{ color: COLOR.mutedInk }}>
+                        <span style={{ color: COLOR.ink }}>{stat.value === null ? '—' : stat.value}</span>
+                        {stat.unit === 'percent' && stat.value !== null ? '%' : ''} {stat.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })
         ) : (
           <p style={{ color: COLOR.mutedInk }}>No ability data yet</p>
         )}

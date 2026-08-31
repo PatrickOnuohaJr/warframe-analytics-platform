@@ -4,6 +4,7 @@ import { wfUser, wfBase } from '../lib/supabase'
 export default function useFrames() {
   const [frames, setFrames] = useState([])
   const [loading, setLoading] = useState(true)
+  const [abilityCanonicalByName, setAbilityCanonicalByName] = useState({})
 
   // `silent` skips the loading flag -- used by refetchFrames after an
   // edit (e.g. auto-saving an Arcane) so the fresh data swaps in in the
@@ -71,6 +72,35 @@ export default function useFrames() {
       targetShardMap[s.my_frame_id] = s
     })
 
+    // Canonical ability data (Duration/Range/Strength/Energy) -- global
+    // reference catalog, not per-frame, so it's kept as a sibling return
+    // value rather than attached onto every frame object. See
+    // DB/Migrations/20260831_add_ability_parameters.sql and
+    // utils/abilityStats.js.
+    const { data: abilityCatalogData } = await wfBase
+      .from('ability_catalog')
+      .select('*')
+
+    const { data: abilityParametersData } = await wfBase
+      .from('ability_parameters')
+      .select('*')
+      .order('sort_order')
+
+    const catalogById = {}
+    abilityCatalogData?.forEach(c => {
+      catalogById[c.ability_catalog_id] = c
+    })
+
+    const canonicalByName = {}
+    abilityCatalogData?.forEach(c => {
+      canonicalByName[c.ability_name] = { catalog: c, parameters: [] }
+    })
+    abilityParametersData?.forEach(p => {
+      const catalog = catalogById[p.ability_catalog_id]
+      if (!catalog) return
+      canonicalByName[catalog.ability_name]?.parameters.push(p)
+    })
+
     const { data: abilityConfigData } = await wfUser
     .from('ability_configs')
     .select('*')
@@ -99,6 +129,7 @@ export default function useFrames() {
     }))
 
     setFrames(enriched)
+    setAbilityCanonicalByName(canonicalByName)
     if (!silent) setLoading(false)
   }
 
@@ -110,5 +141,6 @@ export default function useFrames() {
     frames,
     loading,
     refetchFrames: () => fetchFrames({ silent: true }),
+    abilityCanonicalByName,
   }
 }
