@@ -5,6 +5,7 @@ import SlotBox from './SlotBox';
 import WeaponInput from './WeaponInput';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain, pieceCapacity, isDiscounted } from '../utils/modCapacity';
+import { effectTextAtRank } from '../utils/modMeta';
 import { cleanValue } from '../utils/shardHelpers';
 import { wfUser } from '../lib/supabase';
 import useDebouncedField from '../hooks/useDebouncedField';
@@ -97,6 +98,7 @@ export default function CompanionEquipmentSection({
         rank={rank}
         cost={cost}
         discounted={isDiscounted(item, slot.polarity)}
+        description={item ? effectTextAtRank(item, rank) : null}
         accent={accent}
         onOpenPicker={() => setPicker({ slotPosition: pos, slot })}
         onSetPolarity={polarity => onSetSlot(pos, { mod_id: slot.mod_id, riven_id: null, polarity })}
@@ -113,6 +115,7 @@ export default function CompanionEquipmentSection({
       rank={postureRank}
       cost={postureDrain}
       discounted={isDiscounted(postureMod, postureSlot.polarity, true)}
+      description={postureMod ? effectTextAtRank(postureMod, postureRank) : null}
       accent={accent}
       onOpenPicker={() => setPicker({ slotPosition: 'posture', slot: postureSlot })}
       onSetPolarity={polarity => onSetSlot('posture', { mod_id: postureSlot.mod_id, riven_id: null, polarity })}

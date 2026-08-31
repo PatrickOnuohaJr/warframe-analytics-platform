@@ -10,7 +10,7 @@ import { COLOR } from '../constants/theme';
 // onSetRank here takes just the next rank -- the caller pre-binds which
 // id/setter (real mod vs Riven) it writes to, so this component doesn't
 // need to know the difference.
-export default function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRank, cost, discounted, accent }) {
+export default function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRank, cost, discounted, accent, description }) {
   const cap = mod?.max_rank ?? 0;
 
   return (
@@ -38,6 +38,10 @@ export default function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPol
           <p className="text-sm" style={{ color: COLOR.mutedInk }}>Empty</p>
         )}
       </div>
+
+      {mod && description && (
+        <p className="text-xs mt-1 leading-snug" style={{ color: COLOR.mutedInk }}>{description}</p>
+      )}
 
       {/* Rank editing in-place: ranking a mod up mid-build is the common
           case (you fuse it right there in the Arsenal), so it shouldn't

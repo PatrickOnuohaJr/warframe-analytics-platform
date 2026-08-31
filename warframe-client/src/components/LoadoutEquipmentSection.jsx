@@ -13,7 +13,9 @@ import WeaponModdedStatsPanel from './WeaponModdedStatsPanel';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain, pieceCapacity, isDiscounted, RIVEN_BASE_DRAIN, RIVEN_MAX_RANK } from '../utils/modCapacity';
 import { weaponTrait } from '../utils/weaponMeta';
+import { arcaneEffectText } from '../utils/arcaneMeta';
 import { getShardBonusTexts } from '../utils/survivability';
+import { effectTextAtRank } from '../utils/modMeta';
 import { cleanValue } from '../utils/shardHelpers';
 import { wfUser } from '../lib/supabase';
 import useDebouncedField from '../hooks/useDebouncedField';
@@ -42,7 +44,17 @@ function toRivenPoolItem(riven) {
     max_rank: RIVEN_MAX_RANK,
     owned_rank: riven.owned_rank,
     isRiven: true,
+    stats: [riven.stat_1, riven.stat_2, riven.stat_3, riven.stat_4].filter(Boolean),
   };
+}
+
+// A Riven's stats are already hand-typed display text (see RivenEditorModal),
+// a real mod's comes from its own effect-text-at-rank -- same "no blank
+// cards" goal, different source shape.
+function modDescription(item, rank) {
+  if (!item) return null;
+  if (item.isRiven) return item.stats.join(' · ');
+  return effectTextAtRank(item, rank);
 }
 
 export default function LoadoutEquipmentSection({
@@ -241,22 +253,32 @@ export default function LoadoutEquipmentSection({
 
       {isWarframe && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          <WeaponInput
-            label="Arcane 1"
-            value={arcane1}
-            onChange={setArcane1}
-            weapons={arcanes}
-            slot="Warframe"
-            placeholder="Arcane Reaper"
-          />
-          <WeaponInput
-            label="Arcane 2"
-            value={arcane2}
-            onChange={setArcane2}
-            weapons={arcanes}
-            slot="Warframe"
-            placeholder="Molt Augmented"
-          />
+          <div>
+            <WeaponInput
+              label="Arcane 1"
+              value={arcane1}
+              onChange={setArcane1}
+              weapons={arcanes}
+              slot="Warframe"
+              placeholder="Arcane Reaper"
+            />
+            {arcaneEffectText(arcanes, arcane1) && (
+              <p className="text-xs mt-1 leading-snug" style={{ color: COLOR.mutedInk }}>{arcaneEffectText(arcanes, arcane1)}</p>
+            )}
+          </div>
+          <div>
+            <WeaponInput
+              label="Arcane 2"
+              value={arcane2}
+              onChange={setArcane2}
+              weapons={arcanes}
+              slot="Warframe"
+              placeholder="Molt Augmented"
+            />
+            {arcaneEffectText(arcanes, arcane2) && (
+              <p className="text-xs mt-1 leading-snug" style={{ color: COLOR.mutedInk }}>{arcaneEffectText(arcanes, arcane2)}</p>
+            )}
+          </div>
 
           <div className="sm:col-span-2 rounded-xl p-3" style={{ background: COLOR.surface2, border: `1px solid ${accent}30` }}>
             <p className="text-[10px] uppercase tracking-widest mb-2 font-bold" style={{ color: accent }}>
@@ -306,14 +328,19 @@ export default function LoadoutEquipmentSection({
               />
             </div>
 
-            <WeaponInput
-              label={`${equipmentType} Arcane`}
-              value={weaponArcaneValue}
-              onChange={setWeaponArcaneValue}
-              weapons={arcanes}
-              slot={equipmentType}
-              placeholder="e.g. Primary Merciless"
-            />
+            <div>
+              <WeaponInput
+                label={`${equipmentType} Arcane`}
+                value={weaponArcaneValue}
+                onChange={setWeaponArcaneValue}
+                weapons={arcanes}
+                slot={equipmentType}
+                placeholder="e.g. Primary Merciless"
+              />
+              {arcaneEffectText(arcanes, weaponArcaneValue) && (
+                <p className="text-xs mt-1 leading-snug" style={{ color: COLOR.mutedInk }}>{arcaneEffectText(arcanes, weaponArcaneValue)}</p>
+              )}
+            </div>
           </div>
 
           {weaponTrait(weapons, frame[weaponFields.weapon]) && (
@@ -337,6 +364,7 @@ export default function LoadoutEquipmentSection({
             rank={auraRank}
             cost={auraDrain}
             discounted={isDiscounted(auraMod, auraSlot.polarity, true)}
+            description={modDescription(auraMod, auraRank)}
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'aura', slot: auraSlot })}
             onSetPolarity={polarity => onSetSlot('aura', { mod_id: auraSlot.mod_id, riven_id: null, polarity })}
@@ -352,6 +380,7 @@ export default function LoadoutEquipmentSection({
             rank={stanceRank}
             cost={stanceDrain}
             discounted={isDiscounted(stanceMod, stanceSlot.polarity)}
+            description={modDescription(stanceMod, stanceRank)}
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'stance', slot: stanceSlot })}
             onSetPolarity={polarity => onSetSlot('stance', { mod_id: stanceSlot.mod_id, riven_id: null, polarity })}
@@ -367,6 +396,7 @@ export default function LoadoutEquipmentSection({
             rank={exilusRank}
             cost={exilusDrain}
             discounted={isDiscounted(exilusMod, exilusSlot.polarity)}
+            description={modDescription(exilusMod, exilusRank)}
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'exilus', slot: exilusSlot })}
             onSetPolarity={polarity => onSetSlot('exilus', { mod_id: exilusSlot.mod_id, riven_id: null, polarity })}
@@ -389,6 +419,7 @@ export default function LoadoutEquipmentSection({
               rank={rank}
               cost={cost}
               discounted={isDiscounted(item, slot.polarity)}
+              description={modDescription(item, rank)}
               accent={accent}
               onOpenPicker={() => setPicker({ slotPosition: pos, slot, allowRiven: true })}
               onSetPolarity={polarity => onSetSlot(pos, { mod_id: slot.mod_id, riven_id: slot.riven_id, polarity })}
@@ -439,6 +470,7 @@ export default function LoadoutEquipmentSection({
           modsById={modsById}
           ownedByModId={ownedByModId}
           shardBonusTexts={shardBonusTexts}
+          equippedArcaneNames={[arcane1, arcane2]}
           accent={accent}
         />
       )}

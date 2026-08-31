@@ -92,8 +92,21 @@ const WARFRAME_SHARD_PCT_PATTERNS = [
   { key: 'duration', re: /^\+([\d.]+)% Ability Duration$/ },
 ];
 
+// Arcane effect text is full natural language (e.g. "Remove all Shields.
+// If Armor is above 700: Cannot be hit for more than 500 Damage/s."), not
+// a clean "+N% Stat" line -- there's no generic pattern to extract from it
+// the way mods/shards work. Named special cases only, added one at a time
+// after confirming the exact real effect (this one via wiki screenshot,
+// 2026-08-30, since the seeded wf_base.arcanes.effect_r5 text was
+// independently found to be missing the shield-removal clause entirely).
+// Never add an entry here by inferring from a name alone.
+const SHIELD_REMOVING_ARCANES = new Set(['Arcane Persistence']);
+
 // `equippedMods`/`shardBonusTexts`: same shapes computeResilience takes.
-export function computeModdedWarframeStats({ baseStats, equippedMods = [], shardBonusTexts = [] }) {
+// `equippedArcaneNames`: this build's arcane_1/arcane_2 values (nulls
+// filtered by the caller or left in, either way -- only matched names
+// have any effect).
+export function computeModdedWarframeStats({ baseStats, equippedMods = [], shardBonusTexts = [], equippedArcaneNames = [] }) {
   const pctBonus = { health: 0, shield: 0, armor: 0, energy: 0, sprintSpeed: 0, duration: 0, efficiency: 0, range: 0, strength: 0 };
   const flatBonus = { health: 0, shield: 0, armor: 0, energy: 0 };
   const countedMods = [];
@@ -129,8 +142,10 @@ export function computeModdedWarframeStats({ baseStats, equippedMods = [], shard
     }
   });
 
+  const shieldRemoved = equippedArcaneNames.some(name => SHIELD_REMOVING_ARCANES.has(name));
+
   const health = (baseStats?.health ?? 0) * (1 + pctBonus.health / 100) + flatBonus.health;
-  const shield = (baseStats?.shield ?? 0) * (1 + pctBonus.shield / 100) + flatBonus.shield;
+  const shield = shieldRemoved ? 0 : (baseStats?.shield ?? 0) * (1 + pctBonus.shield / 100) + flatBonus.shield;
   const armor = (baseStats?.armor ?? 0) * (1 + pctBonus.armor / 100) + flatBonus.armor;
   const energy = (baseStats?.energy ?? 0) * (1 + pctBonus.energy / 100) + flatBonus.energy;
   // Sprint Speed's base column is already a raw multiplier (e.g. 1.25),

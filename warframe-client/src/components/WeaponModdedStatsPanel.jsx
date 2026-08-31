@@ -99,7 +99,7 @@ export default function WeaponModdedStatsPanel({
 
   return (
     <Panel accent={accent} className="mb-6">
-      <h3 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: accent }}>Modded Stats</h3>
+      <h3 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: accent }}>Stats</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {tiles.map(tile => (
           <div

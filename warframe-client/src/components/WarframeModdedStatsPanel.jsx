@@ -44,6 +44,7 @@ export default function WarframeModdedStatsPanel({
   modsById,
   ownedByModId,
   shardBonusTexts,
+  equippedArcaneNames,
   accent,
 }) {
   const equippedMods = useMemo(
@@ -53,8 +54,8 @@ export default function WarframeModdedStatsPanel({
 
   const result = useMemo(() => {
     if (!baseStats) return null;
-    return computeModdedWarframeStats({ baseStats, equippedMods, shardBonusTexts });
-  }, [baseStats, equippedMods, shardBonusTexts]);
+    return computeModdedWarframeStats({ baseStats, equippedMods, shardBonusTexts, equippedArcaneNames });
+  }, [baseStats, equippedMods, shardBonusTexts, equippedArcaneNames]);
 
   if (!result) {
     return (
@@ -66,7 +67,7 @@ export default function WarframeModdedStatsPanel({
 
   return (
     <Panel accent={accent} className="mb-6">
-      <h3 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: accent }}>Modded Stats</h3>
+      <h3 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: accent }}>Stats</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {TILES.map(tile => (
           <div
