@@ -242,10 +242,10 @@ export default function ModsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold uppercase tracking-wide mb-2" style={{ color: COLOR.gold }}>
+      <h1 className="text-[22px] font-bold uppercase tracking-[0.08em] mb-1.5" style={{ color: COLOR.gold }}>
         Mods
       </h1>
-      <p className="text-sm mb-6" style={{ color: COLOR.mutedInk }}>
+      <p className="text-xs mb-6" style={{ color: COLOR.mutedInk }}>
         Mods you own and their fused rank. Loadout assignment and capacity math come in a later pass.
       </p>
 

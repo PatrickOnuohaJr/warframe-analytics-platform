@@ -146,10 +146,10 @@ export default function ArmoryPage({ frames, refetchFrames }) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold uppercase tracking-wide mb-2" style={{ color: COLOR.gold }}>
+      <h1 className="text-[22px] font-bold uppercase tracking-[0.08em] mb-1.5" style={{ color: COLOR.gold }}>
         Armory
       </h1>
-      <p className="text-sm mb-6" style={{ color: COLOR.mutedInk }}>
+      <p className="text-xs mb-6" style={{ color: COLOR.mutedInk }}>
         Weapons you own, where they're allocated, and the 3-Weapon Rule at a glance. Drag a weapon onto a frame's slot to assign it.
       </p>
 

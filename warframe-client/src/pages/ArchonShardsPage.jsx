@@ -105,8 +105,8 @@ export default function ArchonShardsPage () {
 
   return (
     <div>
-      <h1 style={{ color: COLOR.gold }} className="text-2xl font-bold mb-2">Archon Shard Inventory</h1>
-      <p style={{ color: COLOR.mutedInk }} className="mb-6">{totalShards} shards owned across all colors</p>
+      <h1 style={{ color: COLOR.gold }} className="text-[22px] font-bold uppercase tracking-[0.08em] mb-1.5">Archon Shard Inventory</h1>
+      <p style={{ color: COLOR.mutedInk }} className="text-xs mb-6">{totalShards} shards owned across all colors</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {SHARD_CONFIG.map(({ type, label, color }) => (
@@ -121,7 +121,7 @@ export default function ArchonShardsPage () {
 
             {/* Base row */}
             <div className="flex items-center justify-between mb-2">
-              <span style={{ color: COLOR.mutedInk }}>Base</span>
+              <span style={{ color: COLOR.mutedInk }} className="text-[9px] uppercase tracking-[0.2em]">Base</span>
               <div className="flex items-center gap-3">
                 <StepButton onClick={() => updateCount(type, false, -1)}>−</StepButton>
                 <span style={{ color: COLOR.ink }} className="w-6 text-center">
@@ -136,7 +136,7 @@ export default function ArchonShardsPage () {
               className="flex items-center justify-between rounded-lg p-2"
               style={{ border: `1px solid ${color}55`, background: `${color}14` }}
             >
-              <span style={{ color }} className="font-medium">Tauforged</span>
+              <span style={{ color }} className="text-[9px] uppercase tracking-[0.2em] font-bold">Tauforged</span>
               <div className="flex items-center gap-3">
                 <StepButton onClick={() => updateCount(type, true, -1)}>−</StepButton>
                 <span style={{ color }} className="w-6 text-center font-semibold">

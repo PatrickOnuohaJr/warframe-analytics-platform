@@ -5,6 +5,7 @@ import Button from '../components/ui/Button'
 import ModalShell from '../components/ui/ModalShell'
 
 const GOLD = '#FBBF24'
+const MUTED = '#B8B3AC'
 
 export default function ArcanesPage() {
   const {
@@ -95,66 +96,75 @@ if (loading) {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">
-        Arcane Collection
-      </h1>
-   
-    <div className="flex gap-6 mb-8 items-start">
-      <div className="grid grid-cols-2 gap-4 w-[340px] shrink-0">
-        <Panel className="!p-4 h-[110px]">
-          <div className="text-sm opacity-70">Total</div>
-          <div className="text-3xl font-bold">{summary?.total_arcanes ?? 0}</div>
+      <div className="mb-8">
+        <h1 className="text-[22px] font-bold uppercase tracking-[0.08em]" style={{ color: GOLD }}>
+          Arcane Collection
+        </h1>
+        <p className="text-xs mt-1.5" style={{ color: MUTED }}>
+          Ownership and completion progress across every Arcane category.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <Panel className="!p-4">
+          <div className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>Total</div>
+          <div className="text-3xl font-bold mt-2">{summary?.total_arcanes ?? 0}</div>
         </Panel>
 
-        <Panel className="!p-4 h-[110px]">
-          <div className="text-sm opacity-70">Owned</div>
-          <div className="text-3xl font-bold">{summary?.owned_arcanes ?? 0}</div>
+        <Panel className="!p-4">
+          <div className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>Owned</div>
+          <div className="text-3xl font-bold mt-2">{summary?.owned_arcanes ?? 0}</div>
         </Panel>
 
-        <Panel className="!p-4 h-[110px]">
-          <div className="text-sm opacity-70">Completed</div>
-          <div className="text-3xl font-bold">{summary?.completed_arcanes ?? 0}</div>
+        <Panel className="!p-4" accent="#4CAF50">
+          <div className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>Completed</div>
+          <div className="text-3xl font-bold mt-2" style={{ color: '#4CAF50' }}>{summary?.completed_arcanes ?? 0}</div>
         </Panel>
 
-        <Panel interactive accent={GOLD} className="!p-4 h-[110px]" onClick={() => setShowMissingModal(true)}>
-          <div className="text-sm opacity-70">Missing</div>
-          <div className="text-3xl font-bold">{summary?.missing_arcanes ?? 0}</div>
+        <Panel interactive accent="#E63946" className="!p-4" onClick={() => setShowMissingModal(true)}>
+          <div className="flex items-center justify-between">
+            <div className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>Missing</div>
+            <span className="text-[8px] uppercase tracking-wide" style={{ color: '#E63946', opacity: 0.8 }}>View →</span>
+          </div>
+          <div className="text-3xl font-bold mt-2" style={{ color: '#E63946' }}>{summary?.missing_arcanes ?? 0}</div>
         </Panel>
 
-        <Panel className="!p-4 h-[110px]">
-          <div className="text-sm opacity-70">Collection Score</div>
-          <div className="text-3xl font-bold">{collectionScore}%</div>
-        </Panel>
-
-    </div>
-
-    <Panel className="flex-1 min-w-[650px]">
-          <h2 className="text-xl font-bold mb-4">
-            Closest To Completion
-          </h2>
-
-          {closestToComplete.length === 0 ? (
-            <div className="opacity-70">
-              No partially completed arcanes.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-2">
-              {closestToComplete.map(arcane => (
-                <div
-                  key={arcane.arcane_id}
-                  className="flex justify-between border-b pb-2 gap-4"
-                >
-                  <span>{arcane.name}</span>
-
-                  <span className="text-[#FBBF24]">
-                    Need {arcane.copies_remaining}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+        <Panel className="!p-4" accent={GOLD}>
+          <div className="text-[9px] uppercase tracking-[0.25em]" style={{ color: MUTED }}>Collection Score</div>
+          <div className="text-3xl font-bold mt-2" style={{ color: GOLD }}>{collectionScore}%</div>
         </Panel>
       </div>
+
+      <Panel className="mb-8">
+        <h2 className="text-xl font-bold mb-4">
+          Closest To Completion
+        </h2>
+
+        {closestToComplete.length === 0 ? (
+          <div className="opacity-70">
+            No partially completed arcanes.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-2">
+            {closestToComplete.map(arcane => (
+              <div
+                key={arcane.arcane_id}
+                className="flex justify-between items-center border-b pb-2 gap-4"
+                style={{ borderColor: 'rgba(111,106,98,0.4)' }}
+              >
+                <span>{arcane.name}</span>
+
+                <span
+                  className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wide"
+                  style={{ background: 'rgba(251,191,36,0.14)', color: GOLD, border: '1px solid rgba(180,83,9,0.35)' }}
+                >
+                  Need {arcane.copies_remaining}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
 
       <div className="mb-8">
   <h2 className="text-xl font-bold mb-4">
@@ -169,49 +179,38 @@ if (loading) {
         accent={GOLD}
         onClick={() => setSelectedCategory(category.arcane_type)}
       >
-        <div className="text-lg font-bold mb-2">
-          {category.arcane_type}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[15px] font-semibold">{category.arcane_type}</h3>
+          <span className="text-[10px] font-bold" style={{ color: GOLD }}>{getCategoryProgress(category)}%</span>
         </div>
 
-        <div className="text-sm opacity-70">
-          Total
-        </div>
-
-        <div className="text-2xl font-bold mb-3">
-          {category.total}
-        </div>
-
-        <div className="flex justify-between text-sm">
-          <span>Owned</span>
-          <span>{category.owned}</span>
-        </div>
-
-        <div className="flex justify-between text-sm">
-          <span>Completed</span>
-          <span>{category.completed}</span>
-        </div>
-
-        <div className="flex justify-between text-sm">
-          <span>Missing</span>
-          <span>{category.missing}</span>
-        </div>
-
-        <div className="mt-4">
-          <div className="flex justify-between text-xs opacity-70 mb-1">
-            <span>Completion</span>
-            <span>{getCategoryProgress(category)}%</span>
+        <div className="flex flex-col gap-1 mb-3">
+          <div className="flex justify-between text-[11px]">
+            <span className="uppercase tracking-wide" style={{ color: MUTED }}>Total</span>
+            <span>{category.total}</span>
           </div>
-
-          <div className="h-3 rounded-full bg-black/30 overflow-hidden">
-            <div
-              className="h-full bg-[#FBBF24] transition-all"
-              style={{
-                width: `${getCategoryProgress(category)}%`,
-              }}
-            />
+          <div className="flex justify-between text-[11px]">
+            <span className="uppercase tracking-wide" style={{ color: MUTED }}>Owned</span>
+            <span>{category.owned}</span>
+          </div>
+          <div className="flex justify-between text-[11px]">
+            <span className="uppercase tracking-wide" style={{ color: MUTED }}>Completed</span>
+            <span style={{ color: '#4CAF50' }}>{category.completed}</span>
+          </div>
+          <div className="flex justify-between text-[11px]">
+            <span className="uppercase tracking-wide" style={{ color: MUTED }}>Missing</span>
+            <span style={{ color: '#E63946' }}>{category.missing}</span>
           </div>
         </div>
 
+        <div className="h-1.5 rounded-full bg-black/30 overflow-hidden">
+          <div
+            className="h-full bg-[#FBBF24] transition-all"
+            style={{
+              width: `${getCategoryProgress(category)}%`,
+            }}
+          />
+        </div>
       </Panel>
     ))}
   </div>

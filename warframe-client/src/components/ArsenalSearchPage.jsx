@@ -140,10 +140,10 @@ export default function ArsenalSearchPage({ onBack, onOpenFrame }) {
           ← Return to Codex
         </button>
 
-        <h1 className="text-2xl font-bold uppercase tracking-wide mb-2" style={{ color: GOLD }}>
+        <h1 className="text-[22px] font-bold uppercase tracking-[0.08em] mb-1.5" style={{ color: GOLD }}>
           {mode === 'builds' ? 'Global Arsenal Search' : 'Weapon Stat Threshold Search'}
         </h1>
-        <p className="text-sm mb-6" style={{ color: MUTED }}>
+        <p className="text-xs mb-6" style={{ color: MUTED }}>
           {mode === 'builds'
             ? 'Search across every build\'s weapons and arcanes. "Where is X used?" answered instantly.'
             : 'Filter the full weapon catalog by minimum stat thresholds — riven-shopping precision, before it\'s even in a loadout.'}
