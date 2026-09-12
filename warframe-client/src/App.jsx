@@ -1,5 +1,5 @@
 import { wfUser } from './lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Fragment } from 'react'
 import FrameCard from './components/FrameCard'
 import ShardEditModal from './components/ShardEditModal'
 import BuildDetailOverlay from './components/BuildDetailOverlay'
@@ -23,6 +23,16 @@ const BORDER = '#6F6A62'
 const INK = '#E8E4DC'
 const MUTED = '#B8B3AC'
 const GOLD = '#FBBF24'
+
+const NAV_ITEMS = [
+  { id: 'home', label: 'Home' },
+  { id: 'codex', label: 'Codex' },
+  { id: 'arsenal-search', label: 'Search' },
+  { id: 'arcanes', label: 'Arcanes' },
+  { id: 'archon-shards', label: 'Archon Shards' },
+  { id: 'armory', label: 'Armory' },
+  { id: 'mods', label: 'Mods' },
+]
 
 function getSchools(frames) {
   return [
@@ -190,160 +200,78 @@ const filteredFrames =
     >
       <div className="mb-8">
 
-        <h1
-          className="text-3xl font-bold tracking-[0.35em] uppercase mb-2"
-          style={{
-            color:
-              selectedSchool === 'All Schools'
-                ? GOLD
-                : schoolColor,
-          }}
-        >
-          Cephalon Gu
-        </h1>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <span className="h-px w-20" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}B3)` }} />
+            <span className="w-1.5 h-1.5 rotate-45" style={{ background: GOLD }} />
+            <span className="h-px w-20" style={{ background: `linear-gradient(90deg, ${GOLD}B3, transparent)` }} />
+          </div>
 
-        <p
-          className="text-sm mb-6"
-          style={{ color: MUTED }}
-        >
-          {filteredFrames.length} / {frames.length} builds
+          <h1
+            className="text-4xl font-bold tracking-[0.35em] uppercase mb-2"
+            style={{
+              color:
+                selectedSchool === 'All Schools'
+                  ? GOLD
+                  : schoolColor,
+            }}
+          >
+            Cephalon Gu
+          </h1>
 
-          {loadingWeapons && (
-            <span className="ml-2 opacity-70">
-              — loading weapons
-            </span>
-          )}
+          <p
+            className="text-sm"
+            style={{ color: MUTED }}
+          >
+            {filteredFrames.length} / {frames.length} builds
 
-          {selectedSchool !== 'All Schools' && (
-            <span style={{ color: schoolColor }}>
-              {' '}— {selectedSchool}
-            </span>
-          )}
-        </p>
+            {loadingWeapons && (
+              <span className="ml-2 opacity-70">
+                — loading weapons
+              </span>
+            )}
 
+            {selectedSchool !== 'All Schools' && (
+              <span style={{ color: schoolColor }}>
+                {' '}— {selectedSchool}
+              </span>
+            )}
+          </p>
 
-          <div className="flex gap-2 mb-6">
+          <p
+            className="text-[10px] uppercase tracking-[0.2em] mt-2"
+            style={{ color: BORDER }}
+          >
+            Personal Cultivation Codex
+          </p>
 
-            <button
-              onClick={() => setActivePage('home')}
-              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-              style={{
-                background: activePage === 'home' ? `${GOLD}22` : PANEL_BG,
-                color: activePage === 'home' ? GOLD : MUTED,
-                borderColor: activePage === 'home' ? `${GOLD}88` : BORDER,
-              }}
-            >
-              Home
-            </button>
+          <div
+            className="flex items-center justify-center gap-6 mt-7 pb-5 border-b"
+            style={{ borderColor: BORDER }}
+          >
+            {NAV_ITEMS.map((item, i) => (
+              <Fragment key={item.id}>
+                {i > 0 && (
+                  <span style={{ color: BORDER, fontSize: '11px' }}>·</span>
+                )}
+                <button
+                  onClick={() => setActivePage(item.id)}
+                  className="text-[11px] font-bold uppercase tracking-[0.2em] pb-2"
+                  style={{
+                    color: activePage === item.id ? GOLD : MUTED,
+                    border: 'none',
+                    borderBottom: `2px solid ${activePage === item.id ? GOLD : 'transparent'}`,
+                    background: 'transparent',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {item.label}
+                </button>
+              </Fragment>
+            ))}
+          </div>
+        </div>
 
-            <button
-              onClick={() => setActivePage('codex')}
-              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-              style={{
-                background: activePage === 'codex' ? `${GOLD}22` : PANEL_BG,
-                color: activePage === 'codex' ? GOLD : MUTED,
-                borderColor: activePage === 'codex' ? `${GOLD}88` : BORDER,
-              }}
-            >
-              Codex
-            </button>
-
-            <button
-              onClick={() => setActivePage('arsenal-search')}
-              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-              style={{
-                background: activePage === 'arsenal-search' ? `${GOLD}22` : PANEL_BG,
-                color: activePage === 'arsenal-search' ? GOLD : MUTED,
-                borderColor: activePage === 'arsenal-search' ? `${GOLD}88` : BORDER,
-              }}
-            >
-              Search
-            </button>
-
-            <button
-              onClick={() => setActivePage('arcanes')}
-              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-              style={{
-                background:
-                  activePage === 'arcanes'
-                    ? `${GOLD}22`
-                    : PANEL_BG,
-                color:
-                  activePage === 'arcanes'
-                    ? GOLD
-                    : MUTED,
-                borderColor:
-                  activePage === 'arcanes'
-                    ? `${GOLD}88`
-                    : BORDER,
-              }}
-            >
-              Arcanes
-            </button>
-
-            <button
-              onClick={() => setActivePage('archon-shards')}
-              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-              style={{
-                background:
-                  activePage === 'archon-shards'
-                    ? `${GOLD}22`
-                    : PANEL_BG,
-                color:
-                  activePage === 'archon-shards'
-                    ? GOLD
-                    : MUTED,
-                borderColor:
-                  activePage === 'archon-shards'
-                    ? `${GOLD}88`
-                    : BORDER,
-              }}
-            >
-              Archon Shards
-            </button>
-
-            <button
-              onClick={() => setActivePage('armory')}
-              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-              style={{
-                background:
-                  activePage === 'armory'
-                    ? `${GOLD}22`
-                    : PANEL_BG,
-                color:
-                  activePage === 'armory'
-                    ? GOLD
-                    : MUTED,
-                borderColor:
-                  activePage === 'armory'
-                    ? `${GOLD}88`
-                    : BORDER,
-              }}
-            >
-              Armory
-            </button>
-
-            <button
-              onClick={() => setActivePage('mods')}
-              className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em]"
-              style={{
-                background:
-                  activePage === 'mods'
-                    ? `${GOLD}22`
-                    : PANEL_BG,
-                color:
-                  activePage === 'mods'
-                    ? GOLD
-                    : MUTED,
-                borderColor:
-                  activePage === 'mods'
-                    ? `${GOLD}88`
-                    : BORDER,
-              }}
-            >
-              Mods
-            </button>
-            </div>
           {activePage === 'codex' && (
             <div className="mb-4">
               <select
