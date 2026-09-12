@@ -89,6 +89,7 @@ export default function CopyWeaponModal({
       return
     }
 
+    alert(`Copied ${activeWeapon.name} to ${targetIds.length} build${targetIds.length === 1 ? '' : 's'}.`)
     onCopied()
   }
 
