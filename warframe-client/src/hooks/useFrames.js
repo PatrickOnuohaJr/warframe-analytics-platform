@@ -19,33 +19,56 @@ export default function useFrames() {
   async function fetchFrames({ silent = false } = {}) {
     if (!silent) setLoading(true)
 
-    const { data, error } = await wfUser
-      .from('my_frames')
-      .select('*, build_status(*), cultivation_color')
-      .order('my_frame_id')
+    // All of these reads are independent of each other, so fire them
+    // concurrently instead of awaiting one at a time -- sequential awaits
+    // here used to turn every save (mark attention, save identity, a
+    // single mod edit) into ~8 round-trips back-to-back, most of them
+    // re-fetching global reference data (all warframes, all abilities)
+    // that hadn't changed. That's what made saves feel unresponsive.
+    const [
+      { data, error },
+      { data: wfData },
+      { data: abilityData },
+      { data: shardData },
+      { data: targetShardData },
+      { data: abilityCatalogData },
+      { data: abilityParametersData },
+      { data: abilityConfigData },
+    ] = await Promise.all([
+      wfUser
+        .from('my_frames')
+        .select('*, build_status(*), cultivation_color')
+        .order('my_frame_id'),
+      wfBase
+        .from('warframes')
+        .select('warframe_id, name'),
+      wfBase
+        .from('warframe_abilities')
+        .select('*')
+        .order('ability_slot'),
+      wfUser
+        .from('archon_shard_slots')
+        .select('*'),
+      wfUser
+        .from('archon_shard_slots_target')
+        .select('*'),
+      wfBase
+        .from('ability_catalog')
+        .select('*'),
+      wfBase
+        .from('ability_parameters')
+        .select('*')
+        .order('sort_order'),
+      wfUser
+        .from('ability_configs')
+        .select('*'),
+    ])
 
     if (error) {
       console.error(error)
       setLoading(false)
       return
     }
-
-    const { data: wfData } = await wfBase
-      .from('warframes')
-      .select('warframe_id, name')
-
-    const { data: abilityData } = await wfBase
-      .from('warframe_abilities')
-      .select('*')
-      .order('ability_slot')  
-
-    const { data: shardData } = await wfUser
-      .from('archon_shard_slots')
-      .select('*')
-
-    const { data: targetShardData } = await wfUser
-      .from('archon_shard_slots_target')
-      .select('*')
 
     const wfMap = {}
     wfData?.forEach(w => {
@@ -77,15 +100,6 @@ export default function useFrames() {
     // value rather than attached onto every frame object. See
     // DB/Migrations/20260831_add_ability_parameters.sql and
     // utils/abilityStats.js.
-    const { data: abilityCatalogData } = await wfBase
-      .from('ability_catalog')
-      .select('*')
-
-    const { data: abilityParametersData } = await wfBase
-      .from('ability_parameters')
-      .select('*')
-      .order('sort_order')
-
     const catalogById = {}
     abilityCatalogData?.forEach(c => {
       catalogById[c.ability_catalog_id] = c
@@ -100,11 +114,6 @@ export default function useFrames() {
       if (!catalog) return
       canonicalByName[catalog.ability_name]?.parameters.push(p)
     })
-
-    const { data: abilityConfigData } = await wfUser
-    .from('ability_configs')
-    .select('*')
-
 
     const abilityConfigMap = {}
 

@@ -158,6 +158,7 @@ export default function BuildDetailOverlay({
   const currentConstitution = getConstitutionLabel(currentShards)
   const targetConstitution = getConstitutionLabel(targetShards)
   const [activeTab, setActiveTab] = useState('identity')
+  const [attentionSaving, setAttentionSaving] = useState(false)
 
   return (
     <div
@@ -176,7 +177,10 @@ export default function BuildDetailOverlay({
           </button>
 
           <button
+            disabled={attentionSaving}
             onClick={async () => {
+              if (attentionSaving) return
+              setAttentionSaving(true)
               const newVal = !frame.needs_attention
               const { error } = await wfUser
                 .from('my_frames')
@@ -187,18 +191,22 @@ export default function BuildDetailOverlay({
                 .eq('my_frame_id', frame.my_frame_id)
               if (error) {
                 console.error('Failed to update attention flag:', error)
+                setAttentionSaving(false)
                 return
               }
               if (onSaved) onSaved()
+              setAttentionSaving(false)
             }}
             className="text-[9px] uppercase tracking-[0.25em] font-bold px-3 py-1.5 rounded-lg border transition-colors"
             style={{
               background: frame.needs_attention ? 'rgba(230,57,70,0.15)' : 'transparent',
               borderColor: frame.needs_attention ? '#E63946' : '#6F6A62',
               color: frame.needs_attention ? '#E63946' : '#9C9890',
+              opacity: attentionSaving ? 0.5 : 1,
+              cursor: attentionSaving ? 'default' : 'pointer',
             }}
           >
-            {frame.needs_attention ? '⚑ Attention On' : '⚑ Mark Attention'}
+            {attentionSaving ? 'Saving...' : frame.needs_attention ? '⚑ Attention On' : '⚑ Mark Attention'}
           </button>
         </div>
 
