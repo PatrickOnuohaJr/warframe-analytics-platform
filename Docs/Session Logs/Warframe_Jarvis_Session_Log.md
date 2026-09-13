@@ -1321,3 +1321,67 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Patrick's own parallel "Static Data" pipeline for Arcanes (separate migrations/diagnostics/tests, untouched by this session) is still in progress on his end -- worth reconciling scope with the ability-data pipeline's own provenance/override conventions once both are further along, since they're solving adjacent problems for different catalogs.
 
 ---
+
+### Session 017 — CopyWeaponModal Confirm-Fix, Full Claude Design Pass (Nav + 6 Pages)
+**Date:** 2026-09-13
+**Location:** Not recorded
+**Duration:** Not recorded
+**Status:** SHIPPED
+
+**Handoff Audit — B1 Already Shipped**
+
+*What Was Done:*
+- Handed a stale trial-run handoff naming two tasks: B1 School Navigation Cleanup, and a CopyWeaponModal wiring audit. Checked `App.jsx` and git history before starting either — B1 (collapsing the 14-item school-filter dropdown) had already shipped in Session 013 (commit `6e3bc11`, 2026-08-27). The "14 tabs" in the handoff text was the school filter, not the 7-item top nav, and the handoff itself was out of date.
+
+*Outcome:*
+- Flagged the discrepancy instead of redoing already-shipped work. Moved straight to the CopyWeaponModal audit.
+
+**CopyWeaponModal Wiring Audit**
+
+*What Was Done:*
+- Traced the full chain: trigger button in `LoadoutEquipmentSection.jsx` → modal → real `wf_user.my_frames` write via `.update().in('my_frame_id', targetIds)` → `onCopied` → `onSaved` → `refetchFrames()`. Verified live in-browser (school/target selection, confirm/cancel) without executing a real copy against Patrick's live save data.
+- Found one real gap: success closed the modal silently, no "Copied to N builds" feedback — matched the audit's own "or does it silently no-op?" question. Fixed with a one-line `alert()` matching the file's existing error-alert pattern.
+
+*Outcome:*
+- Verdict: fully wired, one UX gap fixed. Shipped in isolation before the design work below.
+
+**Claude Design Exploration — Nav Shell**
+
+*What Was Done:*
+- Patrick asked to explore Claude Design more broadly (per the site-redesign handoff's own note that a fuller Design pass was the planned follow-on to B1). Read the real design tokens (`constants/theme.js`, `index.css`'s Cinzel/Outfit font stack, radius/shadow scale) and real screens (`App.jsx`, `HomePage.jsx`, `FrameCard.jsx`) before drafting anything.
+- Published a multi-artboard Claude Design canvas with three real-content nav/shell directions: **Ledger Spine** (left sidebar, grouped Arsenal/Systems/Workshop clusters), **Manuscript Masthead** (centered editorial title plate, no boxed buttons — the school-count subtitle plus a horizontal tracked-underline index), and **Sealed Compass** (closest evolution of the existing pill row). Iterated per Patrick's feedback — tried a Masthead+Spine combination, then Patrick chose the standalone Manuscript Masthead over both.
+
+*Outcome:*
+- Wired into `App.jsx`: the 7-tab pill row replaced with the centered masthead (flourish rule, larger tracked title) and an underlined index nav (interpunct-separated, gold underline on the active tab). `activePage` routing and the Codex-only filter dropdowns unchanged. Verified live (Home → Codex click-through).
+
+**Claude Design Pass — Arcanes / Armory / Mods / Archon Shards / Search**
+
+*What Was Done:*
+- Read all five page components' real source before touching anything, then pulled real live data from the running app (161 total / 117 owned / 67% collection score, 9 real Arcane categories; real Armory weapon names and Frame Roster rows; real owned Mods; 38 real Archon Shards; a real "Coda" search result set) rather than inventing sample content.
+- Arcanes was the clear visual outlier — plain Tailwind grays, unlabeled stat tiles, no tracked micro-labels — so it got the fuller rebuild: stat tiles collapsed into one full-width labeled/color-coded row, Closest-to-Completion pulled into its own full-width panel with "Need N" chips, category cards restyled with tracked labels and progress bars.
+- Armory, Mods, Archon Shards, and Search were already close to the system (COLOR tokens, tracked filter pills already in place), so each only got the standardized masthead-style page header (22px tracked-uppercase gold title + muted subtitle); Archon Shards additionally got tracked-uppercase Base/Tauforged labels.
+
+*Outcome:*
+- All five wired in and verified live in-browser, page by page. No page content logic touched — header/label styling only outside of Arcanes' stat-row restructure.
+
+**Claude Design Pass — Build Detail Overlay Tab Bar**
+
+*What Was Done:*
+- Audited the 6-tab per-build overlay (Identity/Loadout/Companion/Survivability/Archon Shards/Testing Log) before designing anything: the hero card and every tab's actual content already matched the design system (Panel components, COLOR tokens, tracked labels throughout — this surface was built later and already followed the established language). The one real inconsistency was the tab bar itself: small boxed pill buttons, the same style already replaced at the top-nav level.
+- Restyled just the tab bar to the masthead's tracked-underline index, tinted to the build's own cultivation color (not global gold) to match how the hero card already themes per-build.
+
+*Outcome:*
+- Wired into `BuildDetailOverlay.jsx`. Verified live across two builds with different accent colors (Garuda Prime/crimson, Frost Prime/blue) — tab switching and per-build tinting both confirmed correct.
+
+**Bugs Fixed:**
+- CopyWeaponModal: real write, but no success confirmation — added.
+
+**End-of-Session Status:**
+- Full visual design pass shipped and verified live: nav shell, Arcanes, Armory, Mods, Archon Shards, Search, and the Build Detail Overlay tab bar all now read consistently as the same manuscript/codex artifact. D.7 untouched this session.
+
+**Next Targets:**
+- **D.7** — still the actual next-up, carried unchanged from Session 016: design the Doctrine Adjacency schema (Art/School canonical tables + typed relationship table, provenance-as-citation), then define Flow's output shape.
+- Minor remaining design-consistency spots, not urgent: modals (`AddWeaponToInventoryModal`, `AddModToInventoryModal`, `RivenEditorModal`, etc.) and `WeaponStatSearchTab` weren't audited this pass — likely fine (they share `ModalShell`/`Panel`) but unverified.
+- Everything carried from Session 016's Next Targets is still open and untouched: ability-data wiki-title mismatches, multi-build-per-Warframe, 3→6 Loadout Config expansion, Survivability `benchmark_tiers` content, Companion/Posture mod ownership marking, Moa/Hound scope, Nautilus Prime slot count.
+
+---
