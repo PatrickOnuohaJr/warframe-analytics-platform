@@ -23,11 +23,13 @@ function TabButton({ active, color, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className="py-2 px-4 rounded-lg text-sm font-semibold transition-colors"
+      className="text-[11px] font-bold uppercase tracking-[0.18em] pb-2 transition-colors"
       style={{
-        background: active ? `${color}18` : '#3A342C',
-        border: active ? `1px solid ${color}55` : '1px solid #6F6A62',
         color: active ? color : 'rgba(255,255,255,0.4)',
+        border: 'none',
+        borderBottom: `2px solid ${active ? color : 'transparent'}`,
+        background: 'transparent',
+        cursor: 'pointer',
       }}
     >
       {children}
@@ -274,12 +276,17 @@ export default function BuildDetailOverlay({
         </section>
 
         {/* Tab bar */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex items-center gap-[22px] pb-4 mb-7 border-b" style={{ borderColor: '#6F6A62' }}>
           <TabButton active={activeTab === 'identity'} color={color} onClick={() => setActiveTab('identity')}>Identity</TabButton>
+          <span className="text-[11px]" style={{ color: '#6F6A62' }}>·</span>
           <TabButton active={activeTab === 'loadout'} color={color} onClick={() => setActiveTab('loadout')}>Loadout</TabButton>
+          <span className="text-[11px]" style={{ color: '#6F6A62' }}>·</span>
           <TabButton active={activeTab === 'companion'} color={color} onClick={() => setActiveTab('companion')}>Companion</TabButton>
+          <span className="text-[11px]" style={{ color: '#6F6A62' }}>·</span>
           <TabButton active={activeTab === 'survivability'} color={color} onClick={() => setActiveTab('survivability')}>Survivability</TabButton>
+          <span className="text-[11px]" style={{ color: '#6F6A62' }}>·</span>
           <TabButton active={activeTab === 'shards'} color={color} onClick={() => setActiveTab('shards')}>Archon Shards</TabButton>
+          <span className="text-[11px]" style={{ color: '#6F6A62' }}>·</span>
           <TabButton active={activeTab === 'testing'} color={color} onClick={() => setActiveTab('testing')}>Testing Log</TabButton>
         </div>
 
