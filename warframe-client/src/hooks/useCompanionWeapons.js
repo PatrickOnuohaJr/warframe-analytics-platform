@@ -6,7 +6,6 @@ export default function useCompanionWeapons() {
   const [loadingCompanionWeapons, setLoadingCompanionWeapons] = useState(true)
 
   async function fetchCompanionWeapons() {
-    setLoadingCompanionWeapons(true)
 
     const { data, error } = await wfBase
       .from('companion_weapons')
@@ -24,12 +23,14 @@ export default function useCompanionWeapons() {
   }
 
   useEffect(() => {
+    // Database synchronization: state updates occur after the awaited response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCompanionWeapons()
   }, [])
 
   return {
     companionWeapons,
     loadingCompanionWeapons,
-    refetchCompanionWeapons: fetchCompanionWeapons,
+    refetchCompanionWeapons: () => { setLoadingCompanionWeapons(true); return fetchCompanionWeapons() },
   }
 }

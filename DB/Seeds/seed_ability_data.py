@@ -536,6 +536,17 @@ def main():
         return
 
     scope = fetch_full_catalog_scope(warframes, names)
+
+    # --only "Neote,Naraemagi": ingest just these abilities instead of the
+    # whole catalog -- used when a new Warframe drops, so existing curated
+    # rows aren't re-fetched/overwritten.
+    if "--only" in sys.argv:
+        wanted = {n.strip() for n in sys.argv[sys.argv.index("--only") + 1].split(",")}
+        scope = [e for e in scope if e["ability_name"] in wanted]
+        missing = wanted - {e["ability_name"] for e in scope}
+        if missing:
+            print(f"WARNING: not in warframe_abilities, skipped: {sorted(missing)}")
+
     run_ingestion(scope, warframes, names)
 
 

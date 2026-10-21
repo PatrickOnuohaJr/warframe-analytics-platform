@@ -36,7 +36,10 @@ export default function IdentityTab({ frame, color, onSaved, onClose }) {
   })
   const [identitySaving, setIdentitySaving] = useState(false)
 
-  useEffect(() => {
+  const identitySource = JSON.stringify([frame.my_frame_id, frame.warframe_id, frame.display_name, frame.build_title, frame.cultivation_art, frame.cultivation_school, frame.cultivation_color, frame.cultivation_doctrine, frame.tier]);
+  const [previousIdentitySource, setPreviousIdentitySource] = useState(identitySource);
+  if (previousIdentitySource !== identitySource) {
+    setPreviousIdentitySource(identitySource);
     setIdentityForm({
       warframe_id: frame.warframe_id ?? null,
       display_name: frame.display_name ?? '',
@@ -47,7 +50,7 @@ export default function IdentityTab({ frame, color, onSaved, onClose }) {
       cultivation_art: frame.cultivation_art ?? '',
       cultivation_doctrine: frame.cultivation_doctrine ?? '',
     })
-  }, [frame.my_frame_id, frame.warframe_id, frame.display_name, frame.build_title, frame.cultivation_art, frame.cultivation_school, frame.cultivation_color, frame.cultivation_doctrine, frame.tier])
+  }
 
   const [primeTarget, setPrimeTarget] = useState(null) // { warframe_id, name } | null
 

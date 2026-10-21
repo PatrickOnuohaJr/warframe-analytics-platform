@@ -1,5 +1,15 @@
 # Handoff — Cephalon Gu
 
+## Current pickup — September 17, 2026
+
+The local resume-readiness cleanup is complete; access hardening and publication remain open. Read [Housekeeping 2026-09-17.md](Housekeeping%202026-09-17.md) for changes, checks, security evidence, and remaining gates. Lint is now clean; nine Node regression tests and eleven ingestion tests pass; the ability query retrieves all 2,206 parameters in a live read-only check. Build passes with the existing bundle warning. Local-only autosave fixture checks passed for external refresh, latest callback, and unmount cancellation.
+
+Next housekeeping: broader editor/selector/search regression with fixtures; review the intended local artifact set before commit/push. Owner clarified that Gu is single-user development, not yet alpha: profiles/OAuth and account isolation belong to later shared beta preparation for clanmates. Do not implement auth as housekeeping. Supplied audit output shows three Arcane collection views use caller permissions; live table-policy/grant result sets remain unprovided. No live permissions changes, deployment, commit/push, or canonical promotion occurred. A frontend GitHub Actions workflow is prepared but has not run remotely.
+
+**D.7 is cut**, per the September 14 roadmap. Do not resume it from the historical session note below. A3 remains planned. Existing local roadmap/survivability and untracked ingestion/redesign work are preserved.
+
+## Historical Session 017 pickup (superseded where it conflicts above)
+
 *Written 2026-09-13, end of Session 017. Read this first in a fresh session, then discard/overwrite it next handoff — it's a pick-up-here note, not a historical record. The historical record is `Docs/Session Logs/Warframe_Jarvis_Session_Log.md`.*
 
 ## Where things stand

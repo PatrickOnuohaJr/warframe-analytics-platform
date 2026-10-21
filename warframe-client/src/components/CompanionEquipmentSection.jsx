@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Panel from './ui/Panel';
 import LoadoutSlotPickerModal from './LoadoutSlotPickerModal';
 import SlotBox from './SlotBox';
@@ -70,7 +70,7 @@ export default function CompanionEquipmentSection({
   const postureRank = rankForMod(postureMod);
   const postureDrain = postureMod ? effectiveDrain(postureMod, postureRank, postureSlot.polarity, true) : 0;
 
-  const { used, netCapacity } = useMemo(() => {
+  const { used, netCapacity } = (() => {
     let total = 0;
     NUMBERED_SLOTS.forEach(pos => {
       const slot = slotsByPosition.get(pos);
@@ -79,7 +79,7 @@ export default function CompanionEquipmentSection({
       total += effectiveDrain(item, rankForMod(item), slot.polarity);
     });
     return { used: total, netCapacity: isWeaponPiece ? capacity - postureDrain : capacity };
-  }, [slotsByPosition, modsById, ownedByModId, capacity, isWeaponPiece, postureDrain]);
+  })();
 
   const overBudget = used > netCapacity;
 

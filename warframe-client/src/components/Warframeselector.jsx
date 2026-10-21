@@ -26,7 +26,6 @@ import { COLOR } from '../constants/theme';
 export default function WarframeSelector({ currentWarframeId, currentDisplayName, onSelect }) {
   const [query, setQuery] = useState(currentDisplayName || '');
   const [allFrames, setAllFrames] = useState([]);
-  const [filtered, setFiltered] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -64,23 +63,12 @@ export default function WarframeSelector({ currentWarframeId, currentDisplayName
     return () => { cancelled = true; };
   }, []);
 
-  // Filter as the user types
-  useEffect(() => {
-    if (!query.trim()) {
-      setFiltered(allFrames.slice(0, 20)); // cap initial list, no need to render all 117
-      return;
-    }
-    const q = query.toLowerCase();
-    setFiltered(
-      allFrames.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 20)
-    );
-  }, [query, allFrames]);
-
-  // Keep the field in sync if the selected frame changes from outside
-  // (e.g. after a save round-trips through the parent)
-  useEffect(() => {
+  const [previousName, setPreviousName] = useState(currentDisplayName);
+  if (previousName !== currentDisplayName) {
+    setPreviousName(currentDisplayName);
     setQuery(currentDisplayName || '');
-  }, [currentDisplayName]);
+  }
+  const filtered = allFrames.filter(f => !query.trim() || f.name.toLowerCase().includes(query.toLowerCase())).slice(0, 20);
 
   // Close dropdown AND collapse back to display mode on outside click
   useEffect(() => {

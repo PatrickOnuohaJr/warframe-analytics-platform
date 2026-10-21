@@ -44,12 +44,12 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   const [draggedWeapon, setDraggedWeapon] = useState(null);
 
   async function loadInventory() {
-    setLoading(true);
-    setError(null);
 
     const { data: invRows, error: invError } = await wfUser
       .from('weapon_inventory')
       .select('inventory_id, weapon_id');
+
+    setError(null);
 
     if (invError) {
       console.error('Failed to load weapon inventory:', invError);
@@ -76,7 +76,11 @@ export default function ArmoryPage({ frames, refetchFrames }) {
     setLoading(false);
   }
 
-  useEffect(() => { loadInventory(); }, []);
+  useEffect(() => {
+    // Database synchronization: state updates occur after the awaited response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadInventory();
+  }, []);
 
   const ownedWeapons = useMemo(
     () => catalog.filter(w => ownedIds.has(w.weapon_id)),

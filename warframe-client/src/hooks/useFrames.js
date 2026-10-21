@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { wfUser, wfBase } from '../lib/supabase'
+import { fetchAll } from '../lib/fetchAll'
 
 export default function useFrames() {
   const [frames, setFrames] = useState([])
@@ -17,7 +18,6 @@ export default function useFrames() {
   // fields (Arcanes, weapon name) call this on every debounced write,
   // so it made editing an Arcane look like the whole app "reset".
   async function fetchFrames({ silent = false } = {}) {
-    if (!silent) setLoading(true)
 
     // All of these reads are independent of each other, so fire them
     // concurrently instead of awaiting one at a time -- sequential awaits
@@ -32,7 +32,7 @@ export default function useFrames() {
       { data: shardData },
       { data: targetShardData },
       { data: abilityCatalogData },
-      { data: abilityParametersData },
+      { data: abilityParametersData, error: parametersError },
       { data: abilityConfigData },
     ] = await Promise.all([
       wfUser
@@ -55,17 +55,18 @@ export default function useFrames() {
       wfBase
         .from('ability_catalog')
         .select('*'),
-      wfBase
+      fetchAll(() => wfBase
         .from('ability_parameters')
         .select('*')
-        .order('sort_order'),
+        .order('sort_order')
+        .order('ability_parameter_id')),
       wfUser
         .from('ability_configs')
         .select('*'),
     ])
 
-    if (error) {
-      console.error(error)
+    if (error || parametersError) {
+      console.error(error || parametersError)
       setLoading(false)
       return
     }
@@ -143,6 +144,8 @@ export default function useFrames() {
   }
 
   useEffect(() => {
+    // Database synchronization: state updates occur after the awaited response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchFrames()
   }, [])
 

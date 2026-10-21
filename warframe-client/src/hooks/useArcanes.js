@@ -8,7 +8,6 @@ export default function useArcanes() {
   const [loading, setLoading] = useState(true)
 
   async function fetchArcanes() {
-    setLoading(true)
 
     const [summaryResult, categoryResult, detailResult] =
       await Promise.all([
@@ -69,11 +68,14 @@ export default function useArcanes() {
       return { error }
     }
 
+    setLoading(true)
     await fetchArcanes()
     return { error: null }
   }
 
   useEffect(() => {
+    // Database synchronization: state updates occur after the awaited response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchArcanes()
   }, [])
 
@@ -82,7 +84,7 @@ export default function useArcanes() {
     categories,
     arcanes,
     loading,
-    refetchArcanes: fetchArcanes,
+    refetchArcanes: () => { setLoading(true); return fetchArcanes() },
     saveArcaneOwnership,
   }
 }

@@ -16,8 +16,6 @@ export default function ArcanesPage() {
     saveArcaneOwnership,
   } = useArcanes()
 
-  const [search, setSearch] = useState('')
-  const [selectedType, setSelectedType] = useState('All')
   const [selectedArcane, setSelectedArcane] = useState(null)
   const [ownedInput, setOwnedInput] = useState('')
   const [selectedCategory, setSelectedCategory] = useState(null)
@@ -38,21 +36,6 @@ export default function ArcanesPage() {
         { label: 'R4', copies: 15 },
         { label: 'R5', copies: 21 },
       ]
-
-const arcaneTypes = [
-  'All',
-  ...categories.map(category => category.arcane_type),
-]
-
-const filteredArcanes = arcanes.filter(arcane => {
-  const matchesSearch =
-    arcane.name.toLowerCase().includes(search.toLowerCase())
-
-  const matchesType =
-    selectedType === 'All' || arcane.arcane_type === selectedType
-
-  return matchesSearch && matchesType
-})
 
 const getCategoryProgress = (category) => {
   if (!category.total || category.total === 0) {

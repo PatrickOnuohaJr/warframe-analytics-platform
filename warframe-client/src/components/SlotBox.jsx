@@ -1,4 +1,5 @@
-import PolaritySymbol, { POLARITIES } from './PolaritySymbol';
+import PolaritySymbol from './PolaritySymbol';
+import { POLARITIES } from '../constants/polarities';
 import { COLOR } from '../constants/theme';
 
 // Shared mod-slot tile: label, mod name+polarity glyph, cost, inline rank

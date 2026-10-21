@@ -1,11 +1,12 @@
 # Cephalon Gu — Master Roadmap
-*As of August 29, 2026 — full regeneration during Session 016's reconcile.*
+*As of September 14, 2026 — locked-queue update during Session 017.*
 
-> **Note on this file:** Last regenerated at Session 013 and had gone stale since —
-> D.2-D.5 (Survivability Suite) and Companion tracking both shipped in the sessions
-> since, but this file still listed them as upcoming. Refreshed in full so a fresh
-> session starting **D.7** (the real #1 locked-queue item now) reads accurate
-> priorities instead of stale ones.
+> **Note on this file:** D.7 (Flow / Doctrine Adjacency) was dropped this session —
+> Patrick reviewed it once actually scoped and didn't see a real use case ("just
+> saying who's related to who," "extra steps that take away from playing the
+> game"), and nothing else in the roadmap technically depended on it despite the
+> prior queue ordering implying otherwise. **A3 is now the real #1 locked-queue
+> item.** See DROPPED/CUT below for what D.7 actually was and why it's gone.
 
 ---
 
@@ -43,21 +44,19 @@
 
 ### ~~1. Mods Inventory & DB~~ ✅ COMPLETE — see SHIPPED above
 ### ~~2. D.2–D.5 Survivability Suite~~ ✅ COMPLETE — see SHIPPED above
+### ~~3. D.7 — Build Recommendation / Flow / Doctrine Adjacency~~ ❌ DROPPED — see DROPPED/CUT below
 
-### 1. D.7 — Build Recommendation / Flow / Doctrine Adjacency
-Flow metric (how well a build chains movement/combat/buffs), doctrine adjacency modeling (structured sister-art/cross-school relationship data, currently only in codex prose). **The real #1 locked-queue item now that Survivability is shipped.** Not yet scoped in detail — per Patrick, the live modded-stats foundation (Session 016) should put this in better shape to scope than before, since Flow likely wants the same real per-mod/per-stat data the new Loadout panels already compute.
-
-### 2. A3 — Predictive Build Crafting / Build Intelligence Layer
-Locked queue position unchanged since Aug 19 scoping. Full Bayesian confidence-scoring mechanism and benchmark-gated intervention logic already finalized (see prior roadmap version / PM Update doc for full spec) — implementation still gated on #1 above. Acceptance test remains the Citrine build (infer Health Tank archetype from observation alone, correctly benchmark against Jade Light).
+### 1. A3 — Predictive Build Crafting / Build Intelligence Layer
+**The real #1 locked-queue item now that D.7 is dropped.** Full Bayesian confidence-scoring mechanism and benchmark-gated intervention logic were previously described as "already finalized (see prior roadmap version / PM Update doc)," but that doc isn't in this repo — confirm with Patrick at scoping time whether it exists somewhere else or needs re-deriving from scratch. Acceptance test remains the Citrine build (infer Health Tank archetype from observation alone, correctly benchmark against Jade Light). Real dependency, not just queue position: needs `benchmark_tiers` numeric thresholds on the 4 Survivability Profiles (see OPEN THREADS) — archetype inference has nothing to benchmark against without them.
 
 Also folded in: **Ideal Invigoration Profile** — inferred ideal weekly Helminth Invigoration per loadout based on detected build direction/bottleneck. No new infrastructure; consumes A3's existing Observe→Infer→Model→Detect→Simulate→Intervene pipeline.
 
-### 3. Shipment C — Shareable Build URL
+### 2. Shipment C — Shareable Build URL
 Read-only build link.
 
-### 4. Shipment E — OAuth / User Profiles
+### 3. Shipment E — OAuth / User Profiles
 
-### 5. Shipment F — Tools
+### 4. Shipment F — Tools
 Proportions calculator, build math utilities.
 
 ---
@@ -83,7 +82,8 @@ Not locked-queue shipments, but active loose ends:
 ## 🗑️ DROPPED / CUT
 
 - **Incarnon visual chip redesign** — reviewed, satisfied with current toggle UI, off the roadmap
-- **Standalone doctrine tagging/search UI filter** — repositioned into D.7 Doctrine Adjacency
+- **D.7 — Build Recommendation / Flow / Doctrine Adjacency** — dropped *(Session 017)*. Was two bundled things: a Flow metric ("how well a build chains movement/combat/buffs," never actually scoped — no formula, no inputs) and Doctrine Adjacency (structured sister-art/cross-school relationship data). Patrick reviewed both once pressed on the actual use case and cut it — no identified need, "extra steps that take away from playing the game." A3 wasn't actually gated on this despite the prior queue order implying it (A3 draws on Survivability data, not Flow). The Doctrine Adjacency schema got as far as a written, unrun migration (`DB/Migrations/20260913_add_doctrine_adjacency_schema.sql` — canonical Schools/Arts tables seeded verbatim from `DB/Cultivation/*.sql`, plus 9 relationships re-verified against the real doctrine text) before the use-case conversation happened. Left in place, unapplied — harmless, not blocking anything, available later if a real consumer ever shows up (e.g. multi-build-per-Warframe wanting stable Art IDs), but not owed to anyone.
+- **Standalone doctrine tagging/search UI filter** — was repositioned into D.7 Doctrine Adjacency; dropped along with it, same session
 - **Shipment C4 — Forums** — explicitly cut, build sharing gets ~90% of the value without moderation overhead
 - **Fall Off (damage falloff) stat group** — cut, Session 013, no verified real mod text to confirm keyword phrasing, unessential
 - **Forma counter on each loadout piece** — confirmed decorative (nothing reads the value back), tabled per Patrick's call rather than wired up or removed

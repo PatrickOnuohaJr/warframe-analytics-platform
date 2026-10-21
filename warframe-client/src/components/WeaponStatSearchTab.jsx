@@ -129,16 +129,11 @@ export default function WeaponStatSearchTab() {
     return bounds;
   }, [categoryWeapons, activeStats]);
 
-  // Reset thresholds to each stat's floor (no-op filter) whenever category
-  // changes, since the stat set and bounds are entirely different.
-  useEffect(() => {
-    const initial = {};
-    for (const stat of activeStats) {
-      initial[stat.key] = statBounds[stat.key]?.min ?? 0;
-    }
-    setThresholds(initial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, weapons]);
+  const [thresholdSource, setThresholdSource] = useState({ category, weapons });
+  if (thresholdSource.category !== category || thresholdSource.weapons !== weapons) {
+    setThresholdSource({ category, weapons });
+    setThresholds({});
+  }
 
   const results = useMemo(() => {
     return categoryWeapons.filter(w => {

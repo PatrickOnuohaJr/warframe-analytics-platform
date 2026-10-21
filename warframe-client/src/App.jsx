@@ -1,5 +1,4 @@
-import { wfUser } from './lib/supabase'
-import { useEffect, useState, Fragment } from 'react'
+import { useState, Fragment } from 'react'
 import FrameCard from './components/FrameCard'
 import ShardEditModal from './components/ShardEditModal'
 import BuildDetailOverlay from './components/BuildDetailOverlay'
@@ -115,7 +114,10 @@ export default function App() {
   const { frames, loading, refetchFrames, abilityCanonicalByName } = useFrames()
   const { weapons, loadingWeapons } = useWeapons()
   const [editingFrame, setEditingFrame] = useState(null)
-  const [detailFrame, setDetailFrame] = useState(null)
+  const [selectedDetailFrame, setDetailFrame] = useState(null)
+  const detailFrame = selectedDetailFrame
+    ? frames.find(f => f.my_frame_id === selectedDetailFrame.my_frame_id) ?? selectedDetailFrame
+    : null
   const [selectedSchool, setSelectedSchool] = useState('All Schools')
   const [activePage, setActivePage] = useState('home')
   const [shardFilter, setShardFilter] = useState('all')
@@ -127,18 +129,6 @@ export default function App() {
       setShardFilter(value)
       setPhysiqueFilter('all')
     }
-
-  useEffect(() => {
-    if (!detailFrame) return
-
-    const updated = frames.find(
-      f => f.my_frame_id === detailFrame.my_frame_id
-    )
-
-    if (updated) {
-      setDetailFrame(updated)
-    }
-  }, [frames])
 
   const schools = getSchools(frames)
   const schoolColor = getSchoolColor(frames, selectedSchool)
@@ -389,6 +379,7 @@ const filteredFrames =
 
       {detailFrame && (
         <BuildDetailOverlay
+          key={detailFrame.my_frame_id}
           frame={detailFrame}
           frames={frames}
           weapons={weapons}

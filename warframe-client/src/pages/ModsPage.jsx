@@ -42,12 +42,12 @@ export default function ModsPage() {
   const [bulkSaving, setBulkSaving] = useState(false);
 
   async function loadInventory() {
-    setLoading(true);
-    setError(null);
 
     const { data: invRows, error: invError } = await wfUser
       .from('mod_inventory')
       .select('inventory_id, mod_id, owned_rank');
+
+    setError(null);
 
     if (invError) {
       console.error('Failed to load mod inventory:', invError);
@@ -77,7 +77,11 @@ export default function ModsPage() {
     setLoading(false);
   }
 
-  useEffect(() => { loadInventory(); }, []);
+  useEffect(() => {
+    // Database synchronization: state updates occur after the awaited response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadInventory();
+  }, []);
 
   const ownedMods = useMemo(
     () => catalog.filter(m => owned.has(m.mod_id)),

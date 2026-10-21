@@ -11,10 +11,17 @@ export default function useDebouncedField(value, onCommit, delay = 600) {
   const [local, setLocal] = useState(value)
   const timer = useRef(null)
   const committing = useRef(onCommit)
-  committing.current = onCommit
+  useEffect(() => { committing.current = onCommit }, [onCommit])
+
+  const [previousValue, setPreviousValue] = useState(value)
+  if (!Object.is(previousValue, value)) {
+    setPreviousValue(value)
+    setLocal(value)
+  }
 
   useEffect(() => {
-    setLocal(value)
+    // A changed external value invalidates an unsaved edit from the old value.
+    clearTimeout(timer.current)
   }, [value])
 
   useEffect(() => () => clearTimeout(timer.current), [])

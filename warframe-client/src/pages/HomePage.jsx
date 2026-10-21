@@ -5,7 +5,6 @@ import Panel from '../components/ui/Panel'
 import Button from '../components/ui/Button'
 import ModalShell from '../components/ui/ModalShell'
 
-const PAGE_BG = '#2F2A23'
 const PANEL_BG = '#4A443B'
 const BORDER = '#6F6A62'
 const GOLD = '#FBBF24'

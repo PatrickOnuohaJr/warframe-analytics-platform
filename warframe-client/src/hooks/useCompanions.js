@@ -6,7 +6,6 @@ export default function useCompanions() {
   const [loadingCompanions, setLoadingCompanions] = useState(true)
 
   async function fetchCompanions() {
-    setLoadingCompanions(true)
 
     const { data, error } = await wfBase
       .from('companions')
@@ -24,12 +23,14 @@ export default function useCompanions() {
   }
 
   useEffect(() => {
+    // Database synchronization: state updates occur after the awaited response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCompanions()
   }, [])
 
   return {
     companions,
     loadingCompanions,
-    refetchCompanions: fetchCompanions,
+    refetchCompanions: () => { setLoadingCompanions(true); return fetchCompanions() },
   }
 }

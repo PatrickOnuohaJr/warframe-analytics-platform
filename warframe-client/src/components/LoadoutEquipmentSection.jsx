@@ -205,7 +205,7 @@ export default function LoadoutEquipmentSection({
   const stanceRank = stanceMod ? (ownedByModId.get(stanceMod.mod_id)?.owned_rank ?? 0) : 0;
   const stanceDrain = stanceMod ? effectiveDrain(stanceMod, stanceRank, stanceSlot.polarity) : 0;
 
-  const { used, netCapacity } = useMemo(() => {
+  const { used, netCapacity } = (() => {
     let total = exilusDrain + stanceDrain;
     NUMBERED_SLOTS.forEach(pos => {
       const slot = slotsByPosition.get(pos);
@@ -221,7 +221,7 @@ export default function LoadoutEquipmentSection({
     // entirely). It's just a 9th slot restricted to Exilus-tagged mods,
     // its cost comes out of the same pool as the other 8.
     return { used: total, netCapacity: capacity - auraDrain };
-  }, [slotsByPosition, modsById, rivensById, ownedByModId, capacity, auraDrain, exilusDrain, stanceDrain]);
+  })();
 
   const overBudget = used > netCapacity;
 

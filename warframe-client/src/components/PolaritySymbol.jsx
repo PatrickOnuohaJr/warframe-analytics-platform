@@ -35,11 +35,6 @@ const ICONS = {
   omni: recolorToCurrentColor(omni),
 };
 
-// 'omni' is the universal polarity from Omni Forma (Update 38.5, the
-// reworked Aura Forma) -- it matches any mod, so it always earns the
-// half-cost discount. Listed last since it's the premium option.
-export const POLARITIES = ['madurai', 'vazarin', 'naramon', 'zenurik', 'unairu', 'umbra', 'penjaga', 'omni'];
-
 // size in px, color as any CSS color (defaults to inheriting text color)
 export default function PolaritySymbol({ polarity, size = 16, color, className = '' }) {
   const icon = polarity && ICONS[polarity];

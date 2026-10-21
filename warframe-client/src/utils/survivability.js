@@ -1,4 +1,5 @@
 import { parseStat } from './statPatterns';
+import { getTauBonusText } from '../constants/shardBonuses';
 
 // Warframe Resilience metric -- Effective Health/Shield computed from base
 // stats (wf_base.warframes) + equipped mod bonuses + equipped Archon Shard
@@ -39,7 +40,13 @@ const SHARD_STAT_PATTERNS = [
 export function getShardBonusTexts(frame) {
   const slots = frame.shard_slots;
   if (!slots) return [];
-  return [1, 2, 3, 4, 5].map(i => slots[`shard_${i}_bonus`]).filter(Boolean);
+  return [1, 2, 3, 4, 5]
+    .map(i => {
+      const bonus = slots[`shard_${i}_bonus`];
+      if (!bonus) return null;
+      return slots[`shard_${i}_tauforged`] ? getTauBonusText(bonus) : bonus;
+    })
+    .filter(Boolean);
 }
 
 // Warframe stats for the Loadout tab's live "modded stats" panel --
@@ -102,6 +109,39 @@ const WARFRAME_SHARD_PCT_PATTERNS = [
 // Never add an entry here by inferring from a name alone.
 const SHIELD_REMOVING_ARCANES = new Set(['Arcane Persistence']);
 
+// Arcane Battery's real effect is a formula, not the flat "abilities cost 0
+// Energy" text seeded in wf_base.arcanes.effect_r5 (same kind of stale/
+// incomplete arcane text as Arcane Persistence's missing shield-removal
+// clause, found the same way -- comparing against a real in-game screen).
+// Verified via Fandom (Patrick, 2026-09-01): +0.30 max Energy per point of
+// Armor, capped at +1000 Energy. Scales off the build's own final modded
+// Armor (after mods/shards), so it's applied after armor is computed below
+// rather than folded into flatBonus.energy up front.
+const ARCANE_BATTERY_NAMES = new Set(['Arcane Battery']);
+const ARCANE_BATTERY_ENERGY_PER_ARMOR = 0.3;
+const ARCANE_BATTERY_ENERGY_CAP = 1000;
+
+// Umbral Vitality/Intensify/Fiber each carry "Enhance mods in this set" --
+// equipping 2 of the 3 boosts each equipped one's own printed stat past its
+// solo levelStats value (confirmed: 2-of-3 already gives the same enhanced
+// number as all 3, no partial scaling at 2 vs 3). Verified against real
+// in-game tooltips (Patrick, 2026-09-01), rank 10 only: Umbral Vitality
+// +130% Health (solo max +100%), Umbral Fiber +130% Armor (solo max
+// +100%), Umbral Intensify +77% Ability Strength (solo max +44%) -- the
+// Tau Resistance line on each card also changes (11%->14.3%) but that stat
+// isn't tracked here. Only known at max rank; a sub-max Umbral mod falls
+// back to its normal per-rank levelStats value since the enhanced number
+// at lower ranks hasn't been verified. Never add/change an entry here by
+// inferring from a name or a guessed formula -- confirm the real tooltip
+// first.
+const UMBRAL_SET_MOD_NAMES = new Set(['Umbral Vitality', 'Umbral Intensify', 'Umbral Fiber']);
+const UMBRAL_SET_MIN_COUNT = 2;
+const UMBRAL_SET_ENHANCED = {
+  'Umbral Vitality': { rank: 10, statText: '+130% Health' },
+  'Umbral Fiber': { rank: 10, statText: '+130% Armor' },
+  'Umbral Intensify': { rank: 10, statText: '+77% Ability Strength' },
+};
+
 // `equippedMods`/`shardBonusTexts`: same shapes computeResilience takes.
 // `equippedArcaneNames`: this build's arcane_1/arcane_2 values (nulls
 // filtered by the caller or left in, either way -- only matched names
@@ -112,12 +152,19 @@ export function computeModdedWarframeStats({ baseStats, equippedMods = [], shard
   const countedMods = [];
   const countedShards = [];
 
+  const umbralSetActive =
+    equippedMods.filter(({ mod }) => UMBRAL_SET_MOD_NAMES.has(mod?.name)).length >= UMBRAL_SET_MIN_COUNT;
+
   equippedMods.forEach(({ mod, rank }) => {
     const levelStats = mod?.raw_json?.levelStats;
     if (!Array.isArray(levelStats) || levelStats.length === 0) return;
 
     const clampedRank = Math.max(0, Math.min(rank ?? 0, levelStats.length - 1));
-    const stats = levelStats[clampedRank]?.stats ?? [];
+    const enhanced = umbralSetActive ? UMBRAL_SET_ENHANCED[mod.name] : null;
+    const stats =
+      enhanced && rank === enhanced.rank
+        ? [enhanced.statText]
+        : levelStats[clampedRank]?.stats ?? [];
 
     stats.forEach(statText => {
       const parsed = parseStat(statText, WARFRAME_STAT_PATTERNS);
@@ -147,7 +194,10 @@ export function computeModdedWarframeStats({ baseStats, equippedMods = [], shard
   const health = (baseStats?.health ?? 0) * (1 + pctBonus.health / 100) + flatBonus.health;
   const shield = shieldRemoved ? 0 : (baseStats?.shield ?? 0) * (1 + pctBonus.shield / 100) + flatBonus.shield;
   const armor = (baseStats?.armor ?? 0) * (1 + pctBonus.armor / 100) + flatBonus.armor;
-  const energy = (baseStats?.energy ?? 0) * (1 + pctBonus.energy / 100) + flatBonus.energy;
+  const arcaneBatteryEnergyBonus = equippedArcaneNames.some(name => ARCANE_BATTERY_NAMES.has(name))
+    ? Math.min(ARCANE_BATTERY_ENERGY_CAP, ARCANE_BATTERY_ENERGY_PER_ARMOR * armor)
+    : 0;
+  const energy = (baseStats?.energy ?? 0) * (1 + pctBonus.energy / 100) + flatBonus.energy + arcaneBatteryEnergyBonus;
   // Sprint Speed's base column is already a raw multiplier (e.g. 1.25),
   // not a percentage -- keep it displayed the same way, no invented "100%"
   // framing for a stat that already has a real base value on file.

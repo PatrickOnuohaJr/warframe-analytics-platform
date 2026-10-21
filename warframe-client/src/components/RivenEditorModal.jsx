@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import ModalShell from './ui/ModalShell';
 import Button from './ui/Button';
-import PolaritySymbol, { POLARITIES } from './PolaritySymbol';
+import PolaritySymbol from './PolaritySymbol';
+import { POLARITIES } from '../constants/polarities';
 import { COLOR } from '../constants/theme';
 import { RIVEN_MAX_RANK } from '../utils/modCapacity';
 import { statsForCategory, isPositiveOnly, formatRivenStat, parseRivenStat } from '../utils/rivenStats';

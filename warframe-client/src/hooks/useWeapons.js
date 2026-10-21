@@ -6,7 +6,6 @@ export default function useWeapons() {
   const [loadingWeapons, setLoadingWeapons] = useState(true)
 
   async function fetchWeapons() {
-    setLoadingWeapons(true)
 
     const { data, error } = await wfBase
       .from('weapons')
@@ -24,12 +23,14 @@ export default function useWeapons() {
   }
 
   useEffect(() => {
+    // Database synchronization: state updates occur after the awaited response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchWeapons()
   }, [])
 
   return {
     weapons,
     loadingWeapons,
-    refetchWeapons: fetchWeapons,
+    refetchWeapons: () => { setLoadingWeapons(true); return fetchWeapons() },
   }
 }

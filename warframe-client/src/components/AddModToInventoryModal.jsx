@@ -67,11 +67,11 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   // stat groups themselves via statGroupsFor, same category-aware list
   // the Mods page and the Loadout mod picker already use.
   const showTypeGroups = category === 'All' || category === 'Warframe';
-  const statGroupNames = category === 'All' ? [] : statGroupsFor(category);
+  const statGroupNames = useMemo(() => category === 'All' ? [] : statGroupsFor(category), [category]);
   // Conclave, unlike Aura/Exilus/Augment, isn't Warframe-only -- every
   // weapon category has real Conclave-origin mods mixed in (WFCD
   // uniqueName contains "/PvPMods/"), so it's always offered.
-  const typeStatGroupNames = [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), 'Conclave', ...statGroupNames];
+  const typeStatGroupNames = useMemo(() => [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), 'Conclave', ...statGroupNames], [showTypeGroups, statGroupNames]);
 
   const typeStatCounts = useMemo(() => {
     const inCategory = catalog.filter(m => category === 'All' || m.category === category);
