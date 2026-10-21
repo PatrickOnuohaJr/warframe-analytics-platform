@@ -1385,3 +1385,18 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Everything carried from Session 016's Next Targets is still open and untouched: ability-data wiki-title mismatches, multi-build-per-Warframe, 3→6 Loadout Config expansion, Survivability `benchmark_tiers` content, Companion/Posture mod ownership marking, Moa/Hound scope, Nautilus Prime slot count.
 
 ---
+## Session 018 — October 20, 2026 — Repo closeout and CPR
+
+**What was reconciled:**
+- Reviewed the local change set, checked the staged text and office documents for credential-like material, and kept ignored `.env` and Python bytecode out of the commit.
+- Committed the 127-path project set as `9dc7b3d` (`feat: add arcane ingestion and project housekeeping`) and pushed `main` to `origin/main`. The push also published the previously ahead commit `3daabfd`.
+- Published the frontend housekeeping and nine focused Node tests; the Arcane static-data ingestion source, SQL drafts, diagnostics, tests, and review packets; the previously prepared handoff/roadmap updates and The Cultivated Arsenal discovery materials.
+
+**Validation and limits:**
+- Pre-commit checks passed: `npm run lint`, `npm test` (9/9), `npm run build`, and `git diff --check`. Build retains the approximately 603 kB JavaScript chunk-size warning.
+- A fresh `npm audit --package-lock-only` attempt failed because `registry.npmjs.org` could not resolve (`ENOTFOUND`); dependency advisory status is unverified.
+- No live database migration/write, canonical Arcane promotion, deployment, or remote CI result was verified. The static-data migrations are source artifacts only.
+- D.7 remains cut; its unrun schema draft was retained as a parked artifact. The visual redesign remains in discovery; implementation is not approved and the catalog still lacks after captures.
+- No full lettered shipment A–F closed, so the master roadmap was not regenerated.
+
+**Next:** verify the pushed CI workflow, run broader editor/selector/search regression with fixtures, retry the dependency audit when network access is available, and obtain the remaining read-only database policy/grant evidence before shared-beta planning.

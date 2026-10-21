@@ -1,12 +1,16 @@
 # Handoff — Cephalon Gu
 
-## Current pickup — September 17, 2026
+## Current pickup — October 20, 2026
 
-The local resume-readiness cleanup is complete; access hardening and publication remain open. Read [Housekeeping 2026-09-17.md](Housekeeping%202026-09-17.md) for changes, checks, security evidence, and remaining gates. Lint is now clean; nine Node regression tests and eleven ingestion tests pass; the ability query retrieves all 2,206 parameters in a live read-only check. Build passes with the existing bundle warning. Local-only autosave fixture checks passed for external refresh, latest callback, and unmount cancellation.
+The previously local project work has been reconciled, committed, and pushed to `origin/main`. HEAD is `9dc7b3d` on `main`; this push also published the earlier local commit `3daabfd`. The pushed set includes the September housekeeping fixes, focused frontend tests, Arcane static-data ingestion source and review tooling, access diagnostics, and The Cultivated Arsenal discovery materials. No deployment occurred.
 
-Next housekeeping: broader editor/selector/search regression with fixtures; review the intended local artifact set before commit/push. Owner clarified that Gu is single-user development, not yet alpha: profiles/OAuth and account isolation belong to later shared beta preparation for clanmates. Do not implement auth as housekeeping. Supplied audit output shows three Arcane collection views use caller permissions; live table-policy/grant result sets remain unprovided. No live permissions changes, deployment, commit/push, or canonical promotion occurred. A frontend GitHub Actions workflow is prepared but has not run remotely.
+From `warframe-client`, `npm run lint`, all nine `npm test` cases, and `npm run build` passed before the commit; `git diff --check` was clean. The build retains its approximately 603 kB JavaScript chunk warning. The latest dependency-audit attempt could not reach `registry.npmjs.org` (`ENOTFOUND`), so current dependency advisory status is unverified. The pushed GitHub Actions workflow has not yet been verified running remotely.
 
-**D.7 is cut**, per the September 14 roadmap. Do not resume it from the historical session note below. A3 remains planned. Existing local roadmap/survivability and untracked ingestion/redesign work are preserved.
+The Arcane pipeline, SQL migration drafts, diagnostics, and tests are now tracked, but no migration was applied, no canonical data was promoted, and no live database writes were made. The D.7 roadmap cut remains in force; its unrun schema draft is retained as a parked artifact and must not be resumed without a real approved use case. The Cultivated Arsenal report and scope are discovery materials only; product implementation remains unapproved, and the visual catalog has no after captures.
+
+Gu remains a single-user development app, not yet alpha. Login/OAuth and owner isolation remain prerequisites for shared clan beta use. The supplied administrative output still does not establish restrictive live table policies or account isolation.
+
+Next: verify the remote CI run, broaden editor/selector/search regression with fixtures, retry the dependency audit when registry access returns, and obtain the remaining read-only database policy/grant results before designing shared-beta access.
 
 ## Historical Session 017 pickup (superseded where it conflicts above)
 

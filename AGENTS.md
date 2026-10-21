@@ -42,3 +42,12 @@ Do not redesign or refactor product code until the user approves the direction a
 - September 17 housekeeping baseline: lint passes with zero errors/warnings; `npm test` runs nine calculation/pagination tests using Node 24. Build still has the chunk-size warning. Full UI regression is not established. See `Docs/Housekeeping 2026-09-17.md`.
 
 Preserve unrelated user changes. Before implementation, re-run build and lint and report any drift from this baseline.
+
+## CPR and Obsidian synchronization
+
+The Obsidian project-state note is `C:\Users\jideo\Patrick OS\Projects\Cephalon Gu - Project State.md`.
+
+- After a successful CPR (commit, push, reconcile), update the Obsidian note during the same session whenever the commit, push, or reconciliation adds meaningful project status, decisions, validation, blockers, or next steps. Do not leave it pointing at an older source commit or reporting pre-CPR local changes as current.
+- This immediate post-CPR sync is separate from the scheduled 168-hour full-state review. Do not defer a meaningful CPR update until the weekly review.
+- Record the pushed HEAD and branch as source evidence. Reconcile normally edits `Docs/HANDOFF.md` and the session log after the push; identify those post-push edits as local/uncommitted until separately committed and pushed. Keep deployed/live status distinct from pushed source.
+- Preserve the Obsidian note's user context and historical entries. Update `last_updated` only for meaningful content changes and refresh `last_full_state_check_at_utc` after a successful sync. If CPR produces no meaningful change to report, leave the note unchanged.
