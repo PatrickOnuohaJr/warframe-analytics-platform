@@ -1400,3 +1400,15 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - No full lettered shipment A–F closed, so the master roadmap was not regenerated.
 
 **Next:** verify the pushed CI workflow, run broader editor/selector/search regression with fixtures, retry the dependency audit when network access is available, and obtain the remaining read-only database policy/grant evidence before shared-beta planning.
+
+---
+## Session 019 — October 21, 2026 — CI verification and dependency remediation
+
+**What was done:**
+- Verified remote CI: Frontend checks run #1 on `9dc7b3d` completed successfully.
+- Retried the dependency audit (registry reachable): 2 high advisories (source-map-js; vite 8.3.0–8.3.2 via launch-editor), both dev-tooling. `npm audit fix` updated 7 packages, lockfile only; audit now 0 vulnerabilities.
+- Re-verified lint, 9/9 tests, and build after the fix. Committed and pushed as `6b47334` together with the Session 018 docs and Obsidian sync rule.
+
+**Limits:** broader editor/selector/search regression not run; read-only DB policy/grant evidence not supplied; no deployment, live DB change, or roadmap regeneration (no lettered shipment closed).
+
+**Next:** broader regression with fixtures; obtain DB policy/grant evidence before shared-beta access design; A3 still gated on `benchmark_tiers` thresholds.

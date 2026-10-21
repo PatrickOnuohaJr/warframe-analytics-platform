@@ -1,6 +1,6 @@
 # Handoff — Cephalon Gu
 
-## Current pickup — October 20, 2026
+## Current pickup — October 21, 2026
 
 The previously local project work has been reconciled, committed, and pushed to `origin/main`. HEAD is `9dc7b3d` on `main`; this push also published the earlier local commit `3daabfd`. The pushed set includes the September housekeeping fixes, focused frontend tests, Arcane static-data ingestion source and review tooling, access diagnostics, and The Cultivated Arsenal discovery materials. No deployment occurred.
 
@@ -8,9 +8,11 @@ From `warframe-client`, `npm run lint`, all nine `npm test` cases, and `npm run 
 
 The Arcane pipeline, SQL migration drafts, diagnostics, and tests are now tracked, but no migration was applied, no canonical data was promoted, and no live database writes were made. The D.7 roadmap cut remains in force; its unrun schema draft is retained as a parked artifact and must not be resumed without a real approved use case. The Cultivated Arsenal report and scope are discovery materials only; product implementation remains unapproved, and the visual catalog has no after captures.
 
+Follow-up (Oct 21): remote CI verified — run #1 of Frontend checks on `9dc7b3d` succeeded. `npm audit fix` cleared two high dev-tooling advisories (source-map-js, vite/launch-editor); audit now reports 0 vulnerabilities, lockfile only, pushed as `6b47334`. Lint, 9/9 tests, and build re-verified after the fix.
+
 Gu remains a single-user development app, not yet alpha. Login/OAuth and owner isolation remain prerequisites for shared clan beta use. The supplied administrative output still does not establish restrictive live table policies or account isolation.
 
-Next: verify the remote CI run, broaden editor/selector/search regression with fixtures, retry the dependency audit when registry access returns, and obtain the remaining read-only database policy/grant results before designing shared-beta access.
+Next: broaden editor/selector/search regression with fixtures, and obtain the remaining read-only database policy/grant results before designing shared-beta access.
 
 ## Historical Session 017 pickup (superseded where it conflicts above)
 
