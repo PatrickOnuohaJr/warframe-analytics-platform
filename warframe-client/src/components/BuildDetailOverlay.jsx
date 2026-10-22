@@ -11,6 +11,7 @@ import { getReadableColor } from '../utils/color'
 import Panel from './ui/Panel'
 import SurvivabilityBadge from './SurvivabilityBadge'
 import CandidateButtons from './CandidateButtons'
+import ArchetypeButtons from './ArchetypeButtons'
 
 function getShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
@@ -245,6 +246,7 @@ export default function BuildDetailOverlay({
           <div className="flex gap-3 items-center flex-wrap">
             <SurvivabilityBadge claim={frame.survivability_claim} latestTest={frame.latest_jade_test} />
             <CandidateButtons frame={frame} onSaved={onSaved} />
+            <ArchetypeButtons frame={frame} onSaved={onSaved} />
 
             {currentConstitution && (
               <span

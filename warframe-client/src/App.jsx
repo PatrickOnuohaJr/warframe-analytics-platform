@@ -13,6 +13,7 @@ import ArmoryPage from './pages/ArmoryPage'
 import ModsPage from './pages/ModsPage'
 import { getReadableColor } from './utils/color'
 import Button from './components/ui/Button'
+import { ARCHETYPES, ARCHETYPE_FILTER_LABELS, filterByArchetype } from './utils/survivabilityArchetype'
 
 
 
@@ -122,6 +123,7 @@ export default function App() {
   const [activePage, setActivePage] = useState('home')
   const [shardFilter, setShardFilter] = useState('all')
   const [physiqueFilter, setPhysiqueFilter] = useState('all')
+  const [archetypeFilter, setArchetypeFilter] = useState('all')
   const [showAddFrame, setShowAddFrame] = useState(false)
 
 
@@ -133,10 +135,12 @@ export default function App() {
   const schools = getSchools(frames)
   const schoolColor = getSchoolColor(frames, selectedSchool)
 
- const schoolFiltered =
+ const schoolFiltered = filterByArchetype(
   selectedSchool === 'All Schools'
     ? frames
-    : frames.filter(f => f.cultivation_school === selectedSchool)
+    : frames.filter(f => f.cultivation_school === selectedSchool),
+  archetypeFilter
+)
 
 const bucketFiltered =
   shardFilter === 'all'
@@ -281,7 +285,32 @@ const filteredFrames =
             </select>
           </div>
         )}
-      
+
+        {/* Survivability archetype filter -- three toggle buttons (click the
+            active one again to clear). Filters on Patrick's manual tag; builds
+            with no tag only show when no archetype is selected. */}
+        {activePage === 'codex' && (
+          <div className="mb-4 flex gap-2 flex-wrap">
+            {ARCHETYPES.map(type => {
+              const active = archetypeFilter === type
+              const count = frames.filter(f => f.survivability_archetype === type).length
+              return (
+                <button
+                  key={type}
+                  onClick={() => setArchetypeFilter(active ? 'all' : type)}
+                  className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em] transition-colors"
+                  style={{
+                    background: active ? `${GOLD}18` : PANEL_BG,
+                    color: active ? GOLD : MUTED,
+                    borderColor: active ? `${GOLD}88` : BORDER,
+                  }}
+                >
+                  {ARCHETYPE_FILTER_LABELS[type]} ({count})
+                </button>
+              )
+            })}
+          </div>
+        )}
 
               {activePage === 'codex' && (shardFilter === 'slotted' || shardFilter === 'planned') && (
                 <div className="mb-4">
