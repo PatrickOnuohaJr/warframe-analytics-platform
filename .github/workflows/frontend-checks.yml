@@ -19,5 +19,6 @@ jobs:
           cache-dependency-path: warframe-client/package-lock.json
       - run: npm ci
       - run: npm test
+      - run: npm run test:ui
       - run: npm run lint -- --max-warnings=0
       - run: npm run build
