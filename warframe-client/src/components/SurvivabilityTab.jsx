@@ -80,7 +80,7 @@ export default function SurvivabilityTab({ frame, color }) {
       }
 
       const [wfRes, slotsRes] = await Promise.all([
-        wfBase.from('warframes').select('warframe_id, health, shield, armor, energy, sprint_speed').eq('warframe_id', frame.warframe_id).maybeSingle(),
+        wfBase.from('warframes').select('warframe_id, name, health, shield, armor, energy, sprint_speed').eq('warframe_id', frame.warframe_id).maybeSingle(),
         wfUser.from('loadout_slots').select('slot_position, mod_id').eq('my_frame_id', frame.my_frame_id).eq('equipment_type', 'Warframe'),
       ]);
 

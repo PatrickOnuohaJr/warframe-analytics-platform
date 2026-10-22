@@ -1,4 +1,5 @@
 import { parseStat } from './statPatterns';
+import { applyMaxRankStats, maxRankAbilityStrength } from './rankGains';
 import { getTauBonusText } from '../constants/shardBonuses';
 
 // Warframe Resilience metric -- Effective Health/Shield computed from base
@@ -121,50 +122,67 @@ const ARCANE_BATTERY_NAMES = new Set(['Arcane Battery']);
 const ARCANE_BATTERY_ENERGY_PER_ARMOR = 0.3;
 const ARCANE_BATTERY_ENERGY_CAP = 1000;
 
-// Umbral Vitality/Intensify/Fiber each carry "Enhance mods in this set" --
-// equipping 2 of the 3 boosts each equipped one's own printed stat past its
-// solo levelStats value (confirmed: 2-of-3 already gives the same enhanced
-// number as all 3, no partial scaling at 2 vs 3). Verified against real
-// in-game tooltips (Patrick, 2026-09-01), rank 10 only: Umbral Vitality
-// +130% Health (solo max +100%), Umbral Fiber +130% Armor (solo max
-// +100%), Umbral Intensify +77% Ability Strength (solo max +44%) -- the
-// Tau Resistance line on each card also changes (11%->14.3%) but that stat
-// isn't tracked here. Only known at max rank; a sub-max Umbral mod falls
-// back to its normal per-rank levelStats value since the enhanced number
-// at lower ranks hasn't been verified. Never add/change an entry here by
-// inferring from a name or a guessed formula -- confirm the real tooltip
-// first.
+// Umbral Vitality/Intensify/Fiber each carry "Enhance mods in this set" -- the
+// bonus scales with how many of the three are equipped. Verified against real
+// in-game tooltips (Patrick, 2026-10-21), rank 10 only:
+//   solo (1 equipped):  Vitality +100% Health, Fiber +100% Armor, Intensify +44% Ability Strength
+//   2 equipped:         Vitality +130%,        Fiber +130%,       Intensify +55%
+//   3 equipped (full):  Vitality +180%,        Fiber +180%,       Intensify +77%
+// (This replaces the earlier assumption that 2-of-3 equals the full set --
+// a full-set Garuda Prime screen proved Armor at +180%.) The Tau Resistance
+// line on each card also scales (11% -> 15.3% -> 19.2%) but that stat isn't
+// tracked here. Only known at max rank; a sub-max Umbral mod falls back to
+// its normal per-rank levelStats value since the enhanced numbers at lower
+// ranks haven't been verified. Never add/change an entry here by inferring
+// from a name or a guessed formula -- confirm the real tooltip first.
 const UMBRAL_SET_MOD_NAMES = new Set(['Umbral Vitality', 'Umbral Intensify', 'Umbral Fiber']);
-const UMBRAL_SET_MIN_COUNT = 2;
-const UMBRAL_SET_ENHANCED = {
-  'Umbral Vitality': { rank: 10, statText: '+130% Health' },
-  'Umbral Fiber': { rank: 10, statText: '+130% Armor' },
-  'Umbral Intensify': { rank: 10, statText: '+77% Ability Strength' },
+const UMBRAL_ENHANCED_RANK = 10;
+const UMBRAL_SET_ENHANCED_BY_COUNT = {
+  2: { 'Umbral Vitality': '+130% Health', 'Umbral Fiber': '+130% Armor', 'Umbral Intensify': '+55% Ability Strength' },
+  3: { 'Umbral Vitality': '+180% Health', 'Umbral Fiber': '+180% Armor', 'Umbral Intensify': '+77% Ability Strength' },
 };
+
+// How many DISTINCT Umbral set pieces are equipped (0-3). Distinct names, so
+// a duplicate can't inflate the set count.
+export function countUmbralSetPieces(equippedMods) {
+  const names = new Set();
+  equippedMods.forEach(({ mod }) => {
+    if (mod?.name && UMBRAL_SET_MOD_NAMES.has(mod.name)) names.add(mod.name);
+  });
+  return names.size;
+}
+
+// The stat lines a mod contributes at its rank, honoring the Umbral set
+// bonus when this is a max-rank Umbral mod and 2+ set pieces are equipped.
+// Shared by computeModdedWarframeStats and computeResilience so both agree.
+function resolveModStatTexts(mod, rank, umbralCount) {
+  const levelStats = mod?.raw_json?.levelStats;
+  if (!Array.isArray(levelStats) || levelStats.length === 0) return [];
+
+  const enhanced = umbralCount >= 2 ? UMBRAL_SET_ENHANCED_BY_COUNT[umbralCount]?.[mod.name] : null;
+  if (enhanced && rank === UMBRAL_ENHANCED_RANK) return [enhanced];
+
+  const clampedRank = Math.max(0, Math.min(rank ?? 0, levelStats.length - 1));
+  return levelStats[clampedRank]?.stats ?? [];
+}
 
 // `equippedMods`/`shardBonusTexts`: same shapes computeResilience takes.
 // `equippedArcaneNames`: this build's arcane_1/arcane_2 values (nulls
 // filtered by the caller or left in, either way -- only matched names
 // have any effect).
-export function computeModdedWarframeStats({ baseStats, equippedMods = [], shardBonusTexts = [], equippedArcaneNames = [] }) {
-  const pctBonus = { health: 0, shield: 0, armor: 0, energy: 0, sprintSpeed: 0, duration: 0, efficiency: 0, range: 0, strength: 0 };
+export function computeModdedWarframeStats({ baseStats: rawBaseStats, equippedMods = [], shardBonusTexts = [], equippedArcaneNames = [] }) {
+  // Builds are modeled at max rank (30); wf_base stores rank-0 stats.
+  const baseStats = applyMaxRankStats(rawBaseStats);
+  // Strength starts at any rank-30 gain the frame has (e.g. Nidus +15%).
+  const pctBonus = { health: 0, shield: 0, armor: 0, energy: 0, sprintSpeed: 0, duration: 0, efficiency: 0, range: 0, strength: maxRankAbilityStrength(baseStats?.name) };
   const flatBonus = { health: 0, shield: 0, armor: 0, energy: 0 };
   const countedMods = [];
   const countedShards = [];
 
-  const umbralSetActive =
-    equippedMods.filter(({ mod }) => UMBRAL_SET_MOD_NAMES.has(mod?.name)).length >= UMBRAL_SET_MIN_COUNT;
+  const umbralCount = countUmbralSetPieces(equippedMods);
 
   equippedMods.forEach(({ mod, rank }) => {
-    const levelStats = mod?.raw_json?.levelStats;
-    if (!Array.isArray(levelStats) || levelStats.length === 0) return;
-
-    const clampedRank = Math.max(0, Math.min(rank ?? 0, levelStats.length - 1));
-    const enhanced = umbralSetActive ? UMBRAL_SET_ENHANCED[mod.name] : null;
-    const stats =
-      enhanced && rank === enhanced.rank
-        ? [enhanced.statText]
-        : levelStats[clampedRank]?.stats ?? [];
+    const stats = resolveModStatTexts(mod, rank, umbralCount);
 
     stats.forEach(statText => {
       const parsed = parseStat(statText, WARFRAME_STAT_PATTERNS);
@@ -225,18 +243,18 @@ export function computeModdedWarframeStats({ baseStats, equippedMods = [], shard
 // `shardBonusTexts`: resolved bonus strings for this build's currently
 // equipped shards only (frame.shard_slots' shard_1_bonus..shard_5_bonus,
 // nulls filtered) -- not the goal/target shard layout.
-export function computeResilience({ baseStats, equippedMods = [], shardBonusTexts = [] }) {
+export function computeResilience({ baseStats: rawBaseStats, equippedMods = [], shardBonusTexts = [] }) {
+  // Builds are modeled at max rank (30); wf_base stores rank-0 stats.
+  const baseStats = applyMaxRankStats(rawBaseStats);
   const pctBonus = { health: 0, shield: 0, armor: 0 };
   const flatBonus = { health: 0, shield: 0, armor: 0 };
   const countedMods = [];
   const countedShards = [];
 
-  equippedMods.forEach(({ mod, rank }) => {
-    const levelStats = mod?.raw_json?.levelStats;
-    if (!Array.isArray(levelStats) || levelStats.length === 0) return;
+  const umbralCount = countUmbralSetPieces(equippedMods);
 
-    const clampedRank = Math.max(0, Math.min(rank ?? 0, levelStats.length - 1));
-    const stats = levelStats[clampedRank]?.stats ?? [];
+  equippedMods.forEach(({ mod, rank }) => {
+    const stats = resolveModStatTexts(mod, rank, umbralCount);
 
     stats.forEach(statText => {
       const parsed = parseStat(statText, MOD_STAT_PATTERNS);

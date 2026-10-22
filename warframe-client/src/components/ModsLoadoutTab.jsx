@@ -74,7 +74,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
         // Feeds WarframeModdedStatsPanel -- skipped when no Warframe is
         // assigned yet, same guard SurvivabilityTab already uses.
         frame.warframe_id
-          ? wfBase.from('warframes').select('warframe_id, health, shield, armor, energy, sprint_speed').eq('warframe_id', frame.warframe_id).maybeSingle()
+          ? wfBase.from('warframes').select('warframe_id, name, health, shield, armor, energy, sprint_speed').eq('warframe_id', frame.warframe_id).maybeSingle()
           : Promise.resolve({ data: null, error: null }),
       ]);
 
