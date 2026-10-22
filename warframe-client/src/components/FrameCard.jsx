@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ShardChip from './ShardChip'
 import { getReadableColor } from '../utils/color'
+import SurvivabilityBadge from './SurvivabilityBadge'
 
 function getShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
@@ -196,22 +197,7 @@ export default function FrameCard({ frame, onEdit }) {
           </h2>
         </div>
 
-        {frame.tier && (
-          <span
-            className="text-xs font-bold px-2 py-0.5 rounded border"
-            style={{
-              background: hasCultivationColor
-                ? `${cultivationColor}18`
-                : 'rgba(251,191,36,0.18)',
-              color: hasCultivationColor ? cultivationColor : '#B45309',
-              borderColor: hasCultivationColor
-                ? `${cultivationColor}66`
-                : 'rgba(180,83,9,0.35)',
-            }}
-          >
-            {frame.tier}
-          </span>
-        )}
+        <SurvivabilityBadge claim={frame.survivability_claim} latestTest={frame.latest_jade_test} compact />
       </div>
 
       <div className="text-xs text-[#B8B3AC] space-y-0.5">

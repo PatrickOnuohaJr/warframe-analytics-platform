@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { wfUser } from '../lib/supabase';
 import Panel from './ui/Panel';
 import Button from './ui/Button';
+import JadeLightTests from './JadeLightTests';
 
 // ============================================================================
 // TestingLogTab.jsx
@@ -62,7 +63,7 @@ const VERDICT_COLORS = {
   Inconclusive: MUTED,
 };
 
-export default function TestingLogTab({ frame }) {
+export default function TestingLogTab({ frame, onSaved }) {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -193,6 +194,8 @@ export default function TestingLogTab({ frame }) {
 
   return (
     <div className="space-y-6 max-w-2xl">
+      <JadeLightTests frame={frame} onChanged={onSaved} />
+
       <div>
         <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: MUTED }}>
           Log a New Test

@@ -9,6 +9,8 @@ import CompanionTab from './CompanionTab'
 import SurvivabilityTab from './SurvivabilityTab'
 import { getReadableColor } from '../utils/color'
 import Panel from './ui/Panel'
+import SurvivabilityBadge from './SurvivabilityBadge'
+import CandidateButtons from './CandidateButtons'
 
 function getShards(slots) {
   return [1, 2, 3, 4, 5].map(i => ({
@@ -241,18 +243,8 @@ export default function BuildDetailOverlay({
           </p>
 
           <div className="flex gap-3 items-center flex-wrap">
-            {frame.tier && (
-              <span
-                className="text-sm font-black px-3 py-1 rounded-lg border"
-                style={{
-                  color,
-                  background: `${color}18`,
-                  borderColor: `${color}55`,
-                }}
-              >
-                {frame.tier} Tier
-              </span>
-            )}
+            <SurvivabilityBadge claim={frame.survivability_claim} latestTest={frame.latest_jade_test} />
+            <CandidateButtons frame={frame} onSaved={onSaved} />
 
             {currentConstitution && (
               <span
@@ -305,7 +297,7 @@ export default function BuildDetailOverlay({
 
         {/* Testing Log tab */}
         {activeTab === 'testing' && (
-          <TestingLogTab frame={frame} />
+          <TestingLogTab frame={frame} onSaved={onSaved} />
         )}
 
         {/* Loadout tab -- Warframe/Primary/Secondary/Melee, each with its

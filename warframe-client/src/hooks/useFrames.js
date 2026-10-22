@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { wfUser, wfBase } from '../lib/supabase'
 import { fetchAll } from '../lib/fetchAll'
+import { latestJadeLightTest } from '../utils/survivabilityStatus'
 
 export default function useFrames() {
   const [frames, setFrames] = useState([])
@@ -34,6 +35,7 @@ export default function useFrames() {
       { data: abilityCatalogData },
       { data: abilityParametersData, error: parametersError },
       { data: abilityConfigData },
+      { data: jadeLightData },
     ] = await Promise.all([
       wfUser
         .from('my_frames')
@@ -63,6 +65,11 @@ export default function useFrames() {
       wfUser
         .from('ability_configs')
         .select('*'),
+      // Verified Jade Light results. A read error (e.g. the table is not
+      // created yet) just means every build reads as untested/candidate.
+      wfUser
+        .from('jade_light_tests')
+        .select('test_id, my_frame_id, result, environment, tested_on, created_at'),
     ])
 
     if (error || parametersError) {
@@ -126,8 +133,15 @@ export default function useFrames() {
       abilityConfigMap[config.my_frame_id].push(config)
     })
 
+    const jadeByFrame = {}
+    jadeLightData?.forEach(t => {
+      if (!jadeByFrame[t.my_frame_id]) jadeByFrame[t.my_frame_id] = []
+      jadeByFrame[t.my_frame_id].push(t)
+    })
+
     const enriched = data.map(f => ({
       ...f,
+      latest_jade_test: latestJadeLightTest(jadeByFrame[f.my_frame_id]),
       warframe_name: wfMap[f.warframe_id] ?? `Frame ${f.warframe_id}`,
       abilities: abilityMap[f.warframe_id] ?? [],
       melee_weapon: f.melee_weapon === 'nan' ? null : f.melee_weapon,

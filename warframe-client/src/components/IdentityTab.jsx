@@ -22,13 +22,12 @@ const SCHOOLS = [
 ]
 
 // Identity tab of BuildDetailOverlay: Warframe/Prime selection, build
-// title/tier, cultivation identity fields, and frame deletion.
+// title, cultivation identity fields, and frame deletion.
 export default function IdentityTab({ frame, color, onSaved, onClose }) {
   const [identityForm, setIdentityForm] = useState({
     warframe_id: frame.warframe_id ?? null,
     display_name: frame.display_name ?? '',
     build_title: frame.build_title ?? '',
-    tier: frame.tier ?? '',
     cultivation_school: frame.cultivation_school ?? '',
     cultivation_color: frame.cultivation_color ?? '',
     cultivation_art: frame.cultivation_art ?? '',
@@ -36,7 +35,7 @@ export default function IdentityTab({ frame, color, onSaved, onClose }) {
   })
   const [identitySaving, setIdentitySaving] = useState(false)
 
-  const identitySource = JSON.stringify([frame.my_frame_id, frame.warframe_id, frame.display_name, frame.build_title, frame.cultivation_art, frame.cultivation_school, frame.cultivation_color, frame.cultivation_doctrine, frame.tier]);
+  const identitySource = JSON.stringify([frame.my_frame_id, frame.warframe_id, frame.display_name, frame.build_title, frame.cultivation_art, frame.cultivation_school, frame.cultivation_color, frame.cultivation_doctrine]);
   const [previousIdentitySource, setPreviousIdentitySource] = useState(identitySource);
   if (previousIdentitySource !== identitySource) {
     setPreviousIdentitySource(identitySource);
@@ -44,8 +43,7 @@ export default function IdentityTab({ frame, color, onSaved, onClose }) {
       warframe_id: frame.warframe_id ?? null,
       display_name: frame.display_name ?? '',
       build_title: frame.build_title ?? '',
-      tier: frame.tier ?? '',
-      cultivation_school: frame.cultivation_school ?? '',
+        cultivation_school: frame.cultivation_school ?? '',
       cultivation_color: frame.cultivation_color ?? '',
       cultivation_art: frame.cultivation_art ?? '',
       cultivation_doctrine: frame.cultivation_doctrine ?? '',
@@ -101,7 +99,6 @@ export default function IdentityTab({ frame, color, onSaved, onClose }) {
         warframe_id: identityForm.warframe_id || null,
         display_name: identityForm.display_name || null,
         build_title: identityForm.build_title || null,
-        tier: identityForm.tier || null,
         cultivation_school: identityForm.cultivation_school || null,
         cultivation_color: identityForm.cultivation_color || null,
         cultivation_art: identityForm.cultivation_art || null,
@@ -154,21 +151,6 @@ export default function IdentityTab({ frame, color, onSaved, onClose }) {
             className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
             style={{ borderColor: '#6F6A62', color: '#E8E4DC' }}
           />
-        </div>
-        <div>
-          <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#9C9890' }}>Tier</p>
-          <select
-            value={identityForm.tier}
-            onChange={e => setIdentityForm(prev => ({ ...prev, tier: e.target.value }))}
-            className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
-            style={{ background: '#3A342C', borderColor: '#6F6A62', color: '#E8E4DC' }}
-          >
-            <option value="">No tier</option>
-            <option value="S">S</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-          </select>
         </div>
       </div>
       <div>
