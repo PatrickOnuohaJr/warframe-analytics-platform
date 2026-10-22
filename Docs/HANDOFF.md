@@ -2,17 +2,22 @@
 
 ## Current pickup — October 21, 2026
 
-The previously local project work has been reconciled, committed, and pushed to `origin/main`. HEAD is `9dc7b3d` on `main`; this push also published the earlier local commit `3daabfd`. The pushed set includes the September housekeeping fixes, focused frontend tests, Arcane static-data ingestion source and review tooling, access diagnostics, and The Cultivated Arsenal discovery materials. No deployment occurred.
+Pushed `main` is at `2d56a0a`; remote CI is green on every push this session (runs #2-#7). No deployment. Lint, 24 Node tests, 6 vitest UI tests, and build pass locally; `npm audit` reports 0 vulnerabilities. Dependency advisories were fixed (`6b47334`) and the Static Data / housekeeping work was published earlier in `9dc7b3d`.
 
-From `warframe-client`, `npm run lint`, all nine `npm test` cases, and `npm run build` passed before the commit; `git diff --check` was clean. The build retains its approximately 603 kB JavaScript chunk warning. The latest dependency-audit attempt could not reach `registry.npmjs.org` (`ENOTFOUND`), so current dependency advisory status is unverified. The pushed GitHub Actions workflow has not yet been verified running remotely.
+**Survivability is now a verified-vs-predicted system, not an EHP score.** Patrick's standard is the Jade Light test: stand under a full Jade Light (~8s) while mobbed, no evading. **Tier 0** ("Bathroom Big") = survived with no intervention; **Tier 1** = survived but needed active upkeep; **Did not survive** ("Back to the drawing board" in the UI). **Tier 2 and below are undefined - do not invent them.** Default test setting: Steel Path 1999 Scaldre/Techrot survival; Void Steel Path occasionally; Archimedea-without-modifiers is a newer option; Icebind locked. Numeric EHP thresholds are **not** the grading mechanism - Gu's calculations are *predictions*, Jade Light results are *verification*, and an untested build must never be shown as verified Tier 0.
 
-The Arcane pipeline, SQL migration drafts, diagnostics, and tests are now tracked, but no migration was applied, no canonical data was promoted, and no live database writes were made. The D.7 roadmap cut remains in force; its unrun schema draft is retained as a parked artifact and must not be resumed without a real approved use case. The Cultivated Arsenal report and scope are discovery materials only; product implementation remains unapproved, and the visual catalog has no after captures.
+What shipped (all live, migrations run by Patrick):
+- `wf_user.jade_light_tests` + a Jade Light section at the top of each build's Testing Log tab (result, environment, optional date, notes; each entry freezes a loadout snapshot).
+- Four Tier 0 results backfilled (Oberon Prime, Inaros Prime, Valkyr Prime, Kullervo): Steel Path 1999, **date unknown** (tested within ~4 months before 2026-10-21), snapshots have **no Warframe mods** because none were entered.
+- `my_frames.survivability_claim` (Tier 0 / Tier 1 *candidate*, set via modal-header buttons) replaced the S/A/B/C grade dropdown; old grades were wiped (the `tier` column remains, unused). Cards show solid chip = tested, dashed `?` = candidate, red = drawing board, nothing = untested; a logged result always overrides the claim.
+- `my_frames.survivability_archetype` (Health Tank / Shield Tank / Hybrid, manual tag) + three toggle filter buttons on the Codex page. One build is tagged so far.
+- Tests: new regression suites for weapon search/Riven stats, status/archetype logic, and vitest UI tests for WarframeSelector and RivenEditorModal (`npm run test:ui`, also in CI). Weapon-search filter logic was extracted to `utils/weaponSearch.js`.
 
-Follow-up (Oct 21): remote CI verified — run #1 of Frontend checks on `9dc7b3d` succeeded. `npm audit fix` cleared two high dev-tooling advisories (source-map-js, vite/launch-editor); audit now reports 0 vulnerabilities, lockfile only, pushed as `6b47334`. Lint, 9/9 tests, and build re-verified after the fix.
+**Blocker for calibration:** none of the four reference builds has Warframe mods entered in the Loadout tab (only 2 of 61 builds have any), so Gu's computed numbers for them are base stats + shards only (e.g. Oberon computes 913 effective health while being a confirmed Tier 0). Patrick offered to enter them. Gu stores ability *names* only - invulnerability, heals, damage reduction, Overguard are not computable. Proposed methodology (not implemented): per-build defensive *layer inventory* (pool / mitigation / sustain / control / upkeep) judged by archetype, calibrated against the four references; no numeric thresholds.
 
-Gu remains a single-user development app, not yet alpha. Login/OAuth and owner isolation remain prerequisites for shared clan beta use. The supplied administrative output still does not establish restrictive live table policies or account isolation.
+**Roadmap drift:** the master roadmap still says A3 is gated on numeric `benchmark_tiers` thresholds. That framing is obsolete (see above). Not edited - no lettered shipment closed - but raise it with Patrick before A3 scoping.
 
-Next: broaden editor/selector/search regression with fixtures, and obtain the remaining read-only database policy/grant results before designing shared-beta access.
+Still open: read-only DB policy/grant results (only the three Arcane view definitions have been supplied; run `DB/Diagnostics/20260917_product_access_audit.sql` and share all five result sets); Gu is single-user dev, auth/isolation belongs to shared-beta prep; selector/modal interaction gaps are now covered, remaining regression is broader page-level.
 
 ## Historical Session 017 pickup (superseded where it conflicts above)
 

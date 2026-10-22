@@ -1402,13 +1402,18 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 **Next:** verify the pushed CI workflow, run broader editor/selector/search regression with fixtures, retry the dependency audit when network access is available, and obtain the remaining read-only database policy/grant evidence before shared-beta planning.
 
 ---
-## Session 019 — October 21, 2026 — CI verification and dependency remediation
+## Session 019 — October 21, 2026 — Verification, regression tests, and Jade Light survivability
 
 **What was done:**
-- Verified remote CI: Frontend checks run #1 on `9dc7b3d` completed successfully.
-- Retried the dependency audit (registry reachable): 2 high advisories (source-map-js; vite 8.3.0–8.3.2 via launch-editor), both dev-tooling. `npm audit fix` updated 7 packages, lockfile only; audit now 0 vulnerabilities.
-- Re-verified lint, 9/9 tests, and build after the fix. Committed and pushed as `6b47334` together with the Session 018 docs and Obsidian sync rule.
+- Verified remote CI (green on every push, runs #1-#7). Retried the dependency audit: 2 high dev-tooling advisories (source-map-js; vite via launch-editor), cleared with `npm audit fix` (lockfile only, `6b47334`).
+- Regression coverage: extracted the weapon-search filter logic to `utils/weaponSearch.js` (verified unchanged in the browser) and added tests for it and Riven stat format/parse; added vitest + jsdom + Testing Library (`vitest@5`, audit clean) with six UI interaction tests for WarframeSelector and RivenEditorModal, wired into CI as `test:ui`.
+- Survivability redefined by Patrick: the Jade Light test is the verification standard (Tier 0 = survived with no intervention, Tier 1 = survived with active upkeep, otherwise did not survive; Tier 2+ undefined). EHP is a prediction aid, not the tier. Pulled the four Tier 0 reference builds from Supabase: none has Warframe mods entered, so computed numbers are base + shards only (Oberon 913 effective health vs Inaros 7,310 - confirming EHP does not predict tier).
+- Built the verified record: `wf_user.jade_light_tests`, a Jade Light section in the Testing Log tab with auto-captured loadout snapshots, and four backfilled Tier 0 results (environment Steel Path 1999, date unknown).
+- Replaced the S/A/B/C grade with Tier 0 / Tier 1 candidate buttons (`my_frames.survivability_claim`), tested/candidate/failed/untested card chips (a logged result overrides the claim), and wiped the old grades. Added a manual Health Tank / Shield Tank / Hybrid tag (`survivability_archetype`) with three Codex filter buttons.
+- Migrations (run by Patrick): `20261021_add_jade_light_tests.sql`, `20261021_add_survivability_claim.sql`, `20261021_add_survivability_archetype.sql`. Pushed as `7125602`, `b6e57a1`, `8ca36e1`, `2d56a0a`.
 
-**Limits:** broader editor/selector/search regression not run; read-only DB policy/grant evidence not supplied; no deployment, live DB change, or roadmap regeneration (no lettered shipment closed).
+**Bugs found:** archetype buttons appeared dead until their migration was run (column missing; error only in console) - resolved by running it.
 
-**Next:** broader regression with fixtures; obtain DB policy/grant evidence before shared-beta access design; A3 still gated on `benchmark_tiers` thresholds.
+**Limits:** no mods entered for the four reference builds, so calibration is not possible yet; only the Arcane view-definition result set of the DB policy audit has been supplied; no deployment; master roadmap not regenerated (no lettered shipment closed) though its A3 `benchmark_tiers` gate is now obsolete.
+
+**Next:** Patrick enters the four builds' Warframe mods, then re-run the numbers and compare; supply the remaining access-audit result sets; decide how to update the roadmap's A3 gate; later, ability-effect data for survival-relevant abilities and a layer-inventory methodology review before any implementation.
