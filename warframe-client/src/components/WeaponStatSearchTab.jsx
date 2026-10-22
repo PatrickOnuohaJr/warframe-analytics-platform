@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { wfBase } from '../lib/supabase';
 import Panel from './ui/Panel';
 import { COLOR } from '../constants/theme';
+import { toDisplay, computeStatBounds, filterByThresholds } from '../utils/weaponSearch';
 
 // ============================================================================
 // WeaponStatSearchTab.jsx
@@ -50,10 +51,6 @@ const CATEGORIES = [
   { value: 'Secondary', stats: GUN_STATS },
   { value: 'Melee', stats: MELEE_STATS },
 ];
-
-function toDisplay(raw, stat) {
-  return raw * stat.scale;
-}
 
 function step(stat) {
   return stat.precision === 0 ? 1 : Math.pow(10, -stat.precision);
@@ -109,25 +106,10 @@ export default function WeaponStatSearchTab() {
 
   // Live min/max per stat, computed from whatever's actually in this
   // category right now — never hardcoded, so it can't drift from real data.
-  const statBounds = useMemo(() => {
-    const bounds = {};
-    for (const stat of activeStats) {
-      const values = categoryWeapons
-        .map(w => w.raw_json?.[stat.key])
-        .filter(v => typeof v === 'number' && !Number.isNaN(v));
-
-      if (values.length === 0) {
-        bounds[stat.key] = { min: 0, max: 0 };
-        continue;
-      }
-
-      bounds[stat.key] = {
-        min: toDisplay(Math.min(...values), stat),
-        max: toDisplay(Math.max(...values), stat),
-      };
-    }
-    return bounds;
-  }, [categoryWeapons, activeStats]);
+  const statBounds = useMemo(
+    () => computeStatBounds(categoryWeapons, activeStats),
+    [categoryWeapons, activeStats]
+  );
 
   const [thresholdSource, setThresholdSource] = useState({ category, weapons });
   if (thresholdSource.category !== category || thresholdSource.weapons !== weapons) {
@@ -135,20 +117,10 @@ export default function WeaponStatSearchTab() {
     setThresholds({});
   }
 
-  const results = useMemo(() => {
-    return categoryWeapons.filter(w => {
-      return activeStats.every(stat => {
-        const threshold = thresholds[stat.key];
-        const bound = statBounds[stat.key];
-        if (threshold === undefined || bound === undefined || threshold <= bound.min) return true;
-
-        const raw = w.raw_json?.[stat.key];
-        if (typeof raw !== 'number') return false;
-
-        return toDisplay(raw, stat) >= threshold;
-      });
-    });
-  }, [categoryWeapons, activeStats, thresholds, statBounds]);
+  const results = useMemo(
+    () => filterByThresholds(categoryWeapons, activeStats, thresholds, statBounds),
+    [categoryWeapons, activeStats, thresholds, statBounds]
+  );
 
   return (
     <div>
