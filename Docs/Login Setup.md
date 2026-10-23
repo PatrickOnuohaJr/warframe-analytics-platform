@@ -38,6 +38,22 @@ You do these in your own accounts; Claude can't and shouldn't enter these values
 
 Whatever address you open Gu at must be in the Supabase **Redirect URLs** list, or Google sign-in will bounce back with an error. Add each new address there. A private-network address (Tailscale or your home network) works the same way as `localhost`.
 
+### Tailscale setup (what is running)
+
+Gu's dev server runs on the PC and Tailscale Serve publishes it, **inside the tailnet only**, over HTTPS:
+
+1. Tailscale on the PC and the tablet, signed in to the same account. In the Tailscale admin console > DNS, MagicDNS and **HTTPS Certificates** are on.
+2. The dev server must be running on the PC. It listens on the IPv6 loopback only, so Serve must target `[::1]`, not `127.0.0.1`:
+   ```
+   tailscale serve --bg "http://[::1]:5173"
+   ```
+   (Use the port the dev server actually printed; it falls back to 5174 if 5173 is busy.) Turn it off with `tailscale serve --https=443 off`. The setting survives reboots.
+3. `vite.config.js` allows `.ts.net` hostnames (`server.allowedHosts`); Vite rejects unknown hostnames otherwise.
+4. Open `https://<pc-name>.<tailnet>.ts.net` on the tablet and add `https://<pc-name>.<tailnet>.ts.net/**` to Supabase Redirect URLs. Do not commit your real tailnet name here.
+5. The first HTTPS request after enabling can take up to a minute while Tailscale issues the certificate.
+
+The PC has to stay on with the dev server running for the tablet to reach Gu.
+
 ## What changes for tooling
 
 After the lockdown, anything that talks to the database with only the public key — including Claude's read-only diagnostics — is refused, because the public key no longer proves who you are. Seed scripts that use the service-role key are unaffected. To let Claude read data again you would sign in through the app, not hand over a key.

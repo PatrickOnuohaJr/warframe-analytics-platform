@@ -10,5 +10,9 @@ export default defineConfig({
   ],
   server: {
     port: Number(process.env.PORT) || 5173,
+    // Allow requests that arrive via Tailscale Serve (https://<pc>.<tailnet>.ts.net).
+    // Vite rejects unknown Host headers by default; this admits only Tailscale's
+    // own domain, not arbitrary hosts. Gu is still behind Google sign-in.
+    allowedHosts: ['.ts.net'],
   },
 })
