@@ -3,6 +3,7 @@ import { wfUser } from '../lib/supabase'
 import { COLOR } from '../constants/theme'
 import ModalShell from './ui/ModalShell'
 import { computeAbilityStats } from '../utils/abilityStats'
+import { HELMINTH_ABILITIES } from '../constants/helminthAbilities'
 
 // Base kit + Helminth subsume editor for the Warframe piece of the Loadout
 // tab. Extracted from App.jsx's old standalone Abilities modal -- same
@@ -14,13 +15,6 @@ import { computeAbilityStats } from '../utils/abilityStats'
 // Render this with `key={frame.my_frame_id}` from the caller so switching
 // which Warframe is open resets the local config-slot/picker state instead
 // of carrying it over from the previous frame.
-const HELMINTH_ABILITIES = [
-  'Airburst', 'Aquablades', 'Banish', 'Blood Altar', 'Breach Surge', 'Condemn',
-  'Dark Verse', 'Defy', 'Dispensary', 'Eclipse', 'Ensnare', 'Fire Blast',
-  'Gloom', 'Larva', 'Nourish', 'Pillage', 'Resonator', 'Roar', 'Silence',
-  'Thermal Sunder', 'Warcry', 'Wrathful Advance',
-]
-
 export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, abilityCanonicalByName = {}, buildStats }) {
   const configs = frame.ability_configs ?? []
   const sortedConfigs = configs.slice().sort((a, b) => a.config_slot.localeCompare(b.config_slot))
@@ -215,16 +209,22 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
           />
 
           <div className="max-h-[45vh] overflow-y-auto space-y-2">
+            {/* Search matches the ability name OR the Warframe it comes from,
+                so "garuda" finds Blood Altar. */}
             {HELMINTH_ABILITIES
-              .filter(name => name.toLowerCase().includes(helminthSearch.toLowerCase()))
-              .map(name => (
+              .filter(({ name, frame: source }) => {
+                const q = helminthSearch.toLowerCase()
+                return name.toLowerCase().includes(q) || source.toLowerCase().includes(q)
+              })
+              .map(({ name, frame: source }) => (
                 <button
                   key={name}
                   onClick={() => saveHelminthConfig(name)}
-                  className="block w-full rounded-lg border p-3 text-left"
+                  className="flex w-full items-center justify-between rounded-lg border p-3 text-left"
                   style={{ borderColor: COLOR.border, color: COLOR.ink }}
                 >
-                  {name}
+                  <span>{name}</span>
+                  <span className="text-xs" style={{ color: COLOR.mutedInk }}>{source}</span>
                 </button>
               ))}
           </div>
