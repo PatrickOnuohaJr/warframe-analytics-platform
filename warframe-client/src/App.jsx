@@ -13,6 +13,7 @@ import ArmoryPage from './pages/ArmoryPage'
 import ModsPage from './pages/ModsPage'
 import { getReadableColor } from './utils/color'
 import Button from './components/ui/Button'
+import SignOutButton from './components/SignOutButton'
 import { ARCHETYPES, ARCHETYPE_FILTER_LABELS, filterByArchetype } from './utils/survivabilityArchetype'
 
 
@@ -193,6 +194,10 @@ const filteredFrames =
       }}
     >
       <div className="mb-8">
+
+        <div className="flex justify-end">
+          <SignOutButton />
+        </div>
 
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-4 mb-3">
