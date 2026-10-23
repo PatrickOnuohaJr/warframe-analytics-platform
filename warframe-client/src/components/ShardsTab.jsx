@@ -130,37 +130,45 @@ export default function ShardsTab({ frame, frames, color, onSaved }) {
     onSaved()
   }
 
-  async function copyGoalToNow() {
-    const hasGoal = targetShards.some(s => s.color)
+  // Copies one of this frame's shard layouts over the other ('target' = Goal,
+  // 'current' = Now). Overwrites the destination, so it confirms first and
+  // refuses to copy an empty source.
+  async function copyShardSetup(from, to) {
+    const source = from === 'target' ? targetShards : currentShards
+    const label = { target: 'Goal', current: 'Now' }
 
-    if (!hasGoal) {
-      alert('This frame has no Goal shards to copy.')
+    if (!source.some(s => s.color)) {
+      alert(`This frame has no ${label[from]} shards to copy.`)
       return
     }
 
     const confirmed = window.confirm(
-      `Copy ${frame.display_name || frame.warframe_name}'s Goal shard setup to Now?`
+      `Copy ${frame.display_name || frame.warframe_name}'s ${label[from]} shard setup to ${label[to]}? This replaces the current ${label[to]} setup.`
     )
 
     if (!confirmed) return
 
     setSaving(true)
 
-    const copiedShards = targetShards.map(s => ({ ...s }))
+    const copiedShards = source.map(s => ({ ...s }))
     const payload = buildShardPayload(copiedShards)
 
-    if (frame.shard_slots) {
+    const table = to === 'current' ? 'archon_shard_slots' : 'archon_shard_slots_target'
+    const existing = to === 'current' ? frame.shard_slots : frame.target_shards
+
+    if (existing) {
       await wfUser
-        .from('archon_shard_slots')
+        .from(table)
         .update(payload)
         .eq('my_frame_id', frame.my_frame_id)
     } else {
       await wfUser
-        .from('archon_shard_slots')
+        .from(table)
         .insert({ my_frame_id: frame.my_frame_id, ...payload })
     }
 
-    setCurrentShards(copiedShards)
+    if (to === 'current') setCurrentShards(copiedShards)
+    else setTargetShards(copiedShards)
     setSaving(false)
     onSaved()
   }
@@ -463,12 +471,20 @@ export default function ShardsTab({ frame, frames, color, onSaved }) {
       )}
 
       <div className="flex flex-col gap-2">
+        {/* Two-way copy between this frame's Goal and Now layouts, side by
+            side so either direction is one click from either tab. */}
+        <div className="flex gap-2">
+          <Button variant="success" className="flex-1" onClick={() => copyShardSetup('target', 'current')} disabled={saving}>
+            Copy Goal → Now
+          </Button>
+
+          <Button variant="success" className="flex-1" onClick={() => copyShardSetup('current', 'target')} disabled={saving}>
+            Copy Now → Goal
+          </Button>
+        </div>
+
         {mode === 'current' && (
           <>
-            <Button variant="success" fullWidth onClick={copyGoalToNow} disabled={saving}>
-              Copy Goal → Now
-            </Button>
-
             <Button variant="danger" fullWidth onClick={clearAllCurrent}>
               Clear All Now
             </Button>
