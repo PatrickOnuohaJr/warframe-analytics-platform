@@ -1418,3 +1418,16 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 **Limits:** no mods entered for the four reference builds, so calibration is not possible yet; only the Arcane view-definition result set of the DB policy audit has been supplied; no deployment; master roadmap not regenerated (no lettered shipment closed) though its A3 `benchmark_tiers` gate is now obsolete.
 
 **Next:** Patrick enters the four builds' Warframe mods (Valkyr/Inaros/Kullervo rank-30 exceptions still unchecked in game), then re-run the numbers and compare; supply the remaining access-audit result sets; decide how to update the roadmap's A3 gate; later, ability-effect data for survival-relevant abilities and a layer-inventory methodology review before any implementation.
+
+---
+## Session 020 — October 23, 2026 — Loadout polish, Helminth list, and owner-only login
+
+**What was done:**
+- Loadout/picker polish from Patrick's top-down pass: capacity now shows remaining/total; a mod-picker Augments chip per Warframe (owned and unowned, with effect text); Arcane Blessing's stale seeded text corrected via a one-row SQL fix; Helminth subsume list expanded from 22 to 66 abilities from the wiki (cross-checked 65/66 against stored abilities); Archon Shards editor gained a two-way Copy Goal <-> Now button pair. Pushed as `37c61a1`, `19de807`, `90d3b75`.
+- Owner-only Google login: auth gate + Not authorized screen + Sign out, `app_owners` table + `is_owner()`, a loop-based lockdown migration making every `wf_user`/`wf_base` table owner-only (anon refused everywhere, `wf_base` read-only through the API), a rollback, and `Docs/Login Setup.md`. Patrick set up the Google Cloud OAuth client and Supabase provider, signed in, added himself as owner, and ran the lockdown. Verified anonymously: every read and write is now refused. Pushed as `2665133`.
+
+**Bugs found:** the Supabase Users list looked empty right after first sign-in (stale; refresh fixed it); Google flagged a duplicate test-user add (harmless).
+
+**Limits:** Gu is only reachable from Patrick's PC; "Allow new users to sign up" is not yet turned off; post-lockdown Claude can no longer read the database with the public key (handoff updated); per-user isolation for clanmates is not built (owner-only by design); the new login code has not been exercised against a real Google round-trip in automated tests (the gate is unit-tested with a mocked client).
+
+**Next:** run Gu on the tablet over Tailscale or the home network (add the new address to Supabase Redirect URLs); turn off new sign-ups; enter the four reference builds' mods for survivability calibration; update the roadmap's obsolete A3 gate.

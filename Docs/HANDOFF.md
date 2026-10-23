@@ -1,6 +1,22 @@
 # Handoff — Cephalon Gu
 
-## Current pickup — October 21, 2026
+## Current pickup — October 23, 2026
+
+Pushed `main` is at `2665133`; remote CI is green on every push (runs #11-#14). No deployment. Lint, 49 Node tests, and 12 vitest UI tests pass locally; `npm audit` is clean. Everything from the October 21 pickup (Jade Light survivability, archetype filter, Umbral + rank-30 math) is below and still current.
+
+**THE DATABASE IS NOW LOCKED TO ONE SIGNED-IN OWNER. This changes how everything is accessed.**
+- The app sits behind **Google sign-in** (Supabase Auth, PKCE) with a "Not authorized" screen for any non-owner and a Sign out link in the masthead. Code: `AuthGate.jsx`, `LoginPage.jsx`, `SignOutButton.jsx`, `useSession.js`, `utils/ownerCheck.js`.
+- Enforcement is in Postgres, not just the UI: `wf_user.app_owners` (filled by hand with Patrick's auth UID, never committed) + `wf_user.is_owner()`; the lockdown (`DB/Migrations/20261023_lock_down_to_owner.sql`, run by Patrick) made **every** `wf_user` table owner-only read/write, `wf_base` owner read-only (nobody can write it through the API), views `security_invoker`, and anonymous access refused everywhere. Verified: anon reads of `my_frames`, `mod_inventory`, `jade_light_tests`, `rivens`, `player_profile`, `app_owners`, `wf_base.warframes/mods/arcanes` all return 401, and an anon write is refused (42501). Emergency exit: `DB/Migrations/20261023_rollback_lock_down.sql`. Setup/runbook: `Docs/Login Setup.md`.
+- **Claude's database access is gone.** The `.env` public key no longer proves identity, so read-only diagnostics, "check the live row", and backfill scripts using it now fail. Seed scripts that use the service-role key are unaffected. To verify DB state from now on, ask Patrick to run a query in the Supabase SQL editor and paste the result; do **not** ask for keys. The earlier "data-plane-only DB access" gotcha is superseded: there is no anon data access at all.
+- Google setup done by Patrick: Google Cloud project "Cephalon Gu" (External, Testing, his account as a test user), Web OAuth client, Supabase Google provider enabled, Supabase Site URL `http://localhost:5173`, Redirect URLs `http://localhost:5173/**` and `http://localhost:5174/**`. **Any new address Gu is opened from (tablet/phone) must be added to Supabase > Authentication > URL Configuration > Redirect URLs.** Still to do: turn off "Allow new users to sign up" (extra layer; DB already ignores non-owners). Security-checklist note: this is the owner-only phase of Shipment E; per-user isolation (owner column + `auth.uid()` policies) is still needed before any clanmate beta.
+
+Also shipped October 23 (all pushed): capacity now shows **remaining / total** (e.g. 4 / 78) on Loadout and Companion; mod picker has an **Augments** chip listing every augment for the frame (owned selectable, unowned dimmed, with effect text; `augmentsForWarframe` in `utils/modMeta.js`); Arcane Blessing text corrected via `20261023_fix_arcane_blessing_text.sql` (one-row manual correction, run by Patrick; the Static Data pipeline should reconcile it later); **Helminth subsume list updated to 66 abilities** from the wiki in `constants/helminthAbilities.js` (65/66 cross-checked against `warframe_abilities`; Sirius & Orion's is stored as "Jade Stars / Astral Shell", only "Jade Stars" listed; "Rest & Rage" and "Jade Stars" have no `ability_catalog` stat data); Archon Shards editor has **Copy Goal -> Now and Copy Now -> Goal** half-width buttons on both tabs.
+
+**Next: run Gu on Patrick's tablet.** He is fine leaving his PC on. Plan: Tailscale (free private network between his devices; no public URL) or the home network, with the dev server listening on the network (`vite --host`), and add the tablet-facing address (e.g. `http://<pc-tailscale-ip>:5173/**`) to Supabase Redirect URLs. Do **not** host publicly yet. Gu's layout was built for a wide desktop; a phone will likely need responsive fixes (tablet should be fine) — test at phone width. A PWA/home-screen install is a later step.
+
+Other open items: Patrick entering the four reference builds' Warframe mods (calibration blocked); roadmap A3 `benchmark_tiers` gate is obsolete (not yet edited); remaining DB access-audit result sets are now largely moot after the lockdown.
+
+## Previous pickup — October 21, 2026 (still current except where the above supersedes it)
 
 Pushed `main` is at `54d6b24` (plus a docs-only wrap-up commit); remote CI is green on every push this session (runs #2-#8). No deployment. Lint, 39 Node tests, 6 vitest UI tests, and build pass locally; `npm audit` reports 0 vulnerabilities. Dependency advisories were fixed (`6b47334`) and the Static Data / housekeeping work was published earlier in `9dc7b3d`.
 
