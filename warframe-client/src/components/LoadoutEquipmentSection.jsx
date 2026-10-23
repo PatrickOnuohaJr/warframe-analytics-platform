@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import Panel from './ui/Panel';
 import Button from './ui/Button';
 import LoadoutSlotPickerModal from './LoadoutSlotPickerModal';
+import { augmentsForWarframe } from '../utils/modMeta';
 import SlotBox from './SlotBox';
 import WeaponInput from './WeaponInput';
 import IncarnonToggle from './IncarnonToggle';
@@ -225,6 +226,13 @@ export default function LoadoutEquipmentSection({
 
   const overBudget = used > netCapacity;
 
+  // Every augment that fits this Warframe (owned or not) for the picker's
+  // Augments filter. Only the Warframe piece has frame-specific augments.
+  const frameAugments = useMemo(
+    () => (isWarframe ? augmentsForWarframe([...modsById.values()], frame.warframe_name) : []),
+    [isWarframe, modsById, frame.warframe_name]
+  );
+
   return (
     <Panel accent={accent} className="mb-6">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
@@ -257,7 +265,7 @@ export default function LoadoutEquipmentSection({
           </button>
 
           <span className="font-bold" style={{ color: overBudget ? COLOR.danger : COLOR.ink }}>
-            {used} / {netCapacity} Capacity
+            {netCapacity - used} / {netCapacity} Capacity
           </span>
         </div>
       </div>
@@ -510,6 +518,7 @@ export default function LoadoutEquipmentSection({
           }
           category={equipmentType}
           ownedByModId={ownedByModId}
+          augmentCatalog={frameAugments}
           slotPolarity={picker.slot.polarity}
           onSelect={item => {
             onSetSlot(picker.slotPosition, {

@@ -155,7 +155,7 @@ export default function CompanionEquipmentSection({
           </button>
 
           <span className="font-bold" style={{ color: overBudget ? COLOR.danger : COLOR.ink }}>
-            {used} / {netCapacity} Capacity
+            {netCapacity - used} / {netCapacity} Capacity
           </span>
         </div>
       </div>

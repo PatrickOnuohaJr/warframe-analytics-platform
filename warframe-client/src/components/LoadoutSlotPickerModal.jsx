@@ -3,7 +3,7 @@ import ModalShell from './ui/ModalShell';
 import PolaritySymbol from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain, isDiscounted } from '../utils/modCapacity';
-import { statGroups, statGroupsFor } from '../utils/modMeta';
+import { statGroups, statGroupsFor, effectTextAtRank } from '../utils/modMeta';
 
 // Mod picker for a single loadout slot. `mods` is already pre-filtered by
 // the caller (right equipment category, aura-only / exilus-only as
@@ -17,6 +17,7 @@ export default function LoadoutSlotPickerModal({
   mods,
   category,
   ownedByModId,
+  augmentCatalog = [],
   slotPolarity,
   onSelect,
   onClear,
@@ -26,15 +27,24 @@ export default function LoadoutSlotPickerModal({
 }) {
   const [search, setSearch] = useState('');
   const [statFilter, setStatFilter] = useState(null);
+  // Augments view: lists every augment that fits THIS Warframe (owned ones
+  // are pickable, unowned are shown dimmed) so they don't have to be looked
+  // up elsewhere. Only offered when the caller supplies augmentCatalog.
+  const [augmentsOnly, setAugmentsOnly] = useState(false);
   const groups = statGroupsFor(category);
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
+    if (augmentsOnly) {
+      return augmentCatalog
+        .filter(m => !q || m.name.toLowerCase().includes(q))
+        .map(m => ({ ...m, notOwned: !ownedByModId.has(m.mod_id) }));
+    }
     return mods
       .filter(m => !q || m.name.toLowerCase().includes(q))
       .filter(m => !statFilter || statGroups(m).includes(statFilter))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [mods, search, statFilter]);
+  }, [mods, search, statFilter, augmentsOnly, augmentCatalog, ownedByModId]);
 
   return (
     <ModalShell onClose={onClose} accent={COLOR.gold} maxWidth="max-w-lg" zIndex={70}>
@@ -73,20 +83,33 @@ export default function LoadoutSlotPickerModal({
 
       <div className="flex flex-wrap gap-1.5 mb-3">
         <button
-          onClick={() => setStatFilter(null)}
+          onClick={() => { setStatFilter(null); setAugmentsOnly(false); }}
           className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
           style={{
-            background: !statFilter ? `${COLOR.gold}22` : 'transparent',
-            color: !statFilter ? COLOR.gold : COLOR.mutedInk,
-            border: `1px solid ${!statFilter ? COLOR.gold : COLOR.border}`,
+            background: !statFilter && !augmentsOnly ? `${COLOR.gold}22` : 'transparent',
+            color: !statFilter && !augmentsOnly ? COLOR.gold : COLOR.mutedInk,
+            border: `1px solid ${!statFilter && !augmentsOnly ? COLOR.gold : COLOR.border}`,
           }}
         >
           All
         </button>
+        {augmentCatalog.length > 0 && (
+          <button
+            onClick={() => { setAugmentsOnly(v => !v); setStatFilter(null); }}
+            className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
+            style={{
+              background: augmentsOnly ? `${COLOR.gold}22` : 'transparent',
+              color: augmentsOnly ? COLOR.gold : COLOR.mutedInk,
+              border: `1px solid ${augmentsOnly ? COLOR.gold : COLOR.border}`,
+            }}
+          >
+            Augments ({augmentCatalog.length})
+          </button>
+        )}
         {groups.map(group => (
           <button
             key={group}
-            onClick={() => setStatFilter(statFilter === group ? null : group)}
+            onClick={() => { setAugmentsOnly(false); setStatFilter(statFilter === group ? null : group); }}
             className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
             style={{
               background: statFilter === group ? `${COLOR.gold}22` : 'transparent',
@@ -102,7 +125,9 @@ export default function LoadoutSlotPickerModal({
       <div className="max-h-96 overflow-y-auto space-y-1">
         {results.length === 0 && (
           <p className="text-sm" style={{ color: COLOR.mutedInk }}>
-            No owned mods match this slot. Add some from the Mods page first.
+            {augmentsOnly
+              ? 'No augments match.'
+              : 'No owned mods match this slot. Add some from the Mods page first.'}
           </p>
         )}
 
@@ -115,11 +140,13 @@ export default function LoadoutSlotPickerModal({
           const key = mod.mod_id ?? `riven-${mod.riven_id}`;
 
           return (
-            <div key={key} className="w-full flex items-center gap-1">
+            <div key={key} className="w-full flex items-center gap-1" style={{ opacity: mod.notOwned ? 0.5 : 1 }}>
               <button
                 onClick={() => onSelect(mod)}
-                className="flex-1 flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-black/20"
+                disabled={mod.notOwned}
+                className="flex-1 flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-black/20 disabled:cursor-not-allowed"
               >
+                <div>
                 <div className="flex items-center gap-2">
                   <PolaritySymbol polarity={mod.polarity} size={15} color={COLOR.mutedInk} />
                   {mod.isRiven && (
@@ -132,8 +159,15 @@ export default function LoadoutSlotPickerModal({
                   )}
                   <span style={{ color: COLOR.ink }}>{mod.name}</span>
                   <span className="text-xs" style={{ color: COLOR.mutedInk }}>
-                    Rank {rank}/{mod.max_rank ?? 0}
+                    {mod.notOwned ? 'Not owned' : `Rank ${rank}/${mod.max_rank ?? 0}`}
                   </span>
+                </div>
+                {augmentsOnly && (
+                  // The augment's own effect text names the ability it changes.
+                  <p className="text-[11px] mt-1 leading-snug" style={{ color: COLOR.mutedInk }}>
+                    {effectTextAtRank(mod, mod.max_rank ?? 0)}
+                  </p>
+                )}
                 </div>
                 <span className="text-xs font-bold" style={{ color: discounted ? COLOR.success : COLOR.mutedInk }}>
                   {cost}

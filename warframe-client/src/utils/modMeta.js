@@ -22,6 +22,23 @@ export function augmentTarget(mod) {
   return mod.raw_json?.compatName;
 }
 
+// Every augment in `catalogMods` that applies to the named Warframe, owned or
+// not, so a build can see which augments exist for its frame without looking
+// them up. compatName is the BASE frame name ("Garuda"), so a Prime/Umbra
+// variant matches on its base name. Warframe-category only -- some augment
+// targets are not frames at all (Melee, Parazon, Shade).
+export function augmentsForWarframe(catalogMods, warframeName) {
+  if (!warframeName) return [];
+  const base = warframeName.replace(/ (Prime|Umbra)$/, '');
+  return catalogMods
+    .filter(m => m.category === 'Warframe' && isAugment(m))
+    .filter(m => {
+      const target = augmentTarget(m);
+      return target === warframeName || target === base;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export function isPrimeMod(mod) {
   return mod.raw_json?.isPrime === true;
 }
