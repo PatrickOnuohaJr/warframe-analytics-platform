@@ -209,10 +209,13 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
                   onEdit={() => onOpenFrame(frame)}
                 />
                 <span
-                  className="absolute top-2 right-2 z-20 text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded"
+                  // Sits on the card's top edge like a tab label so it never covers the
+                  // tier chip in the card header's top-right corner. The solid backing
+                  // keeps the card border from showing through the translucent tint.
+                  className="absolute -top-2.5 right-4 z-20 text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded"
                   style={{
-                    background: 'rgba(230,57,70,0.2)',
-                    border: '1px solid rgba(230,57,70,0.5)',
+                    background: '#4A2A2E',
+                    border: '1px solid rgba(230,57,70,0.6)',
                     color: '#E63946',
                   }}
                 >
