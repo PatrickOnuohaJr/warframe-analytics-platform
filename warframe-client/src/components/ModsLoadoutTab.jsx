@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
 import { fetchAll } from '../lib/fetchAll';
 import LoadoutEquipmentSection from './LoadoutEquipmentSection';
+import AssignWeaponPanel from './AssignWeaponPanel';
 import useArcanes from '../hooks/useArcanes';
 import { COLOR } from '../constants/theme';
 
@@ -260,8 +261,12 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
     return <p style={{ color: COLOR.mutedInk }}>Loading Loadout...</p>;
   }
 
-  const visibleTypes = EQUIPMENT_TYPES.filter(type => type === 'Warframe' || frame[WEAPON_FIELD[type]]);
+  // All four pieces always have a sub-tab. A weapon slot with no weapon shows
+  // "+ Secondary" and opens a small assign panel, so an emptied slot can never
+  // become unreachable (it used to disappear, taking its weapon box with it).
+  const visibleTypes = EQUIPMENT_TYPES;
   const activeType = visibleTypes.includes(activeEquipment) ? activeEquipment : 'Warframe';
+  const activeIsEmptyWeapon = activeType !== 'Warframe' && !frame[WEAPON_FIELD[activeType]];
 
   return (
     <div>
@@ -279,11 +284,24 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
               color: activeType === type ? color : COLOR.mutedInk,
             }}
           >
-            {type === 'Warframe' ? 'Warframe' : frame[WEAPON_FIELD[type]]}
+            {type === 'Warframe' ? 'Warframe' : (frame[WEAPON_FIELD[type]] || `+ ${type}`)}
           </button>
         ))}
       </div>
 
+      {activeIsEmptyWeapon && (
+        <AssignWeaponPanel
+          key={`assign-${activeType}`}
+          frame={frame}
+          equipmentType={activeType}
+          column={WEAPON_FIELD[activeType]}
+          weapons={weapons}
+          accent={color}
+          onSaved={onSaved}
+        />
+      )}
+
+      {!activeIsEmptyWeapon && (
       <LoadoutEquipmentSection
         key={activeType}
         equipmentType={activeType}
@@ -312,6 +330,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
         abilityCanonicalByName={abilityCanonicalByName}
         onSaved={onSaved}
       />
+      )}
     </div>
   );
 }

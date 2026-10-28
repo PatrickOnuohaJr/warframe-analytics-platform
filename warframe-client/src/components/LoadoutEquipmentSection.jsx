@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import Panel from './ui/Panel';
 import Button from './ui/Button';
 import LoadoutSlotPickerModal from './LoadoutSlotPickerModal';
+import { resolveCatalogWeapon } from '../utils/weaponAssign';
 import { augmentsForWarframe } from '../utils/modMeta';
 import SlotBox from './SlotBox';
 import WeaponInput from './WeaponInput';
@@ -143,10 +144,24 @@ export default function LoadoutEquipmentSection({
     onSaved();
   }
 
+  // The weapon box autosaves, so it only commits a REAL catalog weapon. An
+  // emptied box or half-typed name is ignored and the previous weapon stays
+  // (clearing one used to save "no weapon", which hid this whole piece).
+  // Removing a weapon is the explicit "Remove weapon" button below.
   const [weaponName, setWeaponName] = useDebouncedField(
     weaponFields ? (frame[weaponFields.weapon] ?? '') : '',
-    v => saveFrameField({ [weaponFields.weapon]: cleanValue(v) })
+    v => {
+      const resolved = resolveCatalogWeapon(weapons, v, equipmentType);
+      if (resolved && resolved !== frame[weaponFields.weapon]) saveFrameField({ [weaponFields.weapon]: resolved });
+    }
   );
+
+  function removeWeapon() {
+    const name = frame[weaponFields.weapon];
+    if (!name) return;
+    if (!window.confirm(`Remove ${name} from this build's ${equipmentType} slot? The slot stays, you can assign a weapon again afterwards.`)) return;
+    saveFrameField({ [weaponFields.weapon]: null });
+  }
   const [weaponArcaneValue, setWeaponArcaneValue] = useDebouncedField(
     weaponFields ? (frame[weaponFields.arcane] ?? '') : '',
     v => saveFrameField({ [weaponFields.arcane]: cleanValue(v) })
@@ -340,6 +355,17 @@ export default function LoadoutEquipmentSection({
                 slot={equipmentType}
                 placeholder={`e.g. ${equipmentType === 'Melee' ? 'Praedos' : 'Torid'}`}
               />
+              <p className="text-[10px] mt-1" style={{ color: COLOR.mutedInk }}>
+                Pick a weapon from the list to change it. Clearing the box does not remove it.
+              </p>
+              <button
+                type="button"
+                onClick={removeWeapon}
+                className="text-[10px] uppercase font-bold tracking-widest mt-1 mb-1 underline"
+                style={{ color: COLOR.mutedInk, background: 'transparent', border: 'none', cursor: 'pointer' }}
+              >
+                Remove weapon
+              </button>
               <IncarnonToggle
                 checked={frame[weaponFields.incarnon] ?? false}
                 onChange={checked => saveFrameField({ [weaponFields.incarnon]: checked })}
