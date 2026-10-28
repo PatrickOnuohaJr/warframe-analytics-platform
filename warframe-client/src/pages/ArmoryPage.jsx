@@ -5,7 +5,7 @@ import Button from '../components/ui/Button';
 import ArmoryFrameRoster from '../components/ArmoryFrameRoster';
 import ArmoryPickerModal from '../components/ArmoryPickerModal';
 import AddWeaponToInventoryModal from '../components/AddWeaponToInventoryModal';
-import { getWeaponTags } from '../utils/weaponTags';
+import { getWeaponTags, getWeaponTagEntries, TAG_GROUPS } from '../utils/weaponTags';
 import { COLOR } from '../constants/theme';
 
 // ============================================================================
@@ -40,7 +40,10 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('All');
-  const [tagFilter, setTagFilter] = useState(null);
+  // Selected tags combine with AND: Beam + High Fire Rate = beams that are also fast.
+  const [selectedTags, setSelectedTags] = useState([]);
+  // 'owned' = your Armory; 'all' = the whole weapon catalog, owned or not.
+  const [scope, setScope] = useState('owned');
   const [showAddModal, setShowAddModal] = useState(false);
   const [draggedWeapon, setDraggedWeapon] = useState(null);
   // Tap-to-assign picker: { weapon } = choose a build for this weapon;
@@ -97,19 +100,42 @@ export default function ArmoryPage({ frames, refetchFrames }) {
     return frames.filter(f => f[column] === weapon.name);
   }
 
-  const allTags = useMemo(() => {
-    const set = new Set();
-    ownedWeapons.forEach(w => getWeaponTags(w).forEach(t => set.add(t)));
-    return [...set].sort();
-  }, [ownedWeapons]);
+  // Weapons in view before tag filtering: the chosen scope + category.
+  const scopedWeapons = useMemo(() => {
+    const pool = scope === 'owned'
+      ? ownedWeapons
+      : catalog.filter(w => w.weapon_type !== 'Zaw Component');
+    return pool.filter(w => categoryFilter === 'All' || w.category === categoryFilter);
+  }, [scope, ownedWeapons, catalog, categoryFilter]);
+
+  // Chips for every tag present in view, grouped, most-used first.
+  const tagGroups = useMemo(() => {
+    const counts = new Map();
+    scopedWeapons.forEach(w => {
+      getWeaponTagEntries(w).forEach(({ tag, group }) => {
+        const cur = counts.get(tag);
+        if (cur) cur.count += 1;
+        else counts.set(tag, { tag, group, count: 1 });
+      });
+    });
+    return TAG_GROUPS.map(group => ({
+      group,
+      tags: [...counts.values()]
+        .filter(t => t.group === group)
+        .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag)),
+    })).filter(g => g.tags.length > 0);
+  }, [scopedWeapons]);
 
   const visibleWeapons = useMemo(() => {
-    return ownedWeapons.filter(w => {
-      if (categoryFilter !== 'All' && w.category !== categoryFilter) return false;
-      if (tagFilter && !getWeaponTags(w).includes(tagFilter)) return false;
-      return true;
+    return scopedWeapons.filter(w => {
+      const tags = getWeaponTags(w);
+      return selectedTags.every(t => tags.includes(t));
     });
-  }, [ownedWeapons, categoryFilter, tagFilter]);
+  }, [scopedWeapons, selectedTags]);
+
+  function toggleTag(tag) {
+    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
+  }
 
   async function handleRemove(weapon) {
     const confirmed = window.confirm(`Remove ${weapon.name} from your Armory?`);
@@ -225,42 +251,66 @@ export default function ArmoryPage({ frames, refetchFrames }) {
             </Button>
           </div>
 
-          {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex gap-2 mb-4">
+            {[['owned', 'My Armory'], ['all', 'All Weapons']].map(([key, label]) => (
               <button
-                onClick={() => setTagFilter(null)}
-                className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
+                key={key}
+                onClick={() => setScope(key)}
+                className="text-[10px] uppercase tracking-widest px-3 py-1.5 rounded"
                 style={{
-                  background: !tagFilter ? `${COLOR.gold}22` : 'transparent',
-                  color: !tagFilter ? COLOR.gold : COLOR.mutedInk,
-                  border: `1px solid ${!tagFilter ? COLOR.gold : COLOR.border}`,
+                  background: scope === key ? `${COLOR.gold}22` : 'transparent',
+                  color: scope === key ? COLOR.gold : COLOR.mutedInk,
+                  border: `1px solid ${scope === key ? COLOR.gold : COLOR.border}`,
                 }}
               >
-                All Tags
+                {label}
               </button>
-              {allTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => setTagFilter(tag === tagFilter ? null : tag)}
-                  className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
-                  style={{
-                    background: tagFilter === tag ? `${COLOR.gold}22` : 'transparent',
-                    color: tagFilter === tag ? COLOR.gold : COLOR.mutedInk,
-                    border: `1px solid ${tagFilter === tag ? COLOR.gold : COLOR.border}`,
-                  }}
-                >
-                  {tag}
-                </button>
-              ))}
+            ))}
+          </div>
+
+          {tagGroups.map(({ group, tags }) => (
+            <div key={group} className="mb-3">
+              <p className="text-[9px] uppercase tracking-widest mb-1.5" style={{ color: COLOR.agedInk }}>
+                {group}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {tags.map(({ tag, count }) => {
+                  const active = selectedTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
+                      style={{
+                        background: active ? `${COLOR.gold}22` : 'transparent',
+                        color: active ? COLOR.gold : COLOR.mutedInk,
+                        border: `1px solid ${active ? COLOR.gold : COLOR.border}`,
+                      }}
+                    >
+                      {tag} <span style={{ opacity: 0.6 }}>{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          ))}
+
+          {selectedTags.length > 0 && (
+            <button
+              onClick={() => setSelectedTags([])}
+              className="text-xs mb-4"
+              style={{ color: COLOR.gold }}
+            >
+              Clear {selectedTags.length} tag filter{selectedTags.length === 1 ? '' : 's'}
+            </button>
           )}
 
-          {ownedWeapons.length === 0 && (
+          {scope === 'owned' && ownedWeapons.length === 0 && (
             <p style={{ color: COLOR.mutedInk }}>No weapons in your Armory yet. Add one to get started.</p>
           )}
 
-          {ownedWeapons.length > 0 && visibleWeapons.length === 0 && (
-            <p style={{ color: COLOR.mutedInk }}>No owned weapons match this filter.</p>
+          {visibleWeapons.length === 0 && (scope === 'all' || ownedWeapons.length > 0) && (
+            <p style={{ color: COLOR.mutedInk }}>No weapons match this filter.</p>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -286,34 +336,45 @@ export default function ArmoryPage({ frames, refetchFrames }) {
                         {weapon.category} · {weapon.weapon_type} · MR {weapon.mastery_rank ?? 0}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <button
-                        onClick={() => setPicker({ weapon })}
-                        className="text-xs font-bold uppercase tracking-widest"
-                        style={{ color: COLOR.gold }}
-                      >
-                        Assign
-                      </button>
-                      <button
-                        onClick={() => handleRemove(weapon)}
-                        className="text-xs"
-                        style={{ color: '#F87171' }}
-                      >
-                        Remove
-                      </button>
-                    </div>
+                    {ownedIds.has(weapon.weapon_id) ? (
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          onClick={() => setPicker({ weapon })}
+                          className="text-xs font-bold uppercase tracking-widest"
+                          style={{ color: COLOR.gold }}
+                        >
+                          Assign
+                        </button>
+                        <button
+                          onClick={() => handleRemove(weapon)}
+                          className="text-xs"
+                          style={{ color: '#F87171' }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] uppercase tracking-widest shrink-0" style={{ color: COLOR.agedInk }}>
+                        Not owned
+                      </span>
+                    )}
                   </div>
 
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
                       {tags.map(tag => (
-                        <span
+                        <button
                           key={tag}
+                          onClick={() => toggleTag(tag)}
                           className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
-                          style={{ background: `${COLOR.gold}14`, color: COLOR.gold }}
+                          style={{
+                            background: selectedTags.includes(tag) ? `${COLOR.gold}44` : `${COLOR.gold}14`,
+                            color: COLOR.gold,
+                            border: `1px solid ${selectedTags.includes(tag) ? COLOR.gold : 'transparent'}`,
+                          }}
                         >
                           {tag}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   )}
