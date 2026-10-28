@@ -53,7 +53,7 @@ export default function ArmoryFrameRoster({ frames, draggedWeapon, onDropWeapon,
         <p className="text-sm" style={{ color: COLOR.mutedInk }}>No builds match "{query}".</p>
       )}
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">
         {visibleFrames.map(frame => {
           const color = getReadableColor(frame.cultivation_color ?? COLOR.gold);
 

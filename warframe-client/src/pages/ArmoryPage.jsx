@@ -273,8 +273,12 @@ export default function ArmoryPage({ frames, refetchFrames }) {
 
       {error && <p className="text-red-400 mb-4">{error}</p>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
-        <div>
+      {/* Builds are the main surface (5/8) on the left; the weapon shelf (3/8) sits
+          on the right and stays in view while the builds scroll, so a weapon can
+          be dragged onto any build without scrolling back. */}
+      <div className="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-6">
+        <div className="lg:order-2 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex gap-2">
               {CATEGORY_FILTERS.map(c => (
@@ -360,7 +364,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
             <p style={{ color: COLOR.mutedInk }}>No weapons match this filter.</p>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {visibleWeapons.map(weapon => {
               const allocations = getAllocations(weapon);
               const ruleApplies = weapon.category === 'Primary' || weapon.category === 'Melee';
@@ -448,7 +452,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           </div>
         </div>
 
-        <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+        <div className="lg:order-1">
           <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: COLOR.mutedInk }}>
             Builds — drop a weapon on a slot
           </p>
