@@ -3,6 +3,7 @@ import { wfBase, wfUser } from '../lib/supabase';
 import Panel from '../components/ui/Panel';
 import Button from '../components/ui/Button';
 import ArmoryFrameRoster from '../components/ArmoryFrameRoster';
+import ArmoryPickerModal from '../components/ArmoryPickerModal';
 import AddWeaponToInventoryModal from '../components/AddWeaponToInventoryModal';
 import { getWeaponTags } from '../utils/weaponTags';
 import { COLOR } from '../constants/theme';
@@ -42,6 +43,9 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   const [tagFilter, setTagFilter] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [draggedWeapon, setDraggedWeapon] = useState(null);
+  // Tap-to-assign picker: { weapon } = choose a build for this weapon;
+  // { frame, slot } = choose a weapon for this build's slot.
+  const [picker, setPicker] = useState(null);
 
   async function loadInventory() {
 
@@ -135,6 +139,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
       .eq('my_frame_id', myFrameId);
 
     setDraggedWeapon(null);
+    setPicker(null);
 
     if (updateError) {
       console.error('Failed to assign weapon:', updateError);
@@ -142,6 +147,42 @@ export default function ArmoryPage({ frames, refetchFrames }) {
     }
 
     refetchFrames();
+  }
+
+  // Items for the open picker, plus what a pick does.
+  function pickerConfig() {
+    if (!picker) return null;
+
+    if (picker.weapon) {
+      const w = picker.weapon;
+      const column = SLOT_COLUMN[w.category];
+      return {
+        title: `Assign ${w.name}`,
+        subtitle: `Pick the build that should carry this ${w.category.toLowerCase()} weapon.`,
+        items: frames.map(f => ({
+          id: f.my_frame_id,
+          label: f.display_name || f.warframe_name,
+          sublabel: [f.build_title, f.cultivation_school].filter(Boolean).join(' · '),
+          note: f[column] === w.name ? 'Already equipped' : `Now: ${f[column] || 'empty'}`,
+        })),
+        onPick: id => handleDropWeapon(id, column, w.name),
+      };
+    }
+
+    const { frame, slot } = picker;
+    return {
+      title: `${frame.display_name || frame.warframe_name}: ${slot.label}`,
+      subtitle: `Pick an owned ${slot.label.toLowerCase()} weapon for this build.`,
+      items: ownedWeapons
+        .filter(w => w.category === slot.label)
+        .map(w => ({
+          id: w.name,
+          label: w.name,
+          sublabel: `${w.weapon_type} · MR ${w.mastery_rank ?? 0}`,
+          note: frame[slot.column] === w.name ? 'Currently equipped' : undefined,
+        })),
+      onPick: name => handleDropWeapon(frame.my_frame_id, slot.column, name),
+    };
   }
 
   if (loading) {
@@ -245,13 +286,22 @@ export default function ArmoryPage({ frames, refetchFrames }) {
                         {weapon.category} · {weapon.weapon_type} · MR {weapon.mastery_rank ?? 0}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleRemove(weapon)}
-                      className="text-xs"
-                      style={{ color: '#F87171' }}
-                    >
-                      Remove
-                    </button>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        onClick={() => setPicker({ weapon })}
+                        className="text-xs font-bold uppercase tracking-widest"
+                        style={{ color: COLOR.gold }}
+                      >
+                        Assign
+                      </button>
+                      <button
+                        onClick={() => handleRemove(weapon)}
+                        className="text-xs"
+                        style={{ color: '#F87171' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
 
                   {tags.length > 0 && (
@@ -289,9 +339,14 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: COLOR.mutedInk }}>
             Builds — drop a weapon on a slot
           </p>
-          <ArmoryFrameRoster frames={frames} draggedWeapon={draggedWeapon} onDropWeapon={handleDropWeapon} />
+          <ArmoryFrameRoster frames={frames} draggedWeapon={draggedWeapon} onDropWeapon={handleDropWeapon} onPickSlot={(frame, slot) => setPicker({ frame, slot })} />
         </div>
       </div>
+
+      {picker && (() => {
+        const cfg = pickerConfig();
+        return <ArmoryPickerModal {...cfg} onClose={() => setPicker(null)} />;
+      })()}
 
       {showAddModal && (
         <AddWeaponToInventoryModal

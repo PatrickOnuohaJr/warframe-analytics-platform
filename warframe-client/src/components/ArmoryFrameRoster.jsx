@@ -26,7 +26,7 @@ function searchText(frame) {
 // slots, so you can tell which build is which and read the whole weapon name
 // without hovering. A search box narrows by frame, build title, school or
 // weapon -- typing "ignis" lists every build carrying one.
-export default function ArmoryFrameRoster({ frames, draggedWeapon, onDropWeapon }) {
+export default function ArmoryFrameRoster({ frames, draggedWeapon, onDropWeapon, onPickSlot }) {
   const [query, setQuery] = useState('');
 
   const visibleFrames = useMemo(() => {
@@ -84,13 +84,17 @@ export default function ArmoryFrameRoster({ frames, draggedWeapon, onDropWeapon 
                   return (
                     <div
                       key={slot.key}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onPickSlot(frame, slot)}
+                      onKeyDown={e => { if (e.key === 'Enter') onPickSlot(frame, slot); }}
                       onDragOver={e => { if (isCompatible) e.preventDefault(); }}
                       onDrop={e => {
                         e.preventDefault();
                         if (!isCompatible) return;
                         onDropWeapon(frame.my_frame_id, slot.column, draggedWeapon.name);
                       }}
-                      className="flex items-baseline gap-3 rounded-md px-3 py-2 transition-colors"
+                      className="flex items-baseline gap-3 rounded-md px-3 py-2 transition-colors cursor-pointer"
                       style={{
                         background: isCompatible ? `${COLOR.gold}18` : COLOR.surface2,
                         border: `1px dashed ${isCompatible ? COLOR.gold : COLOR.border}`,
