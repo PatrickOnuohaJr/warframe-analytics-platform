@@ -18,6 +18,8 @@ export default function LoadoutSlotPickerModal({
   category,
   ownedByModId,
   augmentCatalog = [],
+  auraCatalog = [],
+  isAuraSlot = false,
   slotPolarity,
   onSelect,
   onClear,
@@ -27,24 +29,38 @@ export default function LoadoutSlotPickerModal({
 }) {
   const [search, setSearch] = useState('');
   const [statFilter, setStatFilter] = useState(null);
-  // Augments view: lists every augment that fits THIS Warframe (owned ones
-  // are pickable, unowned are shown dimmed) so they don't have to be looked
-  // up elsewhere. Only offered when the caller supplies augmentCatalog.
-  const [augmentsOnly, setAugmentsOnly] = useState(false);
+  // Special views, one at a time:
+  //   'augments' -- every augment that fits THIS Warframe (owned ones are
+  //                 pickable, unowned dimmed) so they don't have to be looked
+  //                 up elsewhere. Needs augmentCatalog.
+  //   'exilus'   -- owned Exilus-capable mods from the current pool.
+  //   'aura'     -- owned Aura mods, for browsing while filling a numbered
+  //                 slot; they can only be equipped in the Aura slot, so they
+  //                 show dimmed unless this IS the Aura slot picker.
+  const [view, setView] = useState(null);
+  const hasExilus = mods.some(m => m.is_exilus);
+  const showAuraChip = auraCatalog.length > 0 && !isAuraSlot;
   const groups = statGroupsFor(category);
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (augmentsOnly) {
+    if (view === 'augments') {
       return augmentCatalog
         .filter(m => !q || m.name.toLowerCase().includes(q))
-        .map(m => ({ ...m, notOwned: !ownedByModId.has(m.mod_id) }));
+        .map(m => ({ ...m, disabledLabel: ownedByModId.has(m.mod_id) ? null : 'Not owned' }));
+    }
+    if (view === 'aura') {
+      return auraCatalog
+        .filter(m => !q || m.name.toLowerCase().includes(q))
+        .map(m => ({ ...m, disabledLabel: 'Aura slot only' }))
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
     return mods
       .filter(m => !q || m.name.toLowerCase().includes(q))
+      .filter(m => view !== 'exilus' || m.is_exilus)
       .filter(m => !statFilter || statGroups(m).includes(statFilter))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [mods, search, statFilter, augmentsOnly, augmentCatalog, ownedByModId]);
+  }, [mods, search, statFilter, view, augmentCatalog, auraCatalog, ownedByModId]);
 
   return (
     <ModalShell onClose={onClose} accent={COLOR.gold} maxWidth="max-w-lg" zIndex={70}>
@@ -83,33 +99,38 @@ export default function LoadoutSlotPickerModal({
 
       <div className="flex flex-wrap gap-1.5 mb-3">
         <button
-          onClick={() => { setStatFilter(null); setAugmentsOnly(false); }}
+          onClick={() => { setStatFilter(null); setView(null); }}
           className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
           style={{
-            background: !statFilter && !augmentsOnly ? `${COLOR.gold}22` : 'transparent',
-            color: !statFilter && !augmentsOnly ? COLOR.gold : COLOR.mutedInk,
-            border: `1px solid ${!statFilter && !augmentsOnly ? COLOR.gold : COLOR.border}`,
+            background: !statFilter && !view ? `${COLOR.gold}22` : 'transparent',
+            color: !statFilter && !view ? COLOR.gold : COLOR.mutedInk,
+            border: `1px solid ${!statFilter && !view ? COLOR.gold : COLOR.border}`,
           }}
         >
           All
         </button>
-        {augmentCatalog.length > 0 && (
+        {[
+          augmentCatalog.length > 0 && { id: 'augments', label: `Augments (${augmentCatalog.length})` },
+          showAuraChip && { id: 'aura', label: `Aura (${auraCatalog.length})` },
+          hasExilus && { id: 'exilus', label: 'Exilus' },
+        ].filter(Boolean).map(chip => (
           <button
-            onClick={() => { setAugmentsOnly(v => !v); setStatFilter(null); }}
+            key={chip.id}
+            onClick={() => { setView(v => (v === chip.id ? null : chip.id)); setStatFilter(null); }}
             className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
             style={{
-              background: augmentsOnly ? `${COLOR.gold}22` : 'transparent',
-              color: augmentsOnly ? COLOR.gold : COLOR.mutedInk,
-              border: `1px solid ${augmentsOnly ? COLOR.gold : COLOR.border}`,
+              background: view === chip.id ? `${COLOR.gold}22` : 'transparent',
+              color: view === chip.id ? COLOR.gold : COLOR.mutedInk,
+              border: `1px solid ${view === chip.id ? COLOR.gold : COLOR.border}`,
             }}
           >
-            Augments ({augmentCatalog.length})
+            {chip.label}
           </button>
-        )}
+        ))}
         {groups.map(group => (
           <button
             key={group}
-            onClick={() => { setAugmentsOnly(false); setStatFilter(statFilter === group ? null : group); }}
+            onClick={() => { setView(null); setStatFilter(statFilter === group ? null : group); }}
             className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
             style={{
               background: statFilter === group ? `${COLOR.gold}22` : 'transparent',
@@ -125,8 +146,9 @@ export default function LoadoutSlotPickerModal({
       <div className="max-h-96 overflow-y-auto space-y-1">
         {results.length === 0 && (
           <p className="text-sm" style={{ color: COLOR.mutedInk }}>
-            {augmentsOnly
-              ? 'No augments match.'
+            {view === 'augments' ? 'No augments match.'
+              : view === 'aura' ? 'No owned Aura mods match.'
+              : view === 'exilus' ? 'No owned Exilus mods match.'
               : 'No owned mods match this slot. Add some from the Mods page first.'}
           </p>
         )}
@@ -140,10 +162,10 @@ export default function LoadoutSlotPickerModal({
           const key = mod.mod_id ?? `riven-${mod.riven_id}`;
 
           return (
-            <div key={key} className="w-full flex items-center gap-1" style={{ opacity: mod.notOwned ? 0.5 : 1 }}>
+            <div key={key} className="w-full flex items-center gap-1" style={{ opacity: mod.disabledLabel ? 0.5 : 1 }}>
               <button
                 onClick={() => onSelect(mod)}
-                disabled={mod.notOwned}
+                disabled={!!mod.disabledLabel}
                 className="flex-1 flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-black/20 disabled:cursor-not-allowed"
               >
                 <div>
@@ -159,10 +181,10 @@ export default function LoadoutSlotPickerModal({
                   )}
                   <span style={{ color: COLOR.ink }}>{mod.name}</span>
                   <span className="text-xs" style={{ color: COLOR.mutedInk }}>
-                    {mod.notOwned ? 'Not owned' : `Rank ${rank}/${mod.max_rank ?? 0}`}
+                    {mod.disabledLabel ?? `Rank ${rank}/${mod.max_rank ?? 0}`}
                   </span>
                 </div>
-                {augmentsOnly && (
+                {view === 'augments' && (
                   // The augment's own effect text names the ability it changes.
                   <p className="text-[11px] mt-1 leading-snug" style={{ color: COLOR.mutedInk }}>
                     {effectTextAtRank(mod, mod.max_rank ?? 0)}
