@@ -1431,3 +1431,20 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 **Limits:** Gu is only reachable from Patrick's PC; "Allow new users to sign up" is not yet turned off; post-lockdown Claude can no longer read the database with the public key (handoff updated); per-user isolation for clanmates is not built (owner-only by design); the new login code has not been exercised against a real Google round-trip in automated tests (the gate is unit-tested with a mocked client).
 
 **Next:** run Gu on the tablet over Tailscale or the home network (add the new address to Supabase Redirect URLs); turn off new sign-ups; enter the four reference builds' mods for survivability calibration; update the roadmap's obsolete A3 gate.
+
+---
+## Session 021 — October 24-28, 2026 — Arcane catalog audit, tablet access, and the Trinity weapon incident
+
+**What was done:**
+- Tablet access: Tailscale on the PC and a Galaxy tablet, Tailscale Serve over HTTPS (tailnet-only), `.ts.net` allowed in Vite, Supabase Redirect URL added, Google sign-in verified from the tablet. Runbook added to `Docs/Login Setup.md`. Gotcha learned: Serve must target `http://[::1]:5173` because Vite listens on IPv6 loopback only.
+- Fixed the Home "Needs Attention" badge overlapping the tier chip (moved onto the card's top edge).
+- Patrick's tablet notes: Aura/Exilus chips in the Choose a Mod picker (built); arcane descriptions wrong (e.g. Arcane Battery on Rhino) -> full audit against WFCD, 0/161 matched; generated and Patrick ran two SQL files (153 descriptions replaced; Hot Shot/Truculence renamed; 5 missing arcanes added; 166 arcanes total; seven legacy WFCD-only names correctly excluded); companion A/B/C loadout copy requested and designed (not built); new-player multi-user account chosen as a staged real multi-user build (not started); screenshot import and hosting/PWA noted as later.
+- Corrected an earlier claim: the repo-root `.env` service key still allows read-only DB checks after the lockdown.
+- Incident: Trinity Prime's secondary weapon vanished. Root cause: an autosaving weapon box saved an emptied field as null and the sub-tab was hidden when no weapon was assigned. The value was unrecoverable (no history). Fix: weapon boxes commit only exact catalog weapons, weapon sub-tabs always visible with an Assign panel, explicit confirmed Remove, plus a `change_history` table with triggers (migration written; Patrick still to run it).
+- Pushed as `7059704` (arcanes + picker chips), `b67f1e8` (weapon safeguards + change history), plus earlier `81adca2`, `6c72c83`.
+
+**Bugs found:** hot-reload error mid-edit when the dev server picked up a half-applied JSX change (resolved immediately; lesson: apply multi-part edits to a running dev tree in one step).
+
+**Limits:** Aura/Exilus chips, the Attention badge, and the new Assign panel were not visually verified (Claude cannot sign in); change-history SQL not yet confirmed run; Trinity's old secondary must be re-picked by Patrick; companion loadouts, multi-user, Armory roster/tag improvements are unbuilt.
+
+**Next:** (1) companion A/B/C loadouts with copy; (2) multi-user stage 1 then onboarding; (3) Armory roster identification and manual weapon tags with most-used-first chips; plus Zid-An-Asheir, the A3 roadmap gate, and the four reference builds' mods.
