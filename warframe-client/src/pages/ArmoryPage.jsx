@@ -5,7 +5,8 @@ import Button from '../components/ui/Button';
 import ArmoryFrameRoster from '../components/ArmoryFrameRoster';
 import ArmoryPickerModal from '../components/ArmoryPickerModal';
 import AddWeaponToInventoryModal from '../components/AddWeaponToInventoryModal';
-import { getWeaponTags, getWeaponTagEntries, TAG_GROUPS } from '../utils/weaponTags';
+import WeaponTagEditor from '../components/WeaponTagEditor';
+import { getWeaponTagEntries, applyCustomTags, TAG_GROUPS } from '../utils/weaponTags';
 import { COLOR } from '../constants/theme';
 
 // ============================================================================
@@ -49,6 +50,16 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   // Tap-to-assign picker: { weapon } = choose a build for this weapon;
   // { frame, slot } = choose a weapon for this build's slot.
   const [picker, setPicker] = useState(null);
+  // Your saved tag changes (wf_user.weapon_tags), and which weapon's editor is open.
+  const [tagRows, setTagRows] = useState([]);
+  const [tagEditWeapon, setTagEditWeapon] = useState(null);
+
+  async function loadTagRows() {
+    const { data, error: tagError } = await wfUser.from('weapon_tags').select('weapon_id, tag, hidden');
+    // Missing table (migration not run yet) just means no custom tags.
+    if (tagError) console.error('Failed to load weapon tags:', tagError);
+    setTagRows(data || []);
+  }
 
   async function loadInventory() {
 
@@ -80,6 +91,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
 
     setCatalog((weaponRows || []).filter(w => w.weapon_type !== 'Incarnon Genesis'));
     setOwnedIds(new Set((invRows || []).map(r => r.weapon_id)));
+    await loadTagRows();
     setLoading(false);
   }
 
@@ -87,6 +99,8 @@ export default function ArmoryPage({ frames, refetchFrames }) {
     // Database synchronization: state updates occur after the awaited response.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadInventory();
+    // Runs once on mount; loadInventory is redefined each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const ownedWeapons = useMemo(
@@ -98,6 +112,37 @@ export default function ArmoryPage({ frames, refetchFrames }) {
     const column = SLOT_COLUMN[weapon.category];
     if (!column) return [];
     return frames.filter(f => f[column] === weapon.name);
+  }
+
+  const tagRowsByWeapon = useMemo(() => {
+    const map = new Map();
+    tagRows.forEach(r => map.set(r.weapon_id, [...(map.get(r.weapon_id) || []), r]));
+    return map;
+  }, [tagRows]);
+
+  // Automatic tags with your saved changes layered on top.
+  function tagEntriesFor(weapon) {
+    return applyCustomTags(getWeaponTagEntries(weapon), tagRowsByWeapon.get(weapon.weapon_id) || []);
+  }
+
+  // Custom tags already used anywhere, offered again when tagging another weapon.
+  const customVocabulary = useMemo(
+    () => [...new Set(tagRows.filter(r => !r.hidden).map(r => r.tag))].sort(),
+    [tagRows]
+  );
+
+  async function saveTagRow(weapon, tag, hidden) {
+    const { error: e } = await wfUser
+      .from('weapon_tags')
+      .upsert({ weapon_id: weapon.weapon_id, tag, hidden }, { onConflict: 'weapon_id,tag' });
+    if (e) { console.error('Failed to save tag:', e); window.alert('Could not save that tag. Has the weapon_tags migration been run?'); return; }
+    await loadTagRows();
+  }
+
+  async function deleteTagRow(weapon, tag) {
+    const { error: e } = await wfUser.from('weapon_tags').delete().eq('weapon_id', weapon.weapon_id).eq('tag', tag);
+    if (e) { console.error('Failed to remove tag:', e); return; }
+    await loadTagRows();
   }
 
   // Weapons in view before tag filtering: the chosen scope + category.
@@ -112,7 +157,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   const tagGroups = useMemo(() => {
     const counts = new Map();
     scopedWeapons.forEach(w => {
-      getWeaponTagEntries(w).forEach(({ tag, group }) => {
+      tagEntriesFor(w).forEach(({ tag, group }) => {
         const cur = counts.get(tag);
         if (cur) cur.count += 1;
         else counts.set(tag, { tag, group, count: 1 });
@@ -124,14 +169,16 @@ export default function ArmoryPage({ frames, refetchFrames }) {
         .filter(t => t.group === group)
         .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag)),
     })).filter(g => g.tags.length > 0);
-  }, [scopedWeapons]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scopedWeapons, tagRowsByWeapon]);
 
   const visibleWeapons = useMemo(() => {
     return scopedWeapons.filter(w => {
-      const tags = getWeaponTags(w);
+      const tags = tagEntriesFor(w).map(e => e.tag);
       return selectedTags.every(t => tags.includes(t));
     });
-  }, [scopedWeapons, selectedTags]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scopedWeapons, selectedTags, tagRowsByWeapon]);
 
   function toggleTag(tag) {
     setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
@@ -226,7 +273,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
 
       {error && <p className="text-red-400 mb-4">{error}</p>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(380px,460px)] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         <div>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex gap-2">
@@ -318,7 +365,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
               const allocations = getAllocations(weapon);
               const ruleApplies = weapon.category === 'Primary' || weapon.category === 'Melee';
               const ruleBroken = ruleApplies && allocations.length > 3;
-              const tags = getWeaponTags(weapon);
+              const tags = tagEntriesFor(weapon).map(e => e.tag);
 
               return (
                 <Panel
@@ -360,9 +407,8 @@ export default function ArmoryPage({ frames, refetchFrames }) {
                     )}
                   </div>
 
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {tags.map(tag => (
+                  <div className="flex flex-wrap items-center gap-1 mb-2">
+                    {tags.map(tag => (
                         <button
                           key={tag}
                           onClick={() => toggleTag(tag)}
@@ -376,8 +422,14 @@ export default function ArmoryPage({ frames, refetchFrames }) {
                           {tag}
                         </button>
                       ))}
-                    </div>
-                  )}
+                    <button
+                      onClick={() => setTagEditWeapon(weapon)}
+                      className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
+                      style={{ color: COLOR.mutedInk, border: `1px dashed ${COLOR.border}` }}
+                    >
+                      ✎ Edit tags
+                    </button>
+                  </div>
 
                   <p className="text-xs" style={{ color: COLOR.mutedInk }}>
                     {allocations.length === 0
@@ -396,13 +448,26 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           </div>
         </div>
 
-        <div>
+        <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
           <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: COLOR.mutedInk }}>
             Builds — drop a weapon on a slot
           </p>
           <ArmoryFrameRoster frames={frames} draggedWeapon={draggedWeapon} onDropWeapon={handleDropWeapon} onPickSlot={(frame, slot) => setPicker({ frame, slot })} />
         </div>
       </div>
+
+      {tagEditWeapon && (
+        <WeaponTagEditor
+          weapon={tagEditWeapon}
+          autoEntries={getWeaponTagEntries(tagEditWeapon)}
+          rows={tagRowsByWeapon.get(tagEditWeapon.weapon_id) || []}
+          vocabulary={customVocabulary}
+          onHideAuto={(tag, hide) => (hide ? saveTagRow(tagEditWeapon, tag, true) : deleteTagRow(tagEditWeapon, tag))}
+          onAddCustom={tag => saveTagRow(tagEditWeapon, tag, false)}
+          onRemoveCustom={tag => deleteTagRow(tagEditWeapon, tag)}
+          onClose={() => setTagEditWeapon(null)}
+        />
+      )}
 
       {picker && (() => {
         const cfg = pickerConfig();

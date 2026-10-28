@@ -11,7 +11,26 @@
 // criticalMultiplier is a plain multiplier, reloadTime is seconds, and for
 // melee fireRate is the attack speed.
 
-export const TAG_GROUPS = ['Type', 'Stats', 'Element', 'Special'];
+export const TAG_GROUPS = ['Type', 'Stats', 'Element', 'Special', 'Custom'];
+
+// Starting ideas offered when adding a custom tag; anything typed is allowed.
+export const SUGGESTED_CUSTOM_TAGS = [
+  'Punch Through', 'Hip-Fire', 'Crowd Control', 'Boss Killer', 'Setup Weapon',
+  'Ammo Hungry', 'Sniper Play', 'Close Range', 'Mid Range', 'Long Range Play',
+];
+
+// Layers the user's saved changes (wf_user.weapon_tags rows: { tag, hidden })
+// over the automatic entries: hidden rows switch an automatic tag off, the
+// rest are added as Custom tags.
+export function applyCustomTags(entries, rows = []) {
+  const hidden = new Set(rows.filter(r => r.hidden).map(r => r.tag));
+  const kept = entries.filter(e => !hidden.has(e.tag));
+  const have = new Set(kept.map(e => e.tag));
+  const custom = rows
+    .filter(r => !r.hidden && !have.has(r.tag))
+    .map(r => ({ tag: r.tag, group: 'Custom' }));
+  return [...kept, ...custom];
+}
 
 const ELEMENT_KEYS = {
   heat: 'Heat', cold: 'Cold', electricity: 'Electricity', toxin: 'Toxin',
