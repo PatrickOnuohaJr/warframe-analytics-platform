@@ -159,7 +159,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
 
       {error && <p className="text-red-400 mb-4">{error}</p>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(380px,460px)] gap-6">
         <div>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex gap-2">
@@ -287,7 +287,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
 
         <div>
           <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: COLOR.mutedInk }}>
-            Frame Roster — drop target
+            Builds — drop a weapon on a slot
           </p>
           <ArmoryFrameRoster frames={frames} draggedWeapon={draggedWeapon} onDropWeapon={handleDropWeapon} />
         </div>
