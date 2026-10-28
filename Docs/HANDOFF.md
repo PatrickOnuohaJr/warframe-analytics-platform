@@ -1,5 +1,18 @@
 # Handoff — Cephalon Gu
 
+## Update — later on October 28, 2026 (Session 022: Armory overhaul; supersedes the Armory item below)
+
+Pushed `main` is at `08bc43a` (plus a docs-only reconcile commit). Lint, 61 Node tests, 12 UI tests and build pass. Patrick re-picked Trinity's secondary himself. Still unconfirmed: whether `20261028_add_change_history.sql` was run.
+
+**Armory is done (open-queue item 3 shipped):**
+- Layout: builds are the main surface (5/8, card grid) on the left; the weapon shelf (3/8) is a sticky self-scrolling side panel on the right. `ArmoryFrameRoster.jsx` (cards + search), `ArmoryPickerModal.jsx` (tap-to-assign from a weapon's Assign button or a build slot), `ArmoryPage.jsx`.
+- Tags are **derived from `raw_json`** (`utils/weaponTags.js`: fire rate, reload, crit chance/damage, status, innate element, class, Beam = held trigger, Charge, Incarnon) with top-quartile thresholds; chips grouped, counted, most-used first, AND-stacked; My Armory / All Weapons switch (Incarnon filter works on unowned too).
+- **Manual tags:** `wf_user.weapon_tags` (run by Patrick, verified) with an Edit tags modal per weapon: add custom tags (own Custom group) or switch an automatic tag off (`hidden=true`). Punch Through has no data field, so it is manual-only. `applyCustomTags` is the merge function (tested).
+- Not done: portrait/narrow layout shows the weapon shelf first; no per-user tag vocabulary beyond what's saved.
+- Gotcha: Claude can't sign in, so UI changes are only verified by Patrick on the tablet; the tablet may need a refresh to pick up a push. The `claude` CLI is not installed on the PC; Remote Control to the tablet got working another way during this session.
+
+**Open queue now:** 1. companion A/B/C loadouts with copy; 2. multi-user stage 1 then onboarding; 3. smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds' mods, confirm change_history, drop the two arcane backup tables).
+
 ## Current pickup — October 28, 2026
 
 Pushed `main` is at `b67f1e8` (plus a docs-only wrap-up commit). Remote CI is green on every push through run #19 (`b67f1e8`). Lint, 53 Node tests, 12 vitest UI tests, and build pass locally. Read the October 23 section below first for the login/lockdown model, which still governs everything.

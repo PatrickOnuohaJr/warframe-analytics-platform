@@ -1448,3 +1448,21 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 **Limits:** Aura/Exilus chips, the Attention badge, and the new Assign panel were not visually verified (Claude cannot sign in); change-history SQL not yet confirmed run; Trinity's old secondary must be re-picked by Patrick; companion loadouts, multi-user, Armory roster/tag improvements are unbuilt.
 
 **Next:** (1) companion A/B/C loadouts with copy; (2) multi-user stage 1 then onboarding; (3) Armory roster identification and manual weapon tags with most-used-first chips; plus Zid-An-Asheir, the A3 roadmap gate, and the four reference builds' mods.
+
+---
+## Session 022 — October 28, 2026 — Armory overhaul: build cards, tap-to-assign, tags
+
+**What was done:**
+- Remote Control: Patrick wanted to dictate to Claude from the tablet while the game runs full-screen on the PC. The `claude` CLI is not installed on the PC (`claude rc` failed); Patrick got connected on the tablet another way, and the session ran from the tablet for the rest of the work.
+- Armory build roster rebuilt as full cards (frame name in school color, build title, school, three full-width Primary/Secondary/Melee lines, search by frame/title/school/weapon). Fixes "could not tell it was Trinity with the Ignis". Pushed as `701114a`.
+- Tap-to-assign (touch path; drag stays for mouse): an Assign button on each owned weapon card opens a searchable build list; tapping a build slot opens a searchable owned-weapon list for that category (`ArmoryPickerModal.jsx`). Pushed as `2d95172`.
+- Weapon tags rebuilt from Patrick's own list, derived from `wf_base.weapons.raw_json` (no DB needed): High/Low Fire Rate, Fast/Slow Reload, High Crit Chance, High Crit Damage, High Status Chance, melee Attack Speed and Long Range, innate element (+ the specific element), weapon class, Beam (held trigger), Charge, and Incarnon (63 weapons plus native ones). Chips are grouped (Type/Stats/Element/Special/Custom), show counts, sort most-used first, stack with AND, and every tag on a card is clickable. A My Armory / All Weapons switch lets Incarnons be filtered whether owned or not. Pushed as `a8f005f`. Thresholds are top-quartile judgment calls in `utils/weaponTags.js`.
+- Manual tag editing: `wf_user.weapon_tags` (`hidden=false` custom tag, `hidden=true` switches an automatic tag off), a per-weapon Edit tags modal, and a Custom filter group. Migration `20261028_add_weapon_tags.sql` run by Patrick and verified (table reachable, empty). Pushed as `77eed0b`.
+- Layout: builds take 5/8 as a card grid (Codex-style, less scrolling); the weapon shelf is a sticky, self-scrolling 3/8 side panel so weapons can be dragged onto any build. Pushed as `08bc43a`.
+
+**Bugs found:** Patrick's first tablet screenshots showed the old tag chips because the tab predated the tag push (refresh fixed it). A lint exhaustive-deps warning appeared and was silenced with a comment.
+
+**Limits:** Claude cannot sign in, so none of the Armory UI was visually verified by Claude; Patrick confirmed it looks good on the tablet. Punch Through is not in the weapon data, so it is a manual tag only. The `change_history` migration from Session 021 is still unconfirmed run. Narrow/portrait layout puts the weapon shelf first (not changed).
+
+**Next:** (1) companion A/B/C loadouts with copy; (2) multi-user stage 1 then onboarding; (3) Zid-An-Asheir description, A3 roadmap gate rewrite, four reference builds' mods, confirm change_history was run.
+
