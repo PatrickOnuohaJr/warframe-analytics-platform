@@ -48,6 +48,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   const [scope, setScope] = useState('owned');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showValence, setShowValence] = useState(false);
+  const [weaponQuery, setWeaponQuery] = useState('');
   const [draggedWeapon, setDraggedWeapon] = useState(null);
   // Tap-to-assign picker: { weapon } = choose a build for this weapon;
   // { frame, slot } = choose a weapon for this build's slot.
@@ -152,8 +153,12 @@ export default function ArmoryPage({ frames, refetchFrames }) {
     const pool = scope === 'owned'
       ? ownedWeapons
       : catalog.filter(w => w.weapon_type !== 'Zaw Component');
-    return pool.filter(w => categoryFilter === 'All' || w.category === categoryFilter);
-  }, [scope, ownedWeapons, catalog, categoryFilter]);
+    const q = weaponQuery.trim().toLowerCase();
+    return pool.filter(w =>
+      (categoryFilter === 'All' || w.category === categoryFilter) &&
+      (!q || `${w.name} ${w.weapon_type ?? ''}`.toLowerCase().includes(q))
+    );
+  }, [scope, ownedWeapons, catalog, categoryFilter, weaponQuery]);
 
   // Chips for every tag present in view, grouped, most-used first.
   const tagGroups = useMemo(() => {
@@ -323,6 +328,15 @@ export default function ArmoryPage({ frames, refetchFrames }) {
               </button>
             ))}
           </div>
+
+          <input
+            type="search"
+            value={weaponQuery}
+            onChange={e => setWeaponQuery(e.target.value)}
+            placeholder="Search weapons by name or type..."
+            className="w-full rounded-lg px-3 py-2 text-sm mb-4 outline-none"
+            style={{ background: COLOR.surface1, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
+          />
 
           {tagGroups.map(({ group, tags }) => (
             <div key={group} className="mb-3">
