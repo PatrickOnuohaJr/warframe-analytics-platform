@@ -1,4 +1,4 @@
-// Valence Fusion maths for Kuva / Tenet / Coda weapons (wiki.warframe.com
+// Valence Fusion maths for Coda weapons (also true of Kuva/Tenet per the wiki; wiki.warframe.com
 // /w/Valence_Fusion). Fusing two copies of the same weapon gives
 //   result = 1.1 x the HIGHER of the two bonuses, floored to 0.1%,
 // with anything >= 58% rounded up to 60% and 60% as the hard cap. The donor's

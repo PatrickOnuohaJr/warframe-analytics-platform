@@ -270,7 +270,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
         <h1 className="text-[22px] font-bold uppercase tracking-[0.08em] mb-1.5" style={{ color: COLOR.gold }}>
           Armory
         </h1>
-        <Button size="sm" variant="ghost" onClick={() => setShowValence(true)}>Valence forecast</Button>
+        <Button size="sm" variant="ghost" onClick={() => setShowValence(true)}>Coda Valence</Button>
       </div>
       <p className="text-xs mb-6" style={{ color: COLOR.mutedInk }}>
         Weapons you own, where they're allocated, and the 3-Weapon Rule at a glance. Drag a weapon onto a frame's slot to assign it.

@@ -27,7 +27,7 @@ function NumberField({ label, value, onChange, placeholder }) {
   );
 }
 
-// Forecasting calculator for Kuva / Tenet / Coda Valence Fusion. Pure maths
+// Forecasting calculator for Coda Valence Fusion (Coda weapons are cheap to farm with Live Heart Cells, so the framing is "what to aim for", not "what is worth buying"; Kuva and Tenet are not covered). Pure maths
 // in utils/valence.js; this is only the form and the readout.
 export default function ValenceCalculator({ onClose }) {
   const [baseText, setBaseText] = useState('');
@@ -58,7 +58,7 @@ export default function ValenceCalculator({ onClose }) {
   return (
     <ModalShell onClose={onClose} maxWidth="max-w-xl" accent={COLOR.gold}>
       <h3 className="text-sm font-bold uppercase tracking-widest mb-1" style={{ color: COLOR.gold }}>
-        Valence forecast
+        Coda Valence forecast
       </h3>
       <p className="text-xs mb-4" style={{ color: COLOR.mutedInk }}>
         Each fusion gives 1.1 &times; the higher of the two bonuses, capped at 60% (58% or more rounds up to 60%).
@@ -99,7 +99,7 @@ export default function ValenceCalculator({ onClose }) {
           ) : (
             <>
               A {fmt(donor)} donor is no better than your {fmt(base)}: it gives <strong>{fmt(whatIf.after)}</strong>,
-              exactly what any weak donor would. Buy it only if it's cheap.
+              exactly what any weak donor would, so it only matters as one more fusion.
             </>
           )}
         </div>
