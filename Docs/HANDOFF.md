@@ -2,7 +2,7 @@
 
 ## Update — later on October 28, 2026 (Session 022: Armory overhaul; supersedes the Armory item below)
 
-Pushed `main` is at `08bc43a` (plus a docs-only reconcile commit). Lint, 61 Node tests, 12 UI tests and build pass. Patrick re-picked Trinity's secondary himself. Still unconfirmed: whether `20261028_add_change_history.sql` was run.
+Pushed `main` is at `08bc43a` (plus a docs-only reconcile commit `c81a2d4`). Remote CI is green on every push this session (runs #21-#26). Lint, 61 Node tests, 12 UI tests and build pass. Patrick re-picked Trinity's secondary himself. `20261028_add_change_history.sql` **was run** (verified read-only: `wf_user.change_history` exists and had already logged two `my_frames` updates).
 
 **Armory is done (open-queue item 3 shipped):**
 - Layout: builds are the main surface (5/8, card grid) on the left; the weapon shelf (3/8) is a sticky self-scrolling side panel on the right. `ArmoryFrameRoster.jsx` (cards + search), `ArmoryPickerModal.jsx` (tap-to-assign from a weapon's Assign button or a build slot), `ArmoryPage.jsx`.
@@ -11,7 +11,7 @@ Pushed `main` is at `08bc43a` (plus a docs-only reconcile commit). Lint, 61 Node
 - Not done: portrait/narrow layout shows the weapon shelf first; no per-user tag vocabulary beyond what's saved.
 - Gotcha: Claude can't sign in, so UI changes are only verified by Patrick on the tablet; the tablet may need a refresh to pick up a push. The `claude` CLI is not installed on the PC; Remote Control to the tablet got working another way during this session.
 
-**Open queue now:** 1. companion A/B/C loadouts with copy; 2. multi-user stage 1 then onboarding; 3. smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds' mods, confirm change_history, drop the two arcane backup tables).
+**Open queue now:** 1. companion A/B/C loadouts with copy; 2. multi-user stage 1 then onboarding; 3. smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds' mods, drop the two arcane backup tables).
 
 ## Current pickup — October 28, 2026
 
@@ -26,7 +26,7 @@ Pushed `main` is at `b67f1e8` (plus a docs-only wrap-up commit). Remote CI is gr
 
 **Tablet access (done):** Tailscale on PC (`theblackprime`) and tablet; `tailscale serve --bg "http://[::1]:5173"` publishes Gu at `https://theblackprime.tail41a2d5.ts.net` inside the tailnet only (the dev server listens on `::1` only, so Serve must target `[::1]`, not `127.0.0.1`). `vite.config.js` allows `.ts.net` hosts. That address is in Supabase Redirect URLs. Patrick now plays on the PC while working in Gu on the tablet. PC and dev server must stay on. Runbook: `Docs/Login Setup.md`. Phone/tablet layout fixes not yet requested beyond the items below.
 
-**Incident: Trinity Prime lost her secondary weapon (Oct 28, from the tablet).** Cause: the Loadout tab's autosaving weapon box saved an emptied field as `null`, which also hid the Secondary sub-tab (it was only shown when a weapon was assigned), so it could not be refilled there. The old value is **unrecoverable** (no history existed); Patrick must re-pick it. Fix shipped (`b67f1e8`): weapon boxes only commit an exact catalog weapon (`utils/weaponAssign.js`), all three weapon sub-tabs always show ("+ Secondary" opens `AssignWeaponPanel` with an explicit Assign button), and removal is an explicit confirmed "Remove weapon". Also written: `DB/Migrations/20261028_add_change_history.sql` (`wf_user.change_history` + AFTER UPDATE/DELETE triggers on build data; owner-only) — **Patrick still needs to run it; not confirmed run.** Recovery query is in the file header. Weapons can also be assigned by dragging in the Armory (mouse; touch drag is unreliable).
+**Incident: Trinity Prime lost her secondary weapon (Oct 28, from the tablet).** Cause: the Loadout tab's autosaving weapon box saved an emptied field as `null`, which also hid the Secondary sub-tab (it was only shown when a weapon was assigned), so it could not be refilled there. The old value is **unrecoverable** (no history existed); Patrick must re-pick it. Fix shipped (`b67f1e8`): weapon boxes only commit an exact catalog weapon (`utils/weaponAssign.js`), all three weapon sub-tabs always show ("+ Secondary" opens `AssignWeaponPanel` with an explicit Assign button), and removal is an explicit confirmed "Remove weapon". Also written: `DB/Migrations/20261028_add_change_history.sql` (`wf_user.change_history` + AFTER UPDATE/DELETE triggers on build data; owner-only) — **Run by Patrick afterwards and verified live.** Recovery query is in the file header. Weapons can also be assigned by dragging in the Armory (mouse; touch drag is unreliable).
 
 Also shipped since Oct 23: **Aura and Exilus chips** in the Choose a Mod picker (`LoadoutSlotPickerModal.jsx`; Aura lists owned Aura mods dimmed unless picking for the Aura slot; not visually verified); Home "Needs Attention" badge moved onto the card's top edge so it no longer covers the tier chip (not visually verified).
 

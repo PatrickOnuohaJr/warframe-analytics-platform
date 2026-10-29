@@ -1462,7 +1462,7 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 
 **Bugs found:** Patrick's first tablet screenshots showed the old tag chips because the tab predated the tag push (refresh fixed it). A lint exhaustive-deps warning appeared and was silenced with a comment.
 
-**Limits:** Claude cannot sign in, so none of the Armory UI was visually verified by Claude; Patrick confirmed it looks good on the tablet. Punch Through is not in the weapon data, so it is a manual tag only. The `change_history` migration from Session 021 is still unconfirmed run. Narrow/portrait layout puts the weapon shelf first (not changed).
+**Limits:** Claude cannot sign in, so none of the Armory UI was visually verified by Claude; Patrick confirmed it looks good on the tablet. Punch Through is not in the weapon data, so it is a manual tag only. Afterwards verified read-only: remote CI green on every push (runs #21-#26) and the Session 021 `change_history` migration was run (the table had logged two updates). Narrow/portrait layout puts the weapon shelf first (not changed).
 
-**Next:** (1) companion A/B/C loadouts with copy; (2) multi-user stage 1 then onboarding; (3) Zid-An-Asheir description, A3 roadmap gate rewrite, four reference builds' mods, confirm change_history was run.
+**Next:** (1) companion A/B/C loadouts with copy; (2) multi-user stage 1 then onboarding; (3) Zid-An-Asheir description, A3 roadmap gate rewrite, four reference builds' mods.
 
