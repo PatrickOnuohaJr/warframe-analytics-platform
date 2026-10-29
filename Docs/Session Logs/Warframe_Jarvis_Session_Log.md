@@ -1466,3 +1466,30 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 
 **Next:** (1) companion A/B/C loadouts with copy; (2) multi-user stage 1 then onboarding; (3) Zid-An-Asheir description, A3 roadmap gate rewrite, four reference builds' mods.
 
+---
+## Session 023 — October 28-29, 2026 — Companion configs, Coda Valence, Armory bulk tools, Codex filters
+
+**Companion A/B/C loadouts**
+- `wf_user.loadout_slots` and `loadout_meta` gained `config_slot` ('A'/'B'/'C', default 'A'); the unique/upsert key became config-aware (migration `20261029_add_loadout_config_slot.sql`, a breaking cut run right after the push; verified: both new constraints exist, all 51 existing rows are config A). `ModsLoadoutTab` upserts on the new key.
+- Companion tab: Config A/B/C buttons per piece (identity shared across configs); "Copy from..." replaces the active config from any build's/config's loadout of the same piece; "Copy to other builds..." pushes the active config onto a chosen config of many builds at once (search a companion's name + Select all shown). Both skip mods the target companion can't take (`utils/companionCopy.js`: ROBOTIC/Sentinel/BEAST/breed buckets/named exclusives/Claws family; sentinel weapons take none), list skips per build, and warn which builds already have mods in the target config. Shared writer: `lib/companionCopyApply.js`.
+- Config names: `loadout_meta.config_name` (migration `20261029_add_loadout_config_name.sql`, run by Patrick and confirmed), a Name box per config, names on the tabs, carried by both copies.
+
+**Coda Valence forecast (Armory header button)**
+- Wiki rule: result = 1.1 x the higher bonus, floored to 0.1%, >= 58% rounds to 60%, cap 60% (`utils/valence.js`, integer tenths). A weaker donor changes nothing. The panel gives fusions to 60%, the donor what-if, and a "what to hunt for" table (1 fusion = 52.8%+, 2 = 48%, ... 9 = 24.9%). Scoped to Coda (Patrick: Coda is cheap via Live Heart Cells; Kuva/Tenet are not).
+
+**Armory additions**
+- Search bar on the weapon shelf; Kuva/Tenet/Coda origin tags; green Owned badge; Incarnon tag verified (67 weapons, all guns).
+- Bulk assign (tick many builds in the Assign picker), a x to clear a slot, drag a filled slot to another build (move, swap if filled) or to the shelf (remove), and an Undo button (last 20 changes, until reload).
+
+**Other**
+- Codex: the Fully Slotted/Planned/Conceptual dropdown became toggle buttons with counts, like the archetype ones.
+- Mods: added a Companion category to the Mods page and the Add Mods picker so companion mods can be marked owned (none were: 0/164). Owned vs catalog: Warframe 317/415, Primary 175/295, Secondary 38/145, Melee 27/227.
+- Not tracked by design: Archwing, Arch-Gun/Melee, Necramech, K-Drive, Railjack, Parazon, Plexus mods. WFCD "Mod Set Mod", Transmutation Core, Peculiar and Tektolyst entries are not real slottable mods.
+
+**Commits pushed:** `dce3511`, `5779090`, `ba9b845`, `3d441e9`, `1f2ca55`, `5ecddb6`, `ba46de5`, `b8f1d86`, `dbce9f4`, `5809f10`. Remote CI green on runs #30-#37 (public run list). Lint, 71 Node tests, 12 UI tests, build pass.
+
+**Bugs found:** two of my own: a regex written in a shell heredoc lost its backslash (caught by the new test); a CRLF mismatch broke a scripted edit (switched to the Edit tool).
+
+**Limits:** Claude cannot sign in, so none of the session's UI was visually verified by Claude. The Companion A/B/C test is still pending; Patrick has not yet imported companion mods. Not confirmed: melee Incarnons (none tagged; catalog may not mark them), Kuva list (21, game has more), low Secondary/Melee owned counts.
+
+**Next:** (1) Patrick: import companion mods, run the Companion test; (2) Warframe 3->6 configs (reuse `config_slot`); (3) multi-user stage 1 then onboarding; (4) Zid-An-Asheir, A3 roadmap gate, four reference builds' mods, drop the two arcane backup tables.
