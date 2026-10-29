@@ -10,8 +10,9 @@ import { cleanValue } from '../utils/shardHelpers';
 import { wfUser } from '../lib/supabase';
 import useDebouncedField from '../hooks/useDebouncedField';
 
-// Companions have 10 numbered mod slots (Patrick, Oct 29 2026; the earlier 8
-// was wrong). Companion Weapons are still 8 plus Posture -- unconfirmed.
+// Numbered slots (Patrick, Oct 29 2026): every companion -- Sentinel or beast --
+// has 10, laid out as two rows of 5. The Companion Weapon has 8 plus a Posture
+// slot centred above them (9 total).
 const SLOTS_BY_TYPE = {
   Companion: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
   CompanionWeapon: ['1', '2', '3', '4', '5', '6', '7', '8'],
@@ -108,6 +109,7 @@ export default function CompanionEquipmentSection({
         accent={accent}
         onOpenPicker={() => setPicker({ slotPosition: pos, slot })}
         onSetPolarity={polarity => onSetSlot(pos, { mod_id: slot.mod_id, riven_id: null, polarity })}
+        onClear={() => onSetSlot(pos, { mod_id: null, riven_id: null, polarity: slot.polarity })}
         onSetRank={nextRank => onSetRank(item.mod_id, nextRank)}
       />
     );
@@ -125,6 +127,7 @@ export default function CompanionEquipmentSection({
       accent={accent}
       onOpenPicker={() => setPicker({ slotPosition: 'posture', slot: postureSlot })}
       onSetPolarity={polarity => onSetSlot('posture', { mod_id: postureSlot.mod_id, riven_id: null, polarity })}
+      onClear={() => onSetSlot('posture', { mod_id: null, riven_id: null, polarity: postureSlot.polarity })}
       onSetRank={nextRank => onSetRank(postureMod.mod_id, nextRank)}
     />
   );
@@ -179,11 +182,10 @@ export default function CompanionEquipmentSection({
 
       {isWeaponPiece ? (
         <div className="mb-3">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            <div className="hidden sm:block" />
-            {postureBox}
-            <div className="hidden sm:block" />
-            <div className="hidden sm:block" />
+          {/* Posture sits centred over slots 2 and 3: one column wide (4 columns,
+              gap-3) and centred, so it lands between them. */}
+          <div className="flex justify-center mb-3">
+            <div className="w-1/2 sm:w-[calc((100%-2.25rem)/4)]">{postureBox}</div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {numberedBoxes}

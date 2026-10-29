@@ -57,3 +57,12 @@ test('planCopy copies fits, empties and reports skips, keeps polarity', () => {
   assert.deepEqual(copy.map(r => r.polarity), ['madurai', 'naramon', null, 'vazarin']);
   assert.deepEqual(skipped.map(s => s.name), ['Wyrm Only', 'Maul']);
 });
+
+test('every companion has 10 numbered slots; a weapon has 8', () => {
+  const modsById = new Map([[2, mod('COMPANION', 'Any')]]);
+  const source = [{ slot_position: '10', mod_id: 2, polarity: null }];
+  assert.deepEqual(planCopy(source, modsById, 'Companion', huras).copy.map(r => r.slot_position), ['10']);
+  assert.deepEqual(planCopy(source, modsById, 'Companion', nautilus).copy.map(r => r.slot_position), ['10']);
+  const claws = { name: 'Kubrow Claws', cls: 'claws' };
+  assert.equal(planCopy(source, modsById, 'CompanionWeapon', claws).skipped.length, 1);
+});

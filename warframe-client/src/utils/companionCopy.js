@@ -55,6 +55,12 @@ export function isModCompatible(mod, equipmentType, target) {
   return compat === 'beast' || compat === bucket || compat === String(target.name).trim().toLowerCase();
 }
 
+// Numbered slots a target has: any companion (Sentinel or beast) 10, any
+// Companion Weapon 8 plus Posture.
+export function numberedSlotCount(equipmentType) {
+  return equipmentType === 'Companion' ? 10 : 8;
+}
+
 // source: [{ slot_position, mod_id, polarity }] rows of one config.
 // Returns { copy: rows to write, skipped: [{ slot_position, mod_id, name }] }.
 // A slot with no mod still copies (polarity from forma is part of the build);
@@ -64,7 +70,16 @@ export function planCopy(source, modsById, equipmentType, target) {
   const copy = [];
   const skipped = [];
 
+  const slotCount = numberedSlotCount(equipmentType);
+
   for (const row of source) {
+    // A numbered slot the target doesn't have (a companion's 9/10 onto a Companion Weapon -- never happens in practice).
+    const n = Number(row.slot_position);
+    if (Number.isInteger(n) && n > slotCount) {
+      const lost = row.mod_id ? modsById.get(row.mod_id) : null;
+      if (lost) skipped.push({ slot_position: row.slot_position, mod_id: row.mod_id, name: `${lost.name} (no slot ${n})` });
+      continue;
+    }
     const mod = row.mod_id ? modsById.get(row.mod_id) : null;
     if (mod && isModCompatible(mod, equipmentType, target) !== true) {
       skipped.push({ slot_position: row.slot_position, mod_id: row.mod_id, name: mod.name });

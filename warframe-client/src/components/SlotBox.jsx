@@ -11,7 +11,7 @@ import { COLOR } from '../constants/theme';
 // onSetRank here takes just the next rank -- the caller pre-binds which
 // id/setter (real mod vs Riven) it writes to, so this component doesn't
 // need to know the difference.
-export default function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRank, cost, discounted, accent, description }) {
+export default function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPolarity, onSetRank, onClear, cost, discounted, accent, description }) {
   const cap = mod?.max_rank ?? 0;
 
   return (
@@ -23,8 +23,24 @@ export default function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPol
       <div className="flex items-center justify-between mb-1">
         <span className="text-[9px] uppercase tracking-widest" style={{ color: COLOR.mutedInk }}>{label}</span>
         {mod && (
-          <span className="text-xs font-bold" style={{ color: discounted ? COLOR.success : COLOR.mutedInk }}>
-            {cost}
+          <span className="flex items-center gap-2">
+            <span className="text-xs font-bold" style={{ color: discounted ? COLOR.success : COLOR.mutedInk }}>
+              {cost}
+            </span>
+            {/* One-tap clear, so emptying a slot doesn't mean opening the
+                picker and choosing Clear. Keeps the slot's polarity. */}
+            {onClear && (
+              <button
+                type="button"
+                aria-label={`Remove ${mod.name} from this slot`}
+                title="Remove from slot"
+                onClick={e => { e.stopPropagation(); onClear(); }}
+                className="px-1 text-sm leading-none rounded hover:bg-black/20"
+                style={{ color: COLOR.mutedInk }}
+              >
+                &times;
+              </button>
+            )}
           </span>
         )}
       </div>

@@ -413,6 +413,7 @@ export default function LoadoutEquipmentSection({
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'aura', slot: auraSlot })}
             onSetPolarity={polarity => onSetSlot('aura', { mod_id: auraSlot.mod_id, riven_id: null, polarity })}
+            onClear={() => onSetSlot('aura', { mod_id: null, riven_id: null, polarity: auraSlot.polarity })}
             onSetRank={nextRank => onSetRank(auraMod.mod_id, nextRank)}
           />
         );
@@ -429,6 +430,7 @@ export default function LoadoutEquipmentSection({
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'stance', slot: stanceSlot })}
             onSetPolarity={polarity => onSetSlot('stance', { mod_id: stanceSlot.mod_id, riven_id: null, polarity })}
+            onClear={() => onSetSlot('stance', { mod_id: null, riven_id: null, polarity: stanceSlot.polarity })}
             onSetRank={nextRank => onSetRank(stanceMod.mod_id, nextRank)}
           />
         );
@@ -445,6 +447,7 @@ export default function LoadoutEquipmentSection({
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'exilus', slot: exilusSlot })}
             onSetPolarity={polarity => onSetSlot('exilus', { mod_id: exilusSlot.mod_id, riven_id: null, polarity })}
+            onClear={() => onSetSlot('exilus', { mod_id: null, riven_id: null, polarity: exilusSlot.polarity })}
             onSetRank={nextRank => onSetRank(exilusMod.mod_id, nextRank)}
           />
         );
@@ -468,6 +471,7 @@ export default function LoadoutEquipmentSection({
               accent={accent}
               onOpenPicker={() => setPicker({ slotPosition: pos, slot, allowRiven: true })}
               onSetPolarity={polarity => onSetSlot(pos, { mod_id: slot.mod_id, riven_id: slot.riven_id, polarity })}
+              onClear={() => onSetSlot(pos, { mod_id: null, riven_id: null, polarity: slot.polarity })}
               onSetRank={nextRank => setRankForItem(item, nextRank)}
             />
           );
