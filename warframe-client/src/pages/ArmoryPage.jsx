@@ -50,6 +50,9 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   const [showValence, setShowValence] = useState(false);
   const [weaponQuery, setWeaponQuery] = useState('');
   const [draggedWeapon, setDraggedWeapon] = useState(null);
+  // Set while a weapon is dragged OUT of a build's slot (not from the shelf):
+  // { frameId, column, name, category }. Dropping it on the shelf removes it.
+  const [dragSource, setDragSource] = useState(null);
   // Tap-to-assign picker: { weapon } = choose a build for this weapon;
   // { frame, slot } = choose a weapon for this build's slot.
   const [picker, setPicker] = useState(null);
@@ -213,12 +216,19 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   }
 
   async function handleDropWeapon(myFrameId, column, weaponName) {
+    // A weapon dragged out of another build's slot MOVES: that slot is
+    // emptied, or takes this slot's old weapon if there was one (a swap).
+    // Dragging from the shelf, or onto its own slot, just assigns.
+    const source = dragSource && dragSource.frameId !== myFrameId ? dragSource : null;
+    const previous = frames.find(f => f.my_frame_id === myFrameId)?.[column] ?? null;
+
     const { error: updateError } = await wfUser
       .from('my_frames')
       .update({ [column]: weaponName })
       .eq('my_frame_id', myFrameId);
 
     setDraggedWeapon(null);
+    setDragSource(null);
     setPicker(null);
 
     if (updateError) {
@@ -226,6 +236,55 @@ export default function ArmoryPage({ frames, refetchFrames }) {
       return;
     }
 
+    if (source && source.column === column) {
+      const { error: sourceError } = await wfUser
+        .from('my_frames')
+        .update({ [source.column]: previous })
+        .eq('my_frame_id', source.frameId);
+      if (sourceError) console.error('Failed to update the source slot:', sourceError);
+    }
+
+    refetchFrames();
+  }
+
+  // Empties one build's slot (the x button, or dragging it onto the shelf).
+  async function handleClearSlot(myFrameId, column) {
+    setDraggedWeapon(null);
+    setDragSource(null);
+    const { error: updateError } = await wfUser
+      .from('my_frames')
+      .update({ [column]: null })
+      .eq('my_frame_id', myFrameId);
+
+    if (updateError) {
+      console.error('Failed to clear weapon slot:', updateError);
+      return;
+    }
+    refetchFrames();
+  }
+
+  // One weapon onto many builds in a single update. The 3-Weapon Rule only
+  // binds primaries and melees, so warn (don't block) if this would push one
+  // past three builds.
+  async function handleBulkAssign(weapon, frameIds) {
+    const column = SLOT_COLUMN[weapon.category];
+    const already = new Set(getAllocations(weapon).map(f => f.my_frame_id));
+    const total = new Set([...already, ...frameIds]).size;
+    const ruleApplies = weapon.category === 'Primary' || weapon.category === 'Melee';
+    if (ruleApplies && total > 3 && !window.confirm(
+      `That puts ${weapon.name} on ${total} builds, past the 3-Weapon Rule. Assign anyway?`
+    )) return;
+
+    const { error: updateError } = await wfUser
+      .from('my_frames')
+      .update({ [column]: weapon.name })
+      .in('my_frame_id', frameIds);
+
+    setPicker(null);
+    if (updateError) {
+      console.error('Failed to bulk-assign weapon:', updateError);
+      return;
+    }
     refetchFrames();
   }
 
@@ -238,7 +297,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
       const column = SLOT_COLUMN[w.category];
       return {
         title: `Assign ${w.name}`,
-        subtitle: `Pick the build that should carry this ${w.category.toLowerCase()} weapon.`,
+        subtitle: `Tick every build that should carry this ${w.category.toLowerCase()} weapon, then confirm.`,
         items: frames.map(f => ({
           id: f.my_frame_id,
           label: f.display_name || f.warframe_name,
@@ -246,6 +305,9 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           note: f[column] === w.name ? 'Already equipped' : `Now: ${f[column] || 'empty'}`,
         })),
         onPick: id => handleDropWeapon(id, column, w.name),
+        // Ticking several builds assigns them all at once (Epitaph Prime on 14 builds).
+        onPickMany: ids => handleBulkAssign(w, ids),
+        confirmLabel: 'Assign to builds',
       };
     }
 
@@ -287,7 +349,21 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           on the right and stays in view while the builds scroll, so a weapon can
           be dragged onto any build without scrolling back. */}
       <div className="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-6">
-        <div className="lg:order-2 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+        <div
+          className="lg:order-2 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto rounded-xl"
+          onDragOver={e => { if (dragSource) e.preventDefault(); }}
+          onDrop={e => {
+            if (!dragSource) return;
+            e.preventDefault();
+            handleClearSlot(dragSource.frameId, dragSource.column);
+          }}
+          style={dragSource ? { outline: `2px dashed ${COLOR.gold}`, outlineOffset: 4 } : undefined}
+        >
+          {dragSource && (
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: COLOR.gold }}>
+              Drop here to remove {dragSource.name} from that build
+            </p>
+          )}
 
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex gap-2">
@@ -485,7 +561,15 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: COLOR.mutedInk }}>
             Builds — drop a weapon on a slot
           </p>
-          <ArmoryFrameRoster frames={frames} draggedWeapon={draggedWeapon} onDropWeapon={handleDropWeapon} onPickSlot={(frame, slot) => setPicker({ frame, slot })} />
+          <ArmoryFrameRoster
+            frames={frames}
+            draggedWeapon={draggedWeapon}
+            onDropWeapon={handleDropWeapon}
+            onPickSlot={(frame, slot) => setPicker({ frame, slot })}
+            onClearSlot={(frame, slot) => handleClearSlot(frame.my_frame_id, slot.column)}
+            onDragSlot={src => { setDragSource(src); setDraggedWeapon({ name: src.name, category: src.category }); }}
+            onDragSlotEnd={() => { setDragSource(null); setDraggedWeapon(null); }}
+          />
         </div>
       </div>
 

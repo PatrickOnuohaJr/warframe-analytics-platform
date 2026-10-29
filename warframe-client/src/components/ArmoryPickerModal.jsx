@@ -7,8 +7,20 @@ import Button from './ui/Button';
 // is the touch path: pick the weapon from a build's slot, or pick the build
 // from a weapon card. One searchable list serves both directions.
 // items: [{ id, label, sublabel?, color?, note? }]
-export default function ArmoryPickerModal({ title, subtitle, items, onPick, onClose }) {
+export default function ArmoryPickerModal({ title, subtitle, items, onPick, onPickMany, confirmLabel, onClose }) {
   const [query, setQuery] = useState('');
+  // With onPickMany the list becomes checkboxes (bulk assign): tick any number
+  // of builds, then one button applies them all. Without it a tap picks one.
+  const multi = Boolean(onPickMany);
+  const [selected, setSelected] = useState(new Set());
+
+  function toggle(id) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -35,18 +47,31 @@ export default function ArmoryPickerModal({ title, subtitle, items, onPick, onCl
         style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.ink }}
       />
 
-      <div className="space-y-1.5 mb-4">
+      {multi && (
+        <div className="flex gap-3 mb-2 text-xs">
+          <button onClick={() => setSelected(new Set([...selected, ...visible.map(i => i.id)]))} style={{ color: COLOR.gold }}>
+            Select all shown ({visible.length})
+          </button>
+          <button onClick={() => setSelected(new Set())} style={{ color: COLOR.mutedInk }}>Clear</button>
+        </div>
+      )}
+
+      <div className="space-y-1.5 mb-4 max-h-[50vh] overflow-y-auto">
         {visible.length === 0 && (
           <p className="text-sm" style={{ color: COLOR.mutedInk }}>Nothing matches.</p>
         )}
         {visible.map(item => (
           <button
             key={item.id}
-            onClick={() => onPick(item.id)}
+            onClick={() => (multi ? toggle(item.id) : onPick(item.id))}
             className="w-full text-left rounded-lg px-3 py-2.5 transition-colors"
-            style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}` }}
+            style={{
+              background: multi && selected.has(item.id) ? `${COLOR.gold}18` : COLOR.surface2,
+              border: `1px solid ${multi && selected.has(item.id) ? COLOR.gold : COLOR.border}`,
+            }}
           >
             <span className="block text-sm font-bold" style={{ color: item.color ?? COLOR.ink }}>
+              {multi && <span className="mr-2">{selected.has(item.id) ? '☑' : '☐'}</span>}
               {item.label}
             </span>
             {item.sublabel && (
@@ -61,7 +86,14 @@ export default function ArmoryPickerModal({ title, subtitle, items, onPick, onCl
         ))}
       </div>
 
-      <Button variant="ghost" onClick={onClose}>Cancel</Button>
+      <div className="flex gap-2">
+        {multi && (
+          <Button disabled={selected.size === 0} onClick={() => onPickMany([...selected])}>
+            {confirmLabel ?? 'Assign'} ({selected.size})
+          </Button>
+        )}
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+      </div>
     </ModalShell>
   );
 }

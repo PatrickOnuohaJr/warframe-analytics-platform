@@ -24,9 +24,12 @@ function searchText(frame) {
 // Drop-target roster for Armory's drag/drop reassignment. Each build is a
 // full card (frame name, build title, school) with three full-width weapon
 // slots, so you can tell which build is which and read the whole weapon name
-// without hovering. A search box narrows by frame, build title, school or
+// without hovering. A filled slot can be dragged onto another build's slot
+// (moves it there, swapping if that slot was filled) or off to the weapon shelf (removes it), or cleared with
+// its x button -- the touch path.
+//  A search box narrows by frame, build title, school or
 // weapon -- typing "ignis" lists every build carrying one.
-export default function ArmoryFrameRoster({ frames, draggedWeapon, onDropWeapon, onPickSlot }) {
+export default function ArmoryFrameRoster({ frames, draggedWeapon, onDropWeapon, onPickSlot, onClearSlot, onDragSlot, onDragSlotEnd }) {
   const [query, setQuery] = useState('');
 
   const visibleFrames = useMemo(() => {
@@ -86,6 +89,9 @@ export default function ArmoryFrameRoster({ frames, draggedWeapon, onDropWeapon,
                       key={slot.key}
                       role="button"
                       tabIndex={0}
+                      draggable={Boolean(current)}
+                      onDragStart={() => current && onDragSlot({ frameId: frame.my_frame_id, column: slot.column, name: current, category: slot.label })}
+                      onDragEnd={onDragSlotEnd}
                       onClick={() => onPickSlot(frame, slot)}
                       onKeyDown={e => { if (e.key === 'Enter') onPickSlot(frame, slot); }}
                       onDragOver={e => { if (isCompatible) e.preventDefault(); }}
@@ -106,9 +112,20 @@ export default function ArmoryFrameRoster({ frames, draggedWeapon, onDropWeapon,
                       >
                         {slot.label}
                       </span>
-                      <span className="text-sm break-words" style={{ color: current ? COLOR.ink : COLOR.agedInk }}>
+                      <span className="text-sm break-words flex-1" style={{ color: current ? COLOR.ink : COLOR.agedInk }}>
                         {current || 'Empty'}
                       </span>
+                      {current && (
+                        <button
+                          type="button"
+                          aria-label={`Remove ${current} from this build`}
+                          onClick={e => { e.stopPropagation(); onClearSlot(frame, slot); }}
+                          className="shrink-0 px-1.5 text-sm leading-none rounded"
+                          style={{ color: COLOR.mutedInk }}
+                        >
+                          &times;
+                        </button>
+                      )}
                     </div>
                   );
                 })}
