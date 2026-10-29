@@ -156,7 +156,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
       .from('loadout_slots')
       .upsert(
         { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, slot_position: slotPosition, mod_id, riven_id, polarity },
-        { onConflict: 'my_frame_id,equipment_type,slot_position' }
+        { onConflict: 'my_frame_id,equipment_type,slot_position,config_slot' }
       );
 
     if (upsertError) console.error('Failed to save slot:', upsertError);
@@ -175,7 +175,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
       .from('loadout_meta')
       .upsert(
         { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, ...next },
-        { onConflict: 'my_frame_id,equipment_type' }
+        { onConflict: 'my_frame_id,equipment_type,config_slot' }
       );
 
     if (upsertError) console.error('Failed to save loadout meta:', upsertError);

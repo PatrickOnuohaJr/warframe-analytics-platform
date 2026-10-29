@@ -2,10 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { wfBase, wfUser } from '../lib/supabase';
 import { fetchAll } from '../lib/fetchAll';
 import CompanionEquipmentSection from './CompanionEquipmentSection';
+import CompanionCopyModal from './CompanionCopyModal';
+import Button from './ui/Button';
 import useCompanions from '../hooks/useCompanions';
 import useCompanionWeapons from '../hooks/useCompanionWeapons';
 import { COLOR } from '../constants/theme';
 import { CLAWS_COMPAT_NAMES } from '../utils/modMeta';
+import { CONFIG_SLOTS } from '../utils/companionCopy';
 
 // ============================================================================
 // CompanionTab.jsx (Companion tab -- Companion / Companion Weapon)
@@ -37,6 +40,12 @@ import { CLAWS_COMPAT_NAMES } from '../utils/modMeta';
 // Precept mods like Vacuum/Guardian/Sacrifice just occupy the Companion's
 // regular numbered slots), so the Companion piece has no special slot at
 // all -- just 8 numbered slots, same capacity math as Primary/Secondary.
+//
+// Each piece has three mod configs (A/B/C, loadout_slots.config_slot). The
+// identity (which companion) is shared across them; only the mods, slot
+// polarities, forma count and catalyst differ. "Copy from..." replaces the
+// active config with another build's/config's loadout, skipping mods the
+// target companion can't take (see utils/companionCopy.js).
 // ============================================================================
 
 const EQUIPMENT_TYPES = ['Companion', 'CompanionWeapon'];
@@ -58,6 +67,9 @@ export default function CompanionTab({ frame, color, onSaved }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeEquipment, setActiveEquipment] = useState('Companion');
+  const [activeConfig, setActiveConfig] = useState('A');
+  const [copying, setCopying] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0); // bump to refetch after a copy
 
   useEffect(() => {
     let cancelled = false;
@@ -95,7 +107,7 @@ export default function CompanionTab({ frame, color, onSaved }) {
 
     load();
     return () => { cancelled = true; };
-  }, [frame.my_frame_id]);
+  }, [frame.my_frame_id, reloadKey]);
 
   const modsById = useMemo(() => new Map(catalog.map(m => [m.mod_id, m])), [catalog]);
 
@@ -116,32 +128,34 @@ export default function CompanionTab({ frame, color, onSaved }) {
     const map = new Map();
     EQUIPMENT_TYPES.forEach(type => map.set(type, new Map()));
     slots.forEach(s => {
+      if (s.config_slot !== activeConfig) return;
       map.get(s.equipment_type)?.set(s.slot_position, { mod_id: s.mod_id, riven_id: s.riven_id, polarity: s.polarity });
     });
     return map;
-  }, [slots]);
+  }, [slots, activeConfig]);
 
   const metaByType = useMemo(() => {
     const map = new Map();
     EQUIPMENT_TYPES.forEach(type => map.set(type, { forma_count: 0, has_catalyst: false }));
     meta.forEach(m => {
+      if (m.config_slot !== activeConfig) return;
       map.set(m.equipment_type, { forma_count: m.forma_count, has_catalyst: m.has_catalyst });
     });
     return map;
-  }, [meta]);
+  }, [meta, activeConfig]);
 
   async function handleSetSlot(equipmentType, slotPosition, { mod_id, riven_id, polarity }) {
     setSlots(prev => {
-      const next = prev.filter(s => !(s.equipment_type === equipmentType && s.slot_position === slotPosition));
-      next.push({ my_frame_id: frame.my_frame_id, equipment_type: equipmentType, slot_position: slotPosition, mod_id, riven_id, polarity });
+      const next = prev.filter(s => !(s.equipment_type === equipmentType && s.slot_position === slotPosition && s.config_slot === activeConfig));
+      next.push({ my_frame_id: frame.my_frame_id, equipment_type: equipmentType, config_slot: activeConfig, slot_position: slotPosition, mod_id, riven_id, polarity });
       return next;
     });
 
     const { error: upsertError } = await wfUser
       .from('loadout_slots')
       .upsert(
-        { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, slot_position: slotPosition, mod_id, riven_id, polarity },
-        { onConflict: 'my_frame_id,equipment_type,slot_position' }
+        { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, config_slot: activeConfig, slot_position: slotPosition, mod_id, riven_id, polarity },
+        { onConflict: 'my_frame_id,equipment_type,slot_position,config_slot' }
       );
 
     if (upsertError) console.error('Failed to save slot:', upsertError);
@@ -152,15 +166,15 @@ export default function CompanionTab({ frame, color, onSaved }) {
     const next = { ...current, ...patch };
 
     setMeta(prev => {
-      const rest = prev.filter(m => m.equipment_type !== equipmentType);
-      return [...rest, { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, ...next }];
+      const rest = prev.filter(m => !(m.equipment_type === equipmentType && m.config_slot === activeConfig));
+      return [...rest, { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, config_slot: activeConfig, ...next }];
     });
 
     const { error: upsertError } = await wfUser
       .from('loadout_meta')
       .upsert(
-        { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, ...next },
-        { onConflict: 'my_frame_id,equipment_type' }
+        { my_frame_id: frame.my_frame_id, equipment_type: equipmentType, config_slot: activeConfig, ...next },
+        { onConflict: 'my_frame_id,equipment_type,config_slot' }
       );
 
     if (upsertError) console.error('Failed to save loadout meta:', upsertError);
@@ -209,6 +223,14 @@ export default function CompanionTab({ frame, color, onSaved }) {
 
   const activeType = activeEquipment;
 
+  // The target's class decides which mods may be copied onto it. Resolved
+  // from the catalog by name; null (unset or not in the catalog) disables Copy.
+  const identityName = frame[IDENTITY_FIELD[activeType]];
+  const identityRow = identityOptions[activeType].find(o => o.name === identityName);
+  const copyTarget = identityRow
+    ? { name: identityRow.name, cls: activeType === 'Companion' ? identityRow.companion_class : identityRow.weapon_class }
+    : null;
+
   return (
     <div>
       {error && <p className="text-red-400 mb-4">{error}</p>}
@@ -230,8 +252,33 @@ export default function CompanionTab({ frame, color, onSaved }) {
         ))}
       </div>
 
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {CONFIG_SLOTS.map(cfg => (
+          <button
+            key={cfg}
+            onClick={() => setActiveConfig(cfg)}
+            className="py-1.5 px-4 rounded-lg text-xs font-bold tracking-widest transition-colors"
+            style={{
+              background: activeConfig === cfg ? `${color}18` : COLOR.surface2,
+              border: `1px solid ${activeConfig === cfg ? `${color}55` : COLOR.border}`,
+              color: activeConfig === cfg ? color : COLOR.mutedInk,
+            }}
+          >
+            Config {cfg}
+          </button>
+        ))}
+        <Button size="sm" variant="ghost" onClick={() => setCopying(true)} disabled={!copyTarget}>
+          Copy from...
+        </Button>
+        {!copyTarget && (
+          <span className="text-xs" style={{ color: COLOR.agedInk }}>
+            Pick a {LABEL[activeType].toLowerCase()} below to enable copying.
+          </span>
+        )}
+      </div>
+
       <CompanionEquipmentSection
-        key={activeType}
+        key={`${activeType}-${activeConfig}`}
         equipmentType={activeType}
         displayName={frame[IDENTITY_FIELD[activeType]] || undefined}
         meta={metaByType.get(activeType)}
@@ -248,6 +295,18 @@ export default function CompanionTab({ frame, color, onSaved }) {
         identityOptions={identityOptions[activeType]}
         onSaved={onSaved}
       />
+
+      {copying && copyTarget && (
+        <CompanionCopyModal
+          frame={frame}
+          equipmentType={activeType}
+          config={activeConfig}
+          target={copyTarget}
+          modsById={modsById}
+          onApplied={() => { setCopying(false); setReloadKey(k => k + 1); }}
+          onClose={() => setCopying(false)}
+        />
+      )}
     </div>
   );
 }
