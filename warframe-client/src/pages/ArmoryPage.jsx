@@ -53,6 +53,10 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   // Set while a weapon is dragged OUT of a build's slot (not from the shelf):
   // { frameId, column, name, category }. Dropping it on the shelf removes it.
   const [dragSource, setDragSource] = useState(null);
+  // Undo history for weapon assignments, newest last. Each entry holds the
+  // slots it changed and what they held before. Lives only until the page
+  // reloads; wf_user.change_history keeps the long-term record.
+  const [undoStack, setUndoStack] = useState([]);
   // Tap-to-assign picker: { weapon } = choose a build for this weapon;
   // { frame, slot } = choose a weapon for this build's slot.
   const [picker, setPicker] = useState(null);
@@ -215,12 +219,33 @@ export default function ArmoryPage({ frames, refetchFrames }) {
     });
   }
 
+  function priorValue(frameId, column) {
+    return frames.find(f => f.my_frame_id === frameId)?.[column] ?? null;
+  }
+
+  function pushUndo(label, changes) {
+    setUndoStack(prev => [...prev.slice(-19), { label, changes }]);
+  }
+
+  async function handleUndo() {
+    const last = undoStack[undoStack.length - 1];
+    if (!last) return;
+    setUndoStack(prev => prev.slice(0, -1));
+
+    const results = await Promise.all(last.changes.map(c =>
+      wfUser.from('my_frames').update({ [c.column]: c.value }).eq('my_frame_id', c.frameId)
+    ));
+    const failed = results.find(r => r.error);
+    if (failed) console.error('Undo failed:', failed.error);
+    refetchFrames();
+  }
+
   async function handleDropWeapon(myFrameId, column, weaponName) {
     // A weapon dragged out of another build's slot MOVES: that slot is
     // emptied, or takes this slot's old weapon if there was one (a swap).
     // Dragging from the shelf, or onto its own slot, just assigns.
     const source = dragSource && dragSource.frameId !== myFrameId ? dragSource : null;
-    const previous = frames.find(f => f.my_frame_id === myFrameId)?.[column] ?? null;
+    const previous = priorValue(myFrameId, column);
 
     const { error: updateError } = await wfUser
       .from('my_frames')
@@ -235,6 +260,10 @@ export default function ArmoryPage({ frames, refetchFrames }) {
       console.error('Failed to assign weapon:', updateError);
       return;
     }
+
+    const changes = [{ frameId: myFrameId, column, value: previous }];
+    if (source && source.column === column) changes.push({ frameId: source.frameId, column: source.column, value: source.name });
+    pushUndo(source ? `move ${weaponName}` : `assign ${weaponName}`, changes);
 
     if (source && source.column === column) {
       const { error: sourceError } = await wfUser
@@ -251,6 +280,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   async function handleClearSlot(myFrameId, column) {
     setDraggedWeapon(null);
     setDragSource(null);
+    const before = priorValue(myFrameId, column);
     const { error: updateError } = await wfUser
       .from('my_frames')
       .update({ [column]: null })
@@ -260,6 +290,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
       console.error('Failed to clear weapon slot:', updateError);
       return;
     }
+    pushUndo(`remove ${before ?? 'weapon'}`, [{ frameId: myFrameId, column, value: before }]);
     refetchFrames();
   }
 
@@ -275,6 +306,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
       `That puts ${weapon.name} on ${total} builds, past the 3-Weapon Rule. Assign anyway?`
     )) return;
 
+    const before = frameIds.map(id => ({ frameId: id, column, value: priorValue(id, column) }));
     const { error: updateError } = await wfUser
       .from('my_frames')
       .update({ [column]: weapon.name })
@@ -285,6 +317,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
       console.error('Failed to bulk-assign weapon:', updateError);
       return;
     }
+    pushUndo(`assign ${weapon.name} to ${frameIds.length} builds`, before);
     refetchFrames();
   }
 
@@ -337,7 +370,18 @@ export default function ArmoryPage({ frames, refetchFrames }) {
         <h1 className="text-[22px] font-bold uppercase tracking-[0.08em] mb-1.5" style={{ color: COLOR.gold }}>
           Armory
         </h1>
-        <Button size="sm" variant="ghost" onClick={() => setShowValence(true)}>Coda Valence</Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={undoStack.length === 0}
+            onClick={handleUndo}
+            title={undoStack.length ? `Undo: ${undoStack[undoStack.length - 1].label}` : 'Nothing to undo'}
+          >
+            {undoStack.length ? `Undo ${undoStack[undoStack.length - 1].label}` : 'Undo'}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setShowValence(true)}>Coda Valence</Button>
+        </div>
       </div>
       <p className="text-xs mb-6" style={{ color: COLOR.mutedInk }}>
         Weapons you own, where they're allocated, and the 3-Weapon Rule at a glance. Drag a weapon onto a frame's slot to assign it.
