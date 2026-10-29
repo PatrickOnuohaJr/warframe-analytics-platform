@@ -1481,12 +1481,16 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Search bar on the weapon shelf; Kuva/Tenet/Coda origin tags; green Owned badge; Incarnon tag verified (67 weapons, all guns).
 - Bulk assign (tick many builds in the Assign picker), a x to clear a slot, drag a filled slot to another build (move, swap if filled) or to the shelf (remove), and an Undo button (last 20 changes, until reload).
 
+**Slots**
+- Companion slot counts corrected by Patrick: every companion (Sentinel or beast) has 10 numbered slots, shown as two rows of 5; the Companion Weapon (claws) has 8 numbered slots plus a Posture slot centred above them (9 total). Copies carry all 10 (`numberedSlotCount` in `utils/companionCopy.js`). This answers the old "Nautilus Prime 10 slots" question. Companion Weapon layout is shared by every weapon, including Sentinel weapons (unconfirmed).
+- One-tap clear: a small x on every filled mod slot (shared `SlotBox`, so Warframe incl. Aura/Exilus/Stance, Primary, Secondary, Melee incl. Riven slots, Companion and Companion Weapon incl. Posture). Keeps the slot's polarity.
+
 **Other**
 - Codex: the Fully Slotted/Planned/Conceptual dropdown became toggle buttons with counts, like the archetype ones.
 - Mods: added a Companion category to the Mods page and the Add Mods picker so companion mods can be marked owned (none were: 0/164). Owned vs catalog: Warframe 317/415, Primary 175/295, Secondary 38/145, Melee 27/227.
 - Not tracked by design: Archwing, Arch-Gun/Melee, Necramech, K-Drive, Railjack, Parazon, Plexus mods. WFCD "Mod Set Mod", Transmutation Core, Peculiar and Tektolyst entries are not real slottable mods.
 
-**Commits pushed:** `dce3511`, `5779090`, `ba9b845`, `3d441e9`, `1f2ca55`, `5ecddb6`, `ba46de5`, `b8f1d86`, `dbce9f4`, `5809f10`. Remote CI green on runs #30-#37 (public run list). Lint, 71 Node tests, 12 UI tests, build pass.
+**Commits pushed:** `dce3511`, `5779090`, `ba9b845`, `3d441e9`, `1f2ca55`, `5ecddb6`, `ba46de5`, `b8f1d86`, `dbce9f4`, `5809f10`, `cf17d6e`, `1aee474` (code), `5464b95` (first docs reconcile). Remote CI green on runs #30-#37 (public run list); the last two code pushes were not checked. Lint, 72 Node tests, 12 UI tests, build pass.
 
 **Bugs found:** two of my own: a regex written in a shell heredoc lost its backslash (caught by the new test); a CRLF mismatch broke a scripted edit (switched to the Edit tool).
 

@@ -2,17 +2,18 @@
 
 ## Update — October 29, 2026 (Session 023: Companion configs, Valence, Armory tools; supersedes the Open queue below)
 
-Pushed `main` is at `5809f10` (docs-only reconcile commit after it). Remote CI green on runs #30-#37. Lint, 71 Node tests, 12 UI tests, build pass. **Both migrations this session were run and verified by Patrick:** `20261029_add_loadout_config_slot.sql` and `20261029_add_loadout_config_name.sql`.
+Pushed `main` is at `1aee474` (docs-only reconcile commits after it). Remote CI green on runs #30-#37; the last two code pushes (`cf17d6e`, `1aee474`) were not checked. Lint, 72 Node tests, 12 UI tests, build pass. **Both migrations this session were run and verified by Patrick:** `20261029_add_loadout_config_slot.sql` and `20261029_add_loadout_config_name.sql`.
 
 **What shipped (details in the Session 023 log):**
 - Companion tab: Config A/B/C (`loadout_slots.config_slot` / `loadout_meta.config_slot`; the unique key is now `(my_frame_id, equipment_type, slot_position, config_slot)`, so any new upsert must use it), config names (`loadout_meta.config_name`), "Copy from..." and "Copy to other builds..." with compatibility skipping (`utils/companionCopy.js`, `lib/companionCopyApply.js`, `CompanionCopyModal`, `CompanionPushModal`).
 - Armory: Coda Valence forecast (`utils/valence.js`, `ValenceCalculator`), shelf search, Kuva/Tenet/Coda tags, Owned badge, bulk assign, x to clear, drag between builds (move/swap) or to the shelf (remove), Undo (session-only, last 20).
 - Codex: build-status filter buttons replaced the dropdown.
 - Mods page and Add Mods picker now have a Companion category.
+- Slots: every companion has 10 numbered slots (2 rows of 5); the Companion Weapon has 8 plus a Posture slot centred on top. Every filled mod slot has a one-tap x to clear (shared `SlotBox`). Companion Weapon layout is the same for Sentinel weapons, unconfirmed.
 
 **Pending on Patrick:** import companion mods (Add Mods -> Companion -> Select all visible, untick the ones not owned, then set ranks in bulk mode), then run the Companion A/B/C test (Config B independent of A, naming, copy to builds, skipped-mod report). Claude cannot sign in, so none of this session's UI has been seen working yet.
 
-**Open questions:** Secondary (38/145) and Melee (27/227) owned-mod counts look low; no melee Incarnons are tagged (67 tagged, all guns) so the catalog may not mark them; Kuva has 21 weapons vs more in game; Moa/Hound companions are out of scope. Only Warframe, Primary, Secondary, Melee and Companion mods are tracked; Archwing/Arch/Necramech/K-Drive/Railjack/Parazon/Plexus are not.
+**Open questions:** Secondary (38/145) and Melee (27/227) owned-mod counts look low; no melee Incarnons are tagged (67 tagged, all guns) so the catalog may not mark them; Kuva has 21 weapons vs more in game; Moa/Hound companions are out of scope. (Resolved: companion slot count is 10; the older "Nautilus Prime 10 slots unconfirmed / renders 8" notes below are obsolete.) Only Warframe, Primary, Secondary, Melee and Companion mods are tracked; Archwing/Arch/Necramech/K-Drive/Railjack/Parazon/Plexus are not.
 
 **Open queue now:** 1. Warframe 3->6 configs (reuse `config_slot`; ModsLoadoutTab still writes config 'A' by default); 2. multi-user stage 1 then onboarding; 3. smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds' mods, drop the two arcane backup tables).
 
