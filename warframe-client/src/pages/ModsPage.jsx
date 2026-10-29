@@ -19,7 +19,7 @@ import ConclaveBadge from '../components/ConclaveBadge';
 // builder with capacity/drain math is a separate, later slice of this arc.
 // ============================================================================
 
-const CATEGORY_FILTERS = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee'];
+const CATEGORY_FILTERS = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee', 'Companion'];
 
 export default function ModsPage() {
   const [catalog, setCatalog] = useState([]);

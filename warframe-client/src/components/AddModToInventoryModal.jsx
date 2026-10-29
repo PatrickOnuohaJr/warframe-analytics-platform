@@ -12,7 +12,7 @@ import ConclaveBadge from './ConclaveBadge';
 // showing them under Primary/Secondary/Melee would just be a menu option
 // that always selects nothing.
 
-const CATEGORIES = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee'];
+const CATEGORIES = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee', 'Companion'];
 
 // Bulk ownership picker for Mod Inventory -- same pattern as
 // AddWeaponToInventoryModal (Armory): browse a category, check off every
