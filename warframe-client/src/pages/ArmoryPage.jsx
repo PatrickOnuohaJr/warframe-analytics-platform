@@ -6,6 +6,7 @@ import ArmoryFrameRoster from '../components/ArmoryFrameRoster';
 import ArmoryPickerModal from '../components/ArmoryPickerModal';
 import AddWeaponToInventoryModal from '../components/AddWeaponToInventoryModal';
 import WeaponTagEditor from '../components/WeaponTagEditor';
+import ValenceCalculator from '../components/ValenceCalculator';
 import { getWeaponTagEntries, applyCustomTags, TAG_GROUPS } from '../utils/weaponTags';
 import { COLOR } from '../constants/theme';
 
@@ -46,6 +47,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
   // 'owned' = your Armory; 'all' = the whole weapon catalog, owned or not.
   const [scope, setScope] = useState('owned');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showValence, setShowValence] = useState(false);
   const [draggedWeapon, setDraggedWeapon] = useState(null);
   // Tap-to-assign picker: { weapon } = choose a build for this weapon;
   // { frame, slot } = choose a weapon for this build's slot.
@@ -264,9 +266,12 @@ export default function ArmoryPage({ frames, refetchFrames }) {
 
   return (
     <div>
-      <h1 className="text-[22px] font-bold uppercase tracking-[0.08em] mb-1.5" style={{ color: COLOR.gold }}>
-        Armory
-      </h1>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <h1 className="text-[22px] font-bold uppercase tracking-[0.08em] mb-1.5" style={{ color: COLOR.gold }}>
+          Armory
+        </h1>
+        <Button size="sm" variant="ghost" onClick={() => setShowValence(true)}>Valence forecast</Button>
+      </div>
       <p className="text-xs mb-6" style={{ color: COLOR.mutedInk }}>
         Weapons you own, where they're allocated, and the 3-Weapon Rule at a glance. Drag a weapon onto a frame's slot to assign it.
       </p>
@@ -459,6 +464,8 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           <ArmoryFrameRoster frames={frames} draggedWeapon={draggedWeapon} onDropWeapon={handleDropWeapon} onPickSlot={(frame, slot) => setPicker({ frame, slot })} />
         </div>
       </div>
+
+      {showValence && <ValenceCalculator onClose={() => setShowValence(false)} />}
 
       {tagEditWeapon && (
         <WeaponTagEditor
