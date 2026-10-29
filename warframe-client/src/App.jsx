@@ -25,6 +25,13 @@ const INK = '#E8E4DC'
 const MUTED = '#B8B3AC'
 const GOLD = '#FBBF24'
 
+// Codex build-status filter buttons: [bucket value from getShardBucket, label].
+const SHARD_BUCKETS = [
+  ['slotted', 'Fully Slotted'],
+  ['planned', 'Planned'],
+  ['conceptual', 'Conceptual'],
+]
+
 const NAV_ITEMS = [
   { id: 'home', label: 'Home' },
   { id: 'codex', label: 'Codex' },
@@ -271,24 +278,29 @@ const filteredFrames =
           </div>
         </div>
 
+          {/* Build-status filter -- toggle buttons like the archetype ones below
+              (click the active one again to show everyone). */}
           {activePage === 'codex' && (
-            <div className="mb-4">
-              <select
-                value={shardFilter}
-                onChange={(e) => handleShardFilterChange(e.target.value)}
-                className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em] outline-none"
-                style={{
-                  background: PANEL_BG,
-                  color: shardFilter === 'all' ? MUTED : GOLD,
-                  borderColor: shardFilter === 'all' ? BORDER : `${GOLD}88`,
-                }}
-              >    
-              <option value="all">All Frames</option>
-              <option value="slotted">Fully Slotted</option>
-              <option value="planned">Planned</option>
-              <option value="conceptual">Conceptual</option>
-            </select>
-          </div>
+            <div className="mb-4 flex gap-2 flex-wrap">
+              {SHARD_BUCKETS.map(([value, label]) => {
+                const active = shardFilter === value
+                const count = frames.filter(f => getShardBucket(f) === value).length
+                return (
+                  <button
+                    key={value}
+                    onClick={() => handleShardFilterChange(active ? 'all' : value)}
+                    className="rounded-xl px-4 py-2 border text-[10px] uppercase font-bold tracking-[0.25em] transition-colors"
+                    style={{
+                      background: active ? `${GOLD}18` : PANEL_BG,
+                      color: active ? GOLD : MUTED,
+                      borderColor: active ? `${GOLD}88` : BORDER,
+                    }}
+                  >
+                    {label} ({count})
+                  </button>
+                )
+              })}
+            </div>
         )}
 
         {/* Survivability archetype filter -- three toggle buttons (click the
