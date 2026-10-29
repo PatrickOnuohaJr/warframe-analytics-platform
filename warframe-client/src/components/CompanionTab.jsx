@@ -40,7 +40,7 @@ import { CONFIG_SLOTS } from '../utils/companionCopy';
 // Sentinels have NO dedicated Precept slot (corrected in Session 014 --
 // Precept mods like Vacuum/Guardian/Sacrifice just occupy the Companion's
 // regular numbered slots), so the Companion piece has no special slot at
-// all -- just 8 numbered slots, same capacity math as Primary/Secondary.
+// all -- 10 numbered slots for the body (8 for the weapon), same capacity math as Primary/Secondary.
 //
 // Each piece has three mod configs (A/B/C, loadout_slots.config_slot). The
 // identity (which companion) is shared across them; only the mods, slot

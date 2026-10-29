@@ -10,7 +10,12 @@ import { cleanValue } from '../utils/shardHelpers';
 import { wfUser } from '../lib/supabase';
 import useDebouncedField from '../hooks/useDebouncedField';
 
-const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
+// Companions have 10 numbered mod slots (Patrick, Oct 29 2026; the earlier 8
+// was wrong). Companion Weapons are still 8 plus Posture -- unconfirmed.
+const SLOTS_BY_TYPE = {
+  Companion: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+  CompanionWeapon: ['1', '2', '3', '4', '5', '6', '7', '8'],
+};
 const IDENTITY_FIELD = { Companion: 'companion', CompanionWeapon: 'companion_weapon' };
 const LABEL = { Companion: 'Companion', CompanionWeapon: 'Companion Weapon' };
 const PLACEHOLDER = { Companion: 'e.g. Wyrm Prime', CompanionWeapon: 'e.g. Deth Machine Rifle' };
@@ -35,6 +40,7 @@ export default function CompanionEquipmentSection({
   const [picker, setPicker] = useState(null); // { slotPosition, slot }
 
   const isWeaponPiece = equipmentType === 'CompanionWeapon';
+  const NUMBERED_SLOTS = SLOTS_BY_TYPE[equipmentType];
   const identityColumn = IDENTITY_FIELD[equipmentType];
 
   // Same auto-save-on-change convention as every other frame field --
@@ -184,7 +190,8 @@ export default function CompanionEquipmentSection({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+        // 10 slots as two rows of 5 once there is room.
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
           {numberedBoxes}
         </div>
       )}
