@@ -7,7 +7,7 @@ import Button from './ui/Button';
 // is the touch path: pick the weapon from a build's slot, or pick the build
 // from a weapon card. One searchable list serves both directions.
 // items: [{ id, label, sublabel?, color?, note? }]
-export default function ArmoryPickerModal({ title, subtitle, items, onPick, onPickMany, confirmLabel, onClose }) {
+export default function ArmoryPickerModal({ title, subtitle, items, onPick, onPickMany, confirmLabel, header, onClose }) {
   const [query, setQuery] = useState('');
   // With onPickMany the list becomes checkboxes (bulk assign): tick any number
   // of builds, then one button applies them all. Without it a tap picks one.
@@ -36,6 +36,8 @@ export default function ArmoryPickerModal({ title, subtitle, items, onPick, onPi
       {subtitle && (
         <p className="text-xs mb-3" style={{ color: COLOR.mutedInk }}>{subtitle}</p>
       )}
+
+      {header}
 
       <input
         type="search"

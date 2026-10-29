@@ -3,6 +3,7 @@ import { wfBase, wfUser } from '../lib/supabase';
 import { fetchAll } from '../lib/fetchAll';
 import CompanionEquipmentSection from './CompanionEquipmentSection';
 import CompanionCopyModal from './CompanionCopyModal';
+import CompanionPushModal from './CompanionPushModal';
 import Button from './ui/Button';
 import useCompanions from '../hooks/useCompanions';
 import useCompanionWeapons from '../hooks/useCompanionWeapons';
@@ -57,6 +58,27 @@ function humanize(slug) {
   return slug.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
+// Free-text name for the active config ("Fire rate", "Duplex Bond"). Saves
+// when you leave the field; empty clears it.
+function ConfigNameField({ value, onSave, accent }) {
+  const [draft, setDraft] = useState(value);
+  return (
+    <label className="flex items-center gap-2 mb-4 text-xs" style={{ color: COLOR.mutedInk }}>
+      Name
+      <input
+        value={draft}
+        maxLength={40}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={() => { if (draft.trim() !== value) onSave(draft.trim()); }}
+        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+        placeholder="e.g. Fire rate, Duplex Bond"
+        className="w-64 rounded-lg px-3 py-1.5 text-sm outline-none"
+        style={{ background: COLOR.surface2, border: `1px solid ${draft ? `${accent}55` : COLOR.border}`, color: COLOR.ink }}
+      />
+    </label>
+  );
+}
+
 export default function CompanionTab({ frame, color, onSaved }) {
   const { companions } = useCompanions();
   const { companionWeapons } = useCompanionWeapons();
@@ -69,6 +91,7 @@ export default function CompanionTab({ frame, color, onSaved }) {
   const [activeEquipment, setActiveEquipment] = useState('Companion');
   const [activeConfig, setActiveConfig] = useState('A');
   const [copying, setCopying] = useState(false);
+  const [pushing, setPushing] = useState(false);
   const [reloadKey, setReloadKey] = useState(0); // bump to refetch after a copy
 
   useEffect(() => {
@@ -136,13 +159,22 @@ export default function CompanionTab({ frame, color, onSaved }) {
 
   const metaByType = useMemo(() => {
     const map = new Map();
-    EQUIPMENT_TYPES.forEach(type => map.set(type, { forma_count: 0, has_catalyst: false }));
+    EQUIPMENT_TYPES.forEach(type => map.set(type, { forma_count: 0, has_catalyst: false, config_name: null }));
     meta.forEach(m => {
       if (m.config_slot !== activeConfig) return;
-      map.set(m.equipment_type, { forma_count: m.forma_count, has_catalyst: m.has_catalyst });
+      map.set(m.equipment_type, { forma_count: m.forma_count, has_catalyst: m.has_catalyst, config_name: m.config_name ?? null });
     });
     return map;
   }, [meta, activeConfig]);
+
+  // Names given to each config of the active piece, for the tab labels.
+  const configNames = useMemo(() => {
+    const names = {};
+    meta.forEach(m => {
+      if (m.equipment_type === activeEquipment && m.config_name) names[m.config_slot] = m.config_name;
+    });
+    return names;
+  }, [meta, activeEquipment]);
 
   async function handleSetSlot(equipmentType, slotPosition, { mod_id, riven_id, polarity }) {
     setSlots(prev => {
@@ -264,11 +296,14 @@ export default function CompanionTab({ frame, color, onSaved }) {
               color: activeConfig === cfg ? color : COLOR.mutedInk,
             }}
           >
-            Config {cfg}
+            Config {cfg}{configNames[cfg] ? ` · ${configNames[cfg]}` : ''}
           </button>
         ))}
         <Button size="sm" variant="ghost" onClick={() => setCopying(true)} disabled={!copyTarget}>
           Copy from...
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setPushing(true)} disabled={!copyTarget}>
+          Copy to other builds...
         </Button>
         {!copyTarget && (
           <span className="text-xs" style={{ color: COLOR.agedInk }}>
@@ -276,6 +311,13 @@ export default function CompanionTab({ frame, color, onSaved }) {
           </span>
         )}
       </div>
+
+      <ConfigNameField
+        key={`${activeType}-${activeConfig}-${metaByType.get(activeType).config_name ?? ''}`}
+        value={metaByType.get(activeType).config_name ?? ''}
+        onSave={name => handleSetMeta(activeType, { config_name: name || null })}
+        accent={color}
+      />
 
       <CompanionEquipmentSection
         key={`${activeType}-${activeConfig}`}
@@ -295,6 +337,23 @@ export default function CompanionTab({ frame, color, onSaved }) {
         identityOptions={identityOptions[activeType]}
         onSaved={onSaved}
       />
+
+      {pushing && copyTarget && (
+        <CompanionPushModal
+          frame={frame}
+          equipmentType={activeType}
+          config={activeConfig}
+          sourceRows={[...slotsByType.get(activeType)].map(([slot_position, v]) => ({ slot_position, mod_id: v.mod_id, polarity: v.polarity }))}
+          sourceMeta={metaByType.get(activeType)}
+          modsById={modsById}
+          classFor={name => {
+            const row = identityOptions[activeType].find(o => o.name === name);
+            return row ? (activeType === 'Companion' ? row.companion_class : row.weapon_class) : null;
+          }}
+          onApplied={() => { setPushing(false); setReloadKey(k => k + 1); }}
+          onClose={() => setPushing(false)}
+        />
+      )}
 
       {copying && copyTarget && (
         <CompanionCopyModal

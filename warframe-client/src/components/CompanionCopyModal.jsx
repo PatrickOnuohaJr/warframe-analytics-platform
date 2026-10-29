@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { wfUser } from '../lib/supabase';
+import { applyCopy } from '../lib/companionCopyApply';
 import { COLOR } from '../constants/theme';
 import { planCopy } from '../utils/companionCopy';
 import ArmoryPickerModal from './ArmoryPickerModal';
@@ -34,7 +35,7 @@ export default function CompanionCopyModal({
     async function load() {
       const [slotsRes, metaRes, framesRes] = await Promise.all([
         wfUser.from('loadout_slots').select('my_frame_id, config_slot, slot_position, mod_id, polarity').eq('equipment_type', equipmentType),
-        wfUser.from('loadout_meta').select('my_frame_id, config_slot, forma_count, has_catalyst').eq('equipment_type', equipmentType),
+        wfUser.from('loadout_meta').select('my_frame_id, config_slot, forma_count, has_catalyst, config_name').eq('equipment_type', equipmentType),
         wfUser.from('my_frames').select('my_frame_id, display_name, warframe_name, build_title, companion, companion_weapon'),
       ]);
       if (cancelled) return;
@@ -71,9 +72,9 @@ export default function CompanionCopyModal({
           frameId,
           cfg,
           rows,
-          meta: metaByKey.get(key) ?? { forma_count: 0, has_catalyst: false },
+          meta: metaByKey.get(key) ?? { forma_count: 0, has_catalyst: false, config_name: null },
           label: `${f.display_name || f.warframe_name}${f.build_title ? ` · ${f.build_title}` : ''}`,
-          sublabel: `${f[IDENTITY_FIELD[equipmentType]] || 'Unnamed'} · Config ${cfg}`,
+          sublabel: `${f[IDENTITY_FIELD[equipmentType]] || 'Unnamed'} · Config ${cfg}${metaByKey.get(key)?.config_name ? ` · ${metaByKey.get(key).config_name}` : ''}`,
           note: `${modCount} mod${modCount === 1 ? '' : 's'}`,
         });
       });
@@ -94,50 +95,13 @@ export default function CompanionCopyModal({
     setSaving(true);
     setError(null);
 
-    const rows = plan.copy.map(r => ({
-      my_frame_id: frame.my_frame_id,
-      equipment_type: equipmentType,
-      config_slot: config,
-      slot_position: r.slot_position,
-      mod_id: r.mod_id,
-      riven_id: null,
-      polarity: r.polarity,
-    }));
-
-    // Write the new slots first, then clear any slot the source didn't have,
-    // so a failure partway never leaves the target emptier than it started.
-    const { error: upsertError } = await wfUser
-      .from('loadout_slots')
-      .upsert(rows, { onConflict: 'my_frame_id,equipment_type,slot_position,config_slot' });
-
-    let failure = upsertError;
-
-    if (!failure) {
-      const positions = rows.map(r => r.slot_position);
-      let del = wfUser
-        .from('loadout_slots')
-        .delete()
-        .eq('my_frame_id', frame.my_frame_id)
-        .eq('equipment_type', equipmentType)
-        .eq('config_slot', config);
-      if (positions.length > 0) del = del.not('slot_position', 'in', `(${positions.join(',')})`);
-      ({ error: failure } = await del);
-    }
-
-    if (!failure) {
-      ({ error: failure } = await wfUser
-        .from('loadout_meta')
-        .upsert(
-          {
-            my_frame_id: frame.my_frame_id,
-            equipment_type: equipmentType,
-            config_slot: config,
-            forma_count: chosen.meta.forma_count,
-            has_catalyst: chosen.meta.has_catalyst,
-          },
-          { onConflict: 'my_frame_id,equipment_type,config_slot' }
-        ));
-    }
+    const failure = await applyCopy({
+      frameId: frame.my_frame_id,
+      equipmentType,
+      config,
+      copy: plan.copy,
+      meta: chosen.meta,
+    });
 
     setSaving(false);
     if (failure) {
