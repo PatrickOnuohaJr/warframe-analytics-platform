@@ -401,7 +401,17 @@ export default function ArmoryPage({ frames, refetchFrames }) {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-bold" style={{ color: COLOR.ink }}>{weapon.name}</p>
+                      <p className="font-bold" style={{ color: COLOR.ink }}>
+                        {weapon.name}
+                        {ownedIds.has(weapon.weapon_id) && (
+                          <span
+                            className="ml-2 align-middle text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
+                            style={{ background: 'rgba(76,175,80,0.12)', border: '1px solid rgba(76,175,80,0.5)', color: COLOR.success }}
+                          >
+                            Owned
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs" style={{ color: COLOR.mutedInk }}>
                         {weapon.category} · {weapon.weapon_type} · MR {weapon.mastery_rank ?? 0}
                       </p>

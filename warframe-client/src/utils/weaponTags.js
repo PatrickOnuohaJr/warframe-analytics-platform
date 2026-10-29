@@ -57,6 +57,13 @@ const MELEE_STAT_RULES = [
   { tag: 'High Status Chance', test: rj => rj.procChance >= 0.25 },
 ];
 
+// Weapon families identified by name prefix.
+const ORIGIN_TAGS = [
+  { tag: 'Kuva', test: /^Kuva /i },
+  { tag: 'Tenet', test: /^Tenet /i },
+  { tag: 'Coda', test: /(^|\s)Coda(\s|$)/i },
+];
+
 // A weapon is Incarnon-capable if the catalog flags it natively (Praedos,
 // Laetum...) or any of its listed attacks is an Incarnon Form.
 export function isIncarnon(weapon) {
@@ -102,6 +109,11 @@ export function getWeaponTagEntries(weapon) {
   }
 
   if (isIncarnon(weapon)) entries.push({ tag: 'Incarnon', group: 'Special' });
+
+  // Lich / Sister / Infested-Coda origin, read off the name ("Kuva Karak",
+  // "Tenet Envoy", "Coda Hirudo", "Dual Coda Torxica").
+  const origin = ORIGIN_TAGS.find(o => o.test.test(weapon.name ?? ''));
+  if (origin) entries.push({ tag: origin.tag, group: 'Special' });
 
   return entries;
 }

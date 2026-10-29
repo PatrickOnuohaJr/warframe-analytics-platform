@@ -48,3 +48,12 @@ test('melee uses attack speed and range, not gun rules', () => {
 test('weapon with no raw_json yields no tags', () => {
   assert.deepEqual(getWeaponTags({ category: 'Primary' }), []);
 });
+
+test('Kuva / Tenet / Coda origin tags come from the name', () => {
+  const mk = name => ({ name, category: 'Primary', raw_json: { type: 'Rifle' } });
+  assert.ok(getWeaponTags(mk('Kuva Karak')).includes('Kuva'));
+  assert.ok(getWeaponTags(mk('Tenet Envoy')).includes('Tenet'));
+  assert.ok(getWeaponTags(mk('Coda Hirudo')).includes('Coda'));
+  assert.ok(getWeaponTags(mk('Dual Coda Torxica')).includes('Coda'));
+  assert.ok(!getWeaponTags(mk('Karak')).includes('Kuva'));
+});
