@@ -2,9 +2,9 @@
 
 ## Update — October 30, 2026 (Session 024: Requiem Solver; supersedes the Open queue below)
 
-Pushed `main` is at `a8553c8` (plus a docs-only reconcile commit). CI not checked for `c05e73f`, `f89e391`, `a8553c8`. Lint, 90 Node tests, 14 UI tests, build pass.
+Pushed `main` is at `a8553c8` (plus a docs-only reconcile commit). Remote CI green on runs #39-#44 (read from GitHub public run list). Lint, 90 Node tests, 14 UI tests, build pass.
 
-**Two migrations are written but NOT run (Patrick must run both in Supabase):** `DB/Migrations/20261030_add_requiem_solver.sql` (Requiem tables; until run, the page works but cannot save) and `DB/Migrations/20261029_add_moa_hound_companions.sql` (Moa/Hound companions). Neither SQL file has been executed against a real database, so expect to fix a typo if one errors.
+**Both new migrations were run by Patrick and verified read-only:** `20261030_add_requiem_solver.sql` (`adversary_sessions` and `requiem_attempts` exist, empty, readable) and `20261029_add_moa_hound_companions.sql` (4 Moas, 3 Hounds present). Not yet exercised from the app: saving a real Lich.
 
 **What shipped:**
 - Requiem tab: pure engine `utils/requiemEngine.js` (candidates, conflicts), exact planner `utils/requiemPlanner.js` (rollout estimate above 24 candidates; `EXACT_LIMIT`), advice `utils/requiemAdvice.js`, store `lib/requiemStore.js` (positions 1-3 in DB, 0-2 in code), page `pages/RequiemSolverPage.jsx`, parts in `components/requiem/`, icons in `public/requiem/`, colours in `constants/requiemLook.js`. JavaScript, not TypeScript. Tests: `tests/requiemEngine.test.js`, `tests/requiemPlanner.test.js` (exhaustive playthroughs), `tests/ui/RequiemSolverPage.test.jsx`.
@@ -14,7 +14,7 @@ Pushed `main` is at `a8553c8` (plus a docs-only reconcile commit). CI not checke
 
 **Open questions:** Moa/Hound slot count (assumed 10) and whether Hounds take Sentinel mods; Sentinel weapons sharing the claws layout; Dex Furis Incarnon; Secondary/Melee owned-mod counts look low; Ultimatum advice thresholds are judgement calls.
 
-**Open queue now:** 1. Patrick runs the two migrations and tries the Requiem tab and Moa/Hound; 2. import companion mods; 3. Warframe 3->6 configs; 4. multi-user stages; 5. smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds, drop the two arcane backup tables).
+**Open queue now:** 1. Patrick tries the Requiem tab on a real Lich (checks it saves and reloads) and Moa/Hound; 2. import companion mods; 3. Warframe 3->6 configs; 4. multi-user stages; 5. smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds, drop the two arcane backup tables).
 
 ## Update — October 29, 2026 (Session 023: Companion configs, Valence, Armory tools; supersedes the Open queue below)
 
