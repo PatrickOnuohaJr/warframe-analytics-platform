@@ -11,6 +11,7 @@ import AddFrameModal from './components/AddFrameModal'
 import ArsenalSearchPage from './components/ArsenalSearchPage';
 import ArmoryPage from './pages/ArmoryPage'
 import ModsPage from './pages/ModsPage'
+import RequiemSolverPage from './pages/RequiemSolverPage'
 import { getReadableColor } from './utils/color'
 import Button from './components/ui/Button'
 import SignOutButton from './components/SignOutButton'
@@ -40,6 +41,7 @@ const NAV_ITEMS = [
   { id: 'archon-shards', label: 'Archon Shards' },
   { id: 'armory', label: 'Armory' },
   { id: 'mods', label: 'Mods' },
+  { id: 'requiem', label: 'Requiem' },
 ]
 
 function getSchools(frames) {
@@ -419,6 +421,8 @@ const filteredFrames =
       <ArmoryPage frames={frames} refetchFrames={refetchFrames} />
     ) : activePage === 'mods' ? (
       <ModsPage />
+    ) : activePage === 'requiem' ? (
+      <RequiemSolverPage />
     ) : (
           <ArchonShardsPage />
 )}
