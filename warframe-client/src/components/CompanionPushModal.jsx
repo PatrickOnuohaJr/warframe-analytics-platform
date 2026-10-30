@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { wfUser } from '../lib/supabase';
 import { applyCopy } from '../lib/companionCopyApply';
+import { fetchBuilds } from '../lib/fetchBuilds';
 import { planCopy, CONFIG_SLOTS } from '../utils/companionCopy';
 import { COLOR } from '../constants/theme';
 import ArmoryPickerModal from './ArmoryPickerModal';
@@ -34,9 +35,7 @@ export default function CompanionPushModal({
 
   useEffect(() => {
     let cancelled = false;
-    wfUser
-      .from('my_frames')
-      .select('my_frame_id, display_name, warframe_name, build_title, companion, companion_weapon')
+    fetchBuilds()
       .then(({ data, error: e }) => {
         if (cancelled) return;
         if (e) { console.error('Failed to load builds:', e); setError('Could not load builds.'); return; }

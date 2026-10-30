@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { wfUser } from '../lib/supabase';
 import { applyCopy } from '../lib/companionCopyApply';
+import { fetchBuilds } from '../lib/fetchBuilds';
 import { COLOR } from '../constants/theme';
 import { planCopy } from '../utils/companionCopy';
 import ArmoryPickerModal from './ArmoryPickerModal';
@@ -36,7 +37,7 @@ export default function CompanionCopyModal({
       const [slotsRes, metaRes, framesRes] = await Promise.all([
         wfUser.from('loadout_slots').select('my_frame_id, config_slot, slot_position, mod_id, polarity').eq('equipment_type', equipmentType),
         wfUser.from('loadout_meta').select('my_frame_id, config_slot, forma_count, has_catalyst, config_name').eq('equipment_type', equipmentType),
-        wfUser.from('my_frames').select('my_frame_id, display_name, warframe_name, build_title, companion, companion_weapon'),
+        fetchBuilds(),
       ]);
       if (cancelled) return;
 
