@@ -1,5 +1,21 @@
 # Handoff — Cephalon Gu
 
+## Update — October 30, 2026 (Session 024: Requiem Solver; supersedes the Open queue below)
+
+Pushed `main` is at `a8553c8` (plus a docs-only reconcile commit). CI not checked for `c05e73f`, `f89e391`, `a8553c8`. Lint, 90 Node tests, 14 UI tests, build pass.
+
+**Two migrations are written but NOT run (Patrick must run both in Supabase):** `DB/Migrations/20261030_add_requiem_solver.sql` (Requiem tables; until run, the page works but cannot save) and `DB/Migrations/20261029_add_moa_hound_companions.sql` (Moa/Hound companions). Neither SQL file has been executed against a real database, so expect to fix a typo if one errors.
+
+**What shipped:**
+- Requiem tab: pure engine `utils/requiemEngine.js` (candidates, conflicts), exact planner `utils/requiemPlanner.js` (rollout estimate above 24 candidates; `EXACT_LIMIT`), advice `utils/requiemAdvice.js`, store `lib/requiemStore.js` (positions 1-3 in DB, 0-2 in code), page `pages/RequiemSolverPage.jsx`, parts in `components/requiem/`, icons in `public/requiem/`, colours in `constants/requiemLook.js`. JavaScript, not TypeScript. Tests: `tests/requiemEngine.test.js`, `tests/requiemPlanner.test.js` (exhaustive playthroughs), `tests/ui/RequiemSolverPage.test.jsx`.
+- Incarnon tag now covers melees and variants (88 tagged); Kuva list is complete (21, the old "incomplete" note was wrong); Moa/Hound compat rule; Valence calculator covers Coda/Kuva/Tenet; copy-screen load bug fixed (`c05e73f`).
+
+**Gotchas learned:** CHECK constraints cannot contain subqueries (use immutable functions); JS `String.replace` mangles `$$` in SQL replacement text; Bash calls with apostrophes inside heredocs can fail, so write script files with the Write tool; CRLF files need normalising for scripted edits.
+
+**Open questions:** Moa/Hound slot count (assumed 10) and whether Hounds take Sentinel mods; Sentinel weapons sharing the claws layout; Dex Furis Incarnon; Secondary/Melee owned-mod counts look low; Ultimatum advice thresholds are judgement calls.
+
+**Open queue now:** 1. Patrick runs the two migrations and tries the Requiem tab and Moa/Hound; 2. import companion mods; 3. Warframe 3->6 configs; 4. multi-user stages; 5. smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds, drop the two arcane backup tables).
+
 ## Update — October 29, 2026 (Session 023: Companion configs, Valence, Armory tools; supersedes the Open queue below)
 
 Pushed `main` is at `1aee474` (docs-only reconcile commits after it). Remote CI green on runs #30-#37; the last two code pushes (`cf17d6e`, `1aee474`) were not checked. Lint, 72 Node tests, 12 UI tests, build pass. **Both migrations this session were run and verified by Patrick:** `20261029_add_loadout_config_slot.sql` and `20261029_add_loadout_config_name.sql`.

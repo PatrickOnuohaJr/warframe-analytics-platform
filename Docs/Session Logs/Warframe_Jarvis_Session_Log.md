@@ -1497,3 +1497,26 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 **Limits:** Claude cannot sign in, so none of the session's UI was visually verified by Claude. The Companion A/B/C test is still pending; Patrick has not yet imported companion mods. Not confirmed: melee Incarnons (none tagged; catalog may not mark them), Kuva list (21, game has more), low Secondary/Melee owned counts.
 
 **Next:** (1) Patrick: import companion mods, run the Companion test; (2) Warframe 3->6 configs (reuse `config_slot`); (3) multi-user stage 1 then onboarding; (4) Zid-An-Asheir, A3 roadmap gate, four reference builds' mods, drop the two arcane backup tables.
+
+## Session 024 — October 29-30, 2026 — Requiem Solver, Incarnon/Moa/Hound groundwork, Valence for Kuva and Tenet
+
+**Requiem Solver (new Requiem tab)**
+- Pure evidence engine `utils/requiemEngine.js`: every sequence of three distinct Requiems consistent with the revealed mods and the stab history (left to right, stops at the first miss; Oull is a wildcard that reveals nothing; untested slots are never failures). Conflict finder names the likely typo stabs.
+- Planner `utils/requiemPlanner.js`: exact decision-tree search for groups of 24 sequences or fewer; larger groups use a greedy rollout (never better than the true optimum, within 10% in a test). Modes: fewest stabs on average / in the worst case. Counts sure-winning setups vs possible-winning setups separately. Advice layer `utils/requiemAdvice.js`: plain reasons, per-slot badges, Ultimatum advice (SAVE / OPTIONAL / READY; only promises a finish when guaranteed), tallies.
+- Page `pages/RequiemSolverPage.jsx` + `components/requiem/*`: adversary panel, 8 Requiem toggles, three-slot Parazon layout with Copy Sequence, stab form with edit/delete/undo and repeat/redundancy warnings, one-tap result buttons under the recommendation, evidence table. Technocyte Coda shows as a disabled "later" chip (different mechanics).
+- Persistence `lib/requiemStore.js` + migration `DB/Migrations/20261030_add_requiem_solver.sql` (`wf_user.adversary_sessions`, `wf_user.requiem_attempts`, owner-only RLS, check constraints via two immutable helper functions). **Migration NOT yet run**; until then the page works in memory and says so.
+- Real Requiem icons: nine white PNGs from WFCD (`warframe-items`) in `public/requiem/`, on mod-coloured tiles, with the drawn shape as fallback. The Requiem mods are not in `wf_base.mods` (only the unrelated Canticle Tome mods match).
+- Written as JavaScript, not TypeScript (the project has no TS setup). Assumes all eight Requiems owned, each mod equipped once, at most one Oull.
+
+**Smaller items**
+- Kuva: the catalog already has all 21 Kuva weapons (WFCD also has 21), so the earlier "Kuva list incomplete" note was wrong.
+- Incarnon tag now also recognises the 40 Genesis-adapter bases (12 melees) and their Prime/Vandal/Wraith/Prisma/Mk1/Dex variants: 67 -> 88 tagged. Dex Furis included by assumption.
+- Moa/Hound: robotic-class rule in `utils/companionCopy.js` (Robotic + Sentinel + own precepts) and migration `20261029_add_moa_hound_companions.sql` (4 Moas, 3 Hounds). **Migration NOT yet run.** Assumes 10 slots and that Hounds take Sentinel-labelled mods (wiki confirms only for Moas).
+- Valence calculator relabelled to cover Coda, Kuva and Tenet (same maths). Worked examples for Patrick: 51% -> 2 fusions (56.1 -> 60), 43% -> 4, 36% -> 6; a partner at 52.8%+ finishes a 51% in one.
+- Fix `c05e73f`: both companion copy screens failed with "Could not load builds" (selected a nonexistent `my_frames.warframe_name`); new `lib/fetchBuilds.js`. Patrick confirmed the Companion copy test works. Auto-compact set to 400k.
+
+**Commits pushed:** `c05e73f`, `f89e391` (Incarnon/Moa-Hound/Valence), `a8553c8` (Requiem Solver). Remote CI not checked for these. Lint, 90 Node tests, 14 UI tests, build pass locally.
+
+**Limits:** Claude cannot sign in, so none of the new UI has been seen in a real browser (the UI is covered by jsdom tests, including the Khra/Netra history). Ultimatum SAVE/OPTIONAL thresholds are judgement calls; Lich rank changes are not modelled. Secondary (38/145) and Melee (27/227) owned counts still look low.
+
+**Next:** (1) Patrick: run both new migrations, then try the Requiem tab on a real Lich and the Moa/Hound picker; (2) import companion mods; (3) Warframe 3->6 configs; (4) multi-user stages; (5) smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds mods, drop the two arcane backup tables).
