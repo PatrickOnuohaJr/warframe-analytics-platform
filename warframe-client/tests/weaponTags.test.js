@@ -57,3 +57,13 @@ test('Kuva / Tenet / Coda origin tags come from the name', () => {
   assert.ok(getWeaponTags(mk('Dual Coda Torxica')).includes('Coda'));
   assert.ok(!getWeaponTags(mk('Karak')).includes('Kuva'));
 });
+
+test('melee and variant Incarnons are recognised by their Genesis adapter', () => {
+  const mk = (name, category = 'Melee') => ({ name, category, raw_json: { type: 'Sword' } });
+  ['Skana', 'Skana Prime', 'Prisma Skana', 'Ack & Brunt', 'Sancti Magistar', 'Nami Solo', 'Dual Ichor'].forEach(n => {
+    assert.equal(isIncarnon(mk(n)), true, n);
+  });
+  assert.equal(isIncarnon(mk('Skanaa')), false);
+  assert.equal(isIncarnon(mk('Galatine')), false);
+  assert.equal(isIncarnon(mk('Bo Prime')), true);
+});

@@ -380,7 +380,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           >
             {undoStack.length ? `Undo ${undoStack[undoStack.length - 1].label}` : 'Undo'}
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => setShowValence(true)}>Coda Valence</Button>
+          <Button size="sm" variant="ghost" onClick={() => setShowValence(true)}>Valence</Button>
         </div>
       </div>
       <p className="text-xs mb-6" style={{ color: COLOR.mutedInk }}>

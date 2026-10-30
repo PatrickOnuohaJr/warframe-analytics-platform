@@ -27,7 +27,7 @@ function NumberField({ label, value, onChange, placeholder }) {
   );
 }
 
-// Forecasting calculator for Coda Valence Fusion (Coda weapons are cheap to farm with Live Heart Cells, so the framing is "what to aim for", not "what is worth buying"; Kuva and Tenet are not covered). Pure maths
+// Forecasting calculator for Valence Fusion on Coda, Kuva and Tenet weapons (same maths for all three; the framing is "what to aim for", not "what is worth buying"). Pure maths
 // in utils/valence.js; this is only the form and the readout.
 export default function ValenceCalculator({ onClose }) {
   const [baseText, setBaseText] = useState('');
@@ -58,8 +58,9 @@ export default function ValenceCalculator({ onClose }) {
   return (
     <ModalShell onClose={onClose} maxWidth="max-w-xl" accent={COLOR.gold}>
       <h3 className="text-sm font-bold uppercase tracking-widest mb-1" style={{ color: COLOR.gold }}>
-        Coda Valence forecast
+        Valence forecast
       </h3>
+      <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: COLOR.agedInk }}>Coda, Kuva and Tenet weapons</p>
       <p className="text-xs mb-4" style={{ color: COLOR.mutedInk }}>
         Each fusion gives 1.1 &times; the higher of the two bonuses, capped at 60% (58% or more rounds up to 60%).
         A weak donor still gives the full +10%; its own roll only matters if it beats your best copy.

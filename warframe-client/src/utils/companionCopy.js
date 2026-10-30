@@ -5,9 +5,10 @@
 // wf_base.mods.compat_name (WFCD's compatName) is either a universal bucket
 // or a named exclusive:
 //   COMPANION            any companion
-//   ROBOTIC, Sentinel    sentinels only
+//   ROBOTIC, Sentinel    sentinels, Moas and Hounds (all robotic)
 //   BEAST                every beast (Kubrow/Kavat/Predasite/Vulpaphyla/Charger)
 //   Kubrow, Kavat, PREDASITE, VULPAPHYLA   one beast breed
+//   Moa, Hound           that robotic type's own precepts
 //   <name>               one companion ("Wyrm", "Smeeta Kavat", ...)
 // and, for Companion Weapons only (all Claws-family):
 //   Claws                any beast claws
@@ -24,6 +25,8 @@ const BREED_BUCKET = {
   vulpaphyla: 'vulpaphyla',
   helminth_charger: 'helminth charger',
 };
+
+const ROBOTIC_CLASSES = new Set(['sentinel', 'moa', 'hound']);
 
 // "Wyrm Prime" / "Prisma Shade" -> "wyrm" / "shade": mods name the base
 // sentinel, and the Prime/Prisma variants take the same ones.
@@ -47,8 +50,11 @@ export function isModCompatible(mod, equipmentType, target) {
 
   // Companion body.
   if (!compat || compat === 'companion') return true;
-  if (target.cls === 'sentinel') {
-    return compat === 'robotic' || compat === 'sentinel' || compat === baseName(target.name);
+  // Robotic companions: Sentinels, Moas and Hounds share the ROBOTIC and
+  // Sentinel pools; each adds its own exclusives (a Sentinel by name, a Moa or
+  // Hound by type).
+  if (ROBOTIC_CLASSES.has(target.cls)) {
+    return compat === 'robotic' || compat === 'sentinel' || compat === target.cls || compat === baseName(target.name);
   }
   const bucket = BREED_BUCKET[target.cls];
   if (!bucket) return null;

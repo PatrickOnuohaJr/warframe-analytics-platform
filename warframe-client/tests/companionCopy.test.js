@@ -66,3 +66,15 @@ test('every companion has 10 numbered slots; a weapon has 8', () => {
   const claws = { name: 'Kubrow Claws', cls: 'claws' };
   assert.equal(planCopy(source, modsById, 'CompanionWeapon', claws).skipped.length, 1);
 });
+
+test('Moas and Hounds take robotic pools plus their own precepts', () => {
+  const moa = { name: 'Lambeo Moa', cls: 'moa' };
+  const hound = { name: 'Bhaira Hound', cls: 'hound' };
+  assert.equal(isModCompatible(mod('ROBOTIC'), 'Companion', moa), true);
+  assert.equal(isModCompatible(mod('Sentinel'), 'Companion', hound), true);
+  assert.equal(isModCompatible(mod('Moa'), 'Companion', moa), true);
+  assert.equal(isModCompatible(mod('Moa'), 'Companion', hound), false);
+  assert.equal(isModCompatible(mod('Hound'), 'Companion', hound), true);
+  assert.equal(isModCompatible(mod('BEAST'), 'Companion', hound), false);
+  assert.equal(isModCompatible(mod('Wyrm'), 'Companion', moa), false);
+});

@@ -64,11 +64,33 @@ const ORIGIN_TAGS = [
   { tag: 'Coda', test: /(^|\s)Coda(\s|$)/i },
 ];
 
+// Weapons that have an Incarnon Genesis adapter, read from the catalog's own
+// "<name> Incarnon Genesis" rows. The weapon's raw data only lists Incarnon
+// forms for guns (no melee ever does), so this list is what lets melees and
+// the odd missed variant be recognised.
+const INCARNON_BASES = [
+  'Boar', 'Boltor', 'Braton', 'Burston', 'Dera', 'Dread', 'Gorgon', 'Latron', 'Miter', 'Paris',
+  'Soma', 'Strun', 'Sybaris', 'Torid', 'Angstrum', 'Atomos', 'Bronco', 'Cestra', 'Despair',
+  'Dual Toxocyst', 'Furis', 'Gammacor', 'Kunai', 'Lato', 'Lex', 'Sicarus', 'Vasto', 'Zylok',
+  'Ack & Brunt', 'Anku', 'Bo', 'Ceramic Dagger', 'Dual Ichor', 'Furax', 'Hate', 'Magistar',
+  'Nami Solo', 'Okina', 'Sibear', 'Skana',
+];
+// The base weapon plus its Prime / Vandal / Wraith / faction / Mk1 / Prisma
+// variants. None of the base names contain a regex metacharacter except the
+// "&" in "Ack & Brunt", which is literal in a regex anyway.
+const INCARNON_NAME_RE = new RegExp(
+  '^(Prisma |Mk1-|Dex |Synoid |Telos |Rakta |Vaykor |Sancti |Secura )?(' +
+  INCARNON_BASES.join('|') +
+  ')( Prime| Vandal| Wraith)?$'
+);
+
 // A weapon is Incarnon-capable if the catalog flags it natively (Praedos,
-// Laetum...) or any of its listed attacks is an Incarnon Form.
+// Laetum...), any of its listed attacks is an Incarnon Form, or it has a
+// Genesis adapter (INCARNON_BASES above).
 export function isIncarnon(weapon) {
   const rj = weapon?.raw_json;
   if (!rj) return false;
+  if (INCARNON_NAME_RE.test(weapon.name ?? '')) return true;
   if (rj.native_incarnon) return true;
   return (rj.attacks || []).some(a => /incarnon/i.test(a?.name ?? ''));
 }
