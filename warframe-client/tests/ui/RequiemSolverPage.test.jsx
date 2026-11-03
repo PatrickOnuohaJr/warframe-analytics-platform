@@ -14,6 +14,13 @@ vi.mock('../../src/lib/requiemStore', () => ({
   validateSessionFields: () => [],
 }));
 
+// The Kuva cycle tracker on the same page has its own store; keep it offline too.
+vi.mock('../../src/lib/weaponCycleStore', () => ({
+  loadCycle: vi.fn(async () => ({ state: null, error: null })),
+  saveCycle: vi.fn(async () => null),
+  isMissingTable: () => false,
+}));
+
 import RequiemSolverPage from '../../src/pages/RequiemSolverPage';
 
 describe('RequiemSolverPage', () => {
@@ -29,7 +36,7 @@ describe('RequiemSolverPage', () => {
     // Record the three historical stabs through the form.
     const record = async (mods, failedAt) => {
       await user.click(screen.getByRole('button', { name: 'Record a stab' }));
-      const selects = screen.getAllByRole('combobox').slice(-3);
+      const selects = [1, 2, 3].map(n => screen.getByLabelText(`Slot ${n}`));
       for (let i = 0; i < 3; i++) await user.selectOptions(selects[i], mods[i]);
       await user.click(screen.getByLabelText(`Failed at ${failedAt}`));
       await user.click(screen.getByRole('button', { name: 'Record stab' }));
@@ -47,13 +54,29 @@ describe('RequiemSolverPage', () => {
     await waitFor(() => expect(screen.queryByText('KHRA → OULL → NETRA')).toBeNull());
   });
 
+  it('replaces the recommendation with a done summary once a stab wins', async () => {
+    const user = userEvent.setup();
+    render(<RequiemSolverPage />);
+    await screen.findByText('Requiem Solver');
+    await user.click(screen.getByRole('button', { name: 'Record a stab' }));
+    const selects = [1, 2, 3].map(n => screen.getByLabelText(`Slot ${n}`));
+    for (const [i, m] of ['Netra', 'Oull', 'Khra'].entries()) await user.selectOptions(selects[i], m);
+    await user.click(screen.getByLabelText('All three passed'));
+    await user.click(screen.getByRole('button', { name: 'Record stab' }));
+
+    await waitFor(() => expect(screen.getByText('Finished')).toBeTruthy());
+    expect(screen.getByText(/Sequence cracked/)).toBeTruthy();
+    expect(screen.queryByText('Try next')).toBeNull();
+    expect(screen.queryByText('OPTIONAL ULTIMATUM')).toBeNull();
+  });
+
   it('flags contradictory evidence instead of inventing a solution', async () => {
     const user = userEvent.setup();
     render(<RequiemSolverPage />);
     await screen.findByText('Requiem Solver');
     const record = async (failedAt) => {
       await user.click(screen.getByRole('button', { name: 'Record a stab' }));
-      const selects = screen.getAllByRole('combobox').slice(-3);
+      const selects = [1, 2, 3].map(n => screen.getByLabelText(`Slot ${n}`));
       for (const [i, m] of ['Khra', 'Netra', 'Lohk'].entries()) await user.selectOptions(selects[i], m);
       await user.click(screen.getByLabelText(`Failed at ${failedAt}`));
       await user.click(screen.getByRole('button', { name: 'Record stab' }));

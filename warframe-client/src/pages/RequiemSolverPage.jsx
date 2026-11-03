@@ -6,7 +6,9 @@ import KnownRequiems from '../components/requiem/KnownRequiems';
 import StabForm from '../components/requiem/StabForm';
 import StabHistory from '../components/requiem/StabHistory';
 import Recommendation from '../components/requiem/Recommendation';
+import RequiemDone from '../components/requiem/RequiemDone';
 import EvidenceBoard from '../components/requiem/EvidenceBoard';
+import KuvaCycleTracker from '../components/requiem/KuvaCycleTracker';
 import { analyzeSession } from '../utils/requiemAdvice';
 import { filterCandidates, succeeded, validateAttempt } from '../utils/requiemEngine';
 import {
@@ -242,6 +244,8 @@ export default function RequiemSolverPage() {
                   </p>
                 )}
               </div>
+            ) : won ? (
+              <RequiemDone attempts={attempts} tally={analysis.tally} />
             ) : (
               <Recommendation
                 analysis={analysis}
@@ -362,6 +366,10 @@ export default function RequiemSolverPage() {
             </div>
           </Panel>
         </div>
+      </div>
+
+      <div className="mt-4">
+        <KuvaCycleTracker />
       </div>
     </div>
   );

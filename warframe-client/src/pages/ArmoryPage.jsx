@@ -389,12 +389,14 @@ export default function ArmoryPage({ frames, refetchFrames }) {
 
       {error && <p className="text-red-400 mb-4">{error}</p>}
 
-      {/* Builds are the main surface (5/8) on the left; the weapon shelf (3/8) sits
-          on the right and stays in view while the builds scroll, so a weapon can
-          be dragged onto any build without scrolling back. */}
-      <div className="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-6">
+      {/* Builds and the weapon shelf each get half the page. The shelf stays in
+          view while the builds scroll, so a weapon can be dragged onto any build
+          without scrolling back. min-w-0 lets each column shrink to its half
+          instead of overflowing it; the shelf's small padding keeps its
+          scroll container from shaving the edge off the first filter chip. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div
-          className="lg:order-2 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto rounded-xl"
+          className="min-w-0 lg:order-2 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto rounded-xl p-1"
           onDragOver={e => { if (dragSource) e.preventDefault(); }}
           onDrop={e => {
             if (!dragSource) return;
@@ -503,7 +505,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
             <p style={{ color: COLOR.mutedInk }}>No weapons match this filter.</p>
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
             {visibleWeapons.map(weapon => {
               const allocations = getAllocations(weapon);
               const ruleApplies = weapon.category === 'Primary' || weapon.category === 'Melee';
@@ -601,7 +603,7 @@ export default function ArmoryPage({ frames, refetchFrames }) {
           </div>
         </div>
 
-        <div className="lg:order-1">
+        <div className="min-w-0 lg:order-1">
           <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: COLOR.mutedInk }}>
             Builds — drop a weapon on a slot
           </p>
