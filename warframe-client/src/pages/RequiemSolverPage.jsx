@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { COLOR } from '../constants/theme';
+import useMinWidth from '../hooks/useMinWidth';
 import Panel from '../components/ui/Panel';
 import Button from '../components/ui/Button';
 import KnownRequiems from '../components/requiem/KnownRequiems';
@@ -30,6 +31,7 @@ function Heading({ children }) {
 // few stabs (and Ultimatums) as possible. Everything the screen shows is
 // recomputed from the saved facts (revealed mods + stabs) by utils/requiem*.js.
 export default function RequiemSolverPage() {
+  const wide = useMinWidth(1536);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(BLANK);
   const [attempts, setAttempts] = useState([]);
@@ -199,8 +201,152 @@ export default function RequiemSolverPage() {
   const saveColor = { saved: COLOR.success, saving: COLOR.mutedInk, offline: COLOR.gold, error: COLOR.danger, idle: COLOR.agedInk }[save.state];
   const saveText = save.message || { saved: 'Saved', saving: 'Saving…', idle: '' }[save.state];
 
+  // The three blocks of the page. Narrow screens stack them in two columns;
+  // screens 1536px and wider spread them over three (settings, answer, evidence).
+  const recommendation = (
+    <Panel accent={COLOR.gold}>
+      <Heading>Recommendation</Heading>
+      {analysis.status === 'conflict' ? (
+        <div className="space-y-2">
+          <p className="text-sm font-bold" style={{ color: COLOR.danger }}>Evidence conflict: no sequence fits everything you entered.</p>
+          {analysis.conflict.culprits.length > 0 ? (
+            <p className="text-sm" style={{ color: COLOR.ink }}>
+              Likely typo: {analysis.conflict.culprits.map(set => set.map(id => `Stab ${attempts.findIndex(a => a.id === id) + 1}`).join(' + ')).join(', or ')}.
+              {' '}Those stabs are highlighted in red. Edit or delete one and the solver continues.
+            </p>
+          ) : (
+            <p className="text-sm" style={{ color: COLOR.ink }}>
+              Even with every stab removed this does not work, so check the Requiems marked as revealed.
+            </p>
+          )}
+        </div>
+      ) : won ? (
+        <RequiemDone attempts={attempts} tally={analysis.tally} />
+      ) : (
+        <Recommendation
+          analysis={analysis}
+          forcing={forcing}
+          onForcing={setForcing}
+          onQuickRecord={(config, failedSlot) => recordStab(config, failedSlot, forcing)}
+          onFormFill={config => setForm({ prefill: config })}
+        />
+      )}
+    </Panel>
+  );
+
+  const evidence = analysis.board && (
+    <Panel>
+      <Heading>What the evidence says</Heading>
+      <EvidenceBoard board={analysis.board} known={session.known} />
+      {analysis.facts.length > 0 && (
+        <ul className="mt-3 space-y-1 text-xs" style={{ color: COLOR.mutedInk }}>
+          {analysis.facts.map(f => <li key={f}>{f}</li>)}
+        </ul>
+      )}
+    </Panel>
+  );
+
+  const settings = (
+    <>
+      <Panel>
+        <Heading>Active adversary</Heading>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {[['kuva_lich', 'Kuva Lich'], ['sister', 'Sister of Parvos']].map(([value, label]) => (
+            <button
+              key={value} type="button" aria-pressed={session.adversaryType === value}
+              onClick={() => changeSession({ adversaryType: value })}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold"
+              style={{
+                background: session.adversaryType === value ? `${COLOR.gold}22` : COLOR.surface2,
+                border: `1px solid ${session.adversaryType === value ? COLOR.gold : COLOR.border}`,
+                color: session.adversaryType === value ? COLOR.gold : COLOR.mutedInk,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+          <button
+            type="button" disabled
+            title="Technocyte Coda uses different mechanics (Antivirus and Potency) and will get its own solver."
+            className="px-3 py-1.5 rounded-lg text-xs font-bold opacity-40"
+            style={{ background: COLOR.surface2, border: `1px dashed ${COLOR.border}`, color: COLOR.mutedInk }}
+          >
+            Technocyte Coda · later
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <label className="block">
+            <span className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: COLOR.agedInk }}>Name (optional)</span>
+            <input
+              value={session.adversaryName} maxLength={60}
+              onChange={e => commitSession({ ...sessionRef.current, adversaryName: e.target.value })}
+              onBlur={persistSession}
+              className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={inputStyle}
+            />
+          </label>
+          <label className="block">
+            <span className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: COLOR.agedInk }}>Ultimatums owned</span>
+            <input
+              type="number" min="0" max="99" value={session.ultimatumCount}
+              onChange={e => changeSession({ ultimatumCount: Math.max(0, Math.min(99, Number(e.target.value) || 0)) })}
+              className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={inputStyle}
+            />
+          </label>
+        </div>
+        <label className="flex items-center gap-2 text-sm mb-2" style={{ color: COLOR.ink }}>
+          <input type="checkbox" checked={session.hasOull} onChange={e => changeSession({ hasOull: e.target.checked })} />
+          I have an Oull to use
+        </label>
+        <label className="flex items-center gap-2 text-sm mb-2" style={{ color: COLOR.ink }}>
+          <input type="checkbox" checked={saver} onChange={e => setSaver(e.target.checked)} />
+          Ultimatum Saver (hold Ultimatums until a stab is worth it)
+        </label>
+        <label className="flex items-center gap-2 text-sm" style={{ color: COLOR.ink }}>
+          Plan for
+          <select value={mode} onChange={e => setMode(e.target.value)} className="rounded-lg px-2 py-1 text-sm outline-none" style={inputStyle}>
+            <option value="expected">fewest stabs on average</option>
+            <option value="worst">fewest stabs in the worst case</option>
+          </select>
+        </label>
+      </Panel>
+
+      <Panel>
+        <Heading>Known Requiems</Heading>
+        <KnownRequiems known={session.known} onChange={known => changeSession({ known })} />
+      </Panel>
+
+      <Panel>
+        <Heading>Stab history</Heading>
+        <StabHistory
+          attempts={attempts} conflictIds={conflictIds}
+          onEdit={a => setForm({ initial: a })} onDelete={deleteStab}
+        />
+        <div className="mt-3">
+          {form ? (
+            <div className="rounded-xl p-3" style={{ background: COLOR.surface1, border: `1px solid ${COLOR.border}` }}>
+              <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: COLOR.agedInk }}>
+                {form.initial ? 'Edit stab' : 'Record a stab'}
+              </p>
+              <StabForm
+                key={form.initial?.id ?? (form.prefill ? form.prefill.join() : 'new')}
+                initial={form.initial ?? (form.prefill ? { equipped: form.prefill, failedSlot: undefined, usedUltimatum: forcing } : null)}
+                otherAttempts={attempts.filter(a => a.id !== form.initial?.id)}
+                candidates={formCandidates}
+                defaultUltimatum={forcing}
+                onSubmit={a => recordStab(a.equipped, a.failedSlot, a.usedUltimatum, form.initial)}
+                onCancel={() => setForm(null)}
+              />
+            </div>
+          ) : (
+            <Button size="sm" onClick={() => setForm({})}>Record a stab</Button>
+          )}
+        </div>
+      </Panel>
+    </>
+  );
+
   return (
-    <div className="max-w-6xl mx-auto px-4 pb-10">
+    <div className="max-w-6xl 2xl:max-w-[1800px] mx-auto px-4 pb-10">
       <div className="flex items-end justify-between flex-wrap gap-2 mb-4">
         <div>
           <h2 className="text-lg font-bold uppercase tracking-[0.2em]" style={{ color: COLOR.gold }}>Requiem Solver</h2>
@@ -225,152 +371,30 @@ export default function RequiemSolverPage() {
         </Panel>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Right column first in the source so the answer is on top on phones. */}
-        <div className="space-y-4 lg:order-2">
-          <Panel accent={COLOR.gold}>
-            <Heading>Recommendation</Heading>
-            {analysis.status === 'conflict' ? (
-              <div className="space-y-2">
-                <p className="text-sm font-bold" style={{ color: COLOR.danger }}>Evidence conflict: no sequence fits everything you entered.</p>
-                {analysis.conflict.culprits.length > 0 ? (
-                  <p className="text-sm" style={{ color: COLOR.ink }}>
-                    Likely typo: {analysis.conflict.culprits.map(set => set.map(id => `Stab ${attempts.findIndex(a => a.id === id) + 1}`).join(' + ')).join(', or ')}.
-                    {' '}Those stabs are highlighted in red. Edit or delete one and the solver continues.
-                  </p>
-                ) : (
-                  <p className="text-sm" style={{ color: COLOR.ink }}>
-                    Even with every stab removed this does not work, so check the Requiems marked as revealed.
-                  </p>
-                )}
-              </div>
-            ) : won ? (
-              <RequiemDone attempts={attempts} tally={analysis.tally} />
-            ) : (
-              <Recommendation
-                analysis={analysis}
-                forcing={forcing}
-                onForcing={setForcing}
-                onQuickRecord={(config, failedSlot) => recordStab(config, failedSlot, forcing)}
-                onFormFill={config => setForm({ prefill: config })}
-              />
-            )}
-          </Panel>
-
-          {analysis.board && (
-            <Panel>
-              <Heading>What the evidence says</Heading>
-              <EvidenceBoard board={analysis.board} known={session.known} />
-              {analysis.facts.length > 0 && (
-                <ul className="mt-3 space-y-1 text-xs" style={{ color: COLOR.mutedInk }}>
-                  {analysis.facts.map(f => <li key={f}>{f}</li>)}
-                </ul>
-              )}
-            </Panel>
-          )}
+      {wide ? (
+        <div className="grid grid-cols-3 gap-4 items-start">
+          <div className="space-y-4">{settings}</div>
+          <div className="space-y-4">{recommendation}</div>
+          <div className="space-y-4">
+            {evidence}
+            <KuvaCycleTracker />
+          </div>
         </div>
-
-        <div className="space-y-4 lg:order-1">
-          <Panel>
-            <Heading>Active adversary</Heading>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {[['kuva_lich', 'Kuva Lich'], ['sister', 'Sister of Parvos']].map(([value, label]) => (
-                <button
-                  key={value} type="button" aria-pressed={session.adversaryType === value}
-                  onClick={() => changeSession({ adversaryType: value })}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold"
-                  style={{
-                    background: session.adversaryType === value ? `${COLOR.gold}22` : COLOR.surface2,
-                    border: `1px solid ${session.adversaryType === value ? COLOR.gold : COLOR.border}`,
-                    color: session.adversaryType === value ? COLOR.gold : COLOR.mutedInk,
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-              <button
-                type="button" disabled
-                title="Technocyte Coda uses different mechanics (Antivirus and Potency) and will get its own solver."
-                className="px-3 py-1.5 rounded-lg text-xs font-bold opacity-40"
-                style={{ background: COLOR.surface2, border: `1px dashed ${COLOR.border}`, color: COLOR.mutedInk }}
-              >
-                Technocyte Coda · later
-              </button>
+      ) : (
+        <>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* Answer column first in the source so it is on top on phones. */}
+            <div className="space-y-4 lg:order-2">
+              {recommendation}
+              {evidence}
             </div>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <label className="block">
-                <span className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: COLOR.agedInk }}>Name (optional)</span>
-                <input
-                  value={session.adversaryName} maxLength={60}
-                  onChange={e => commitSession({ ...sessionRef.current, adversaryName: e.target.value })}
-                  onBlur={persistSession}
-                  className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={inputStyle}
-                />
-              </label>
-              <label className="block">
-                <span className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: COLOR.agedInk }}>Ultimatums owned</span>
-                <input
-                  type="number" min="0" max="99" value={session.ultimatumCount}
-                  onChange={e => changeSession({ ultimatumCount: Math.max(0, Math.min(99, Number(e.target.value) || 0)) })}
-                  className="w-full rounded-lg px-3 py-2 text-sm outline-none" style={inputStyle}
-                />
-              </label>
-            </div>
-            <label className="flex items-center gap-2 text-sm mb-2" style={{ color: COLOR.ink }}>
-              <input type="checkbox" checked={session.hasOull} onChange={e => changeSession({ hasOull: e.target.checked })} />
-              I have an Oull to use
-            </label>
-            <label className="flex items-center gap-2 text-sm mb-2" style={{ color: COLOR.ink }}>
-              <input type="checkbox" checked={saver} onChange={e => setSaver(e.target.checked)} />
-              Ultimatum Saver (hold Ultimatums until a stab is worth it)
-            </label>
-            <label className="flex items-center gap-2 text-sm" style={{ color: COLOR.ink }}>
-              Plan for
-              <select value={mode} onChange={e => setMode(e.target.value)} className="rounded-lg px-2 py-1 text-sm outline-none" style={inputStyle}>
-                <option value="expected">fewest stabs on average</option>
-                <option value="worst">fewest stabs in the worst case</option>
-              </select>
-            </label>
-          </Panel>
-
-          <Panel>
-            <Heading>Known Requiems</Heading>
-            <KnownRequiems known={session.known} onChange={known => changeSession({ known })} />
-          </Panel>
-
-          <Panel>
-            <Heading>Stab history</Heading>
-            <StabHistory
-              attempts={attempts} conflictIds={conflictIds}
-              onEdit={a => setForm({ initial: a })} onDelete={deleteStab}
-            />
-            <div className="mt-3">
-              {form ? (
-                <div className="rounded-xl p-3" style={{ background: COLOR.surface1, border: `1px solid ${COLOR.border}` }}>
-                  <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: COLOR.agedInk }}>
-                    {form.initial ? 'Edit stab' : 'Record a stab'}
-                  </p>
-                  <StabForm
-                    key={form.initial?.id ?? (form.prefill ? form.prefill.join() : 'new')}
-                    initial={form.initial ?? (form.prefill ? { equipped: form.prefill, failedSlot: undefined, usedUltimatum: forcing } : null)}
-                    otherAttempts={attempts.filter(a => a.id !== form.initial?.id)}
-                    candidates={formCandidates}
-                    defaultUltimatum={forcing}
-                    onSubmit={a => recordStab(a.equipped, a.failedSlot, a.usedUltimatum, form.initial)}
-                    onCancel={() => setForm(null)}
-                  />
-                </div>
-              ) : (
-                <Button size="sm" onClick={() => setForm({})}>Record a stab</Button>
-              )}
-            </div>
-          </Panel>
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <KuvaCycleTracker />
-      </div>
+            <div className="space-y-4 lg:order-1">{settings}</div>
+          </div>
+          <div className="mt-4">
+            <KuvaCycleTracker />
+          </div>
+        </>
+      )}
     </div>
   );
 }

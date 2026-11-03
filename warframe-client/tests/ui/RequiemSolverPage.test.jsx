@@ -70,6 +70,33 @@ describe('RequiemSolverPage', () => {
     expect(screen.queryByText('OPTIONAL ULTIMATUM')).toBeNull();
   });
 
+  // Block headings in the order they appear in the page.
+  const headingOrder = () => screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent);
+
+  it('stacks the answer first on narrow screens, each block once', async () => {
+    render(<RequiemSolverPage />);
+    await screen.findByText('Requiem Solver');
+    expect(headingOrder()).toEqual([
+      'Recommendation', 'What the evidence says', 'Active adversary', 'Known Requiems', 'Stab history', 'Kuva Weapon Cycle',
+    ]);
+  });
+
+  it('spreads three columns on screens 1536px and wider: settings, answer, evidence and tracker', async () => {
+    window.matchMedia = vi.fn(query => ({
+      matches: query === '(min-width: 1536px)', media: query, addEventListener() {}, removeEventListener() {},
+    }));
+    try {
+      render(<RequiemSolverPage />);
+      await screen.findByText('Requiem Solver');
+      expect(headingOrder()).toEqual([
+        'Active adversary', 'Known Requiems', 'Stab history', 'Recommendation', 'What the evidence says', 'Kuva Weapon Cycle',
+      ]);
+      expect(screen.getAllByRole('button', { name: 'Record a stab' }).length).toBe(1);
+    } finally {
+      delete window.matchMedia;
+    }
+  });
+
   it('flags contradictory evidence instead of inventing a solution', async () => {
     const user = userEvent.setup();
     render(<RequiemSolverPage />);

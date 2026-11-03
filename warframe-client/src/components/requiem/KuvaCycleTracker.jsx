@@ -154,7 +154,7 @@ export default function KuvaCycleTracker() {
           <p className="text-xs mb-3" style={{ color: odds.status === 'cycled' ? COLOR.gold : COLOR.mutedInk }}>{oddsText(odds)}</p>
           {notice && <p role="alert" className="text-xs mb-3" style={{ color: COLOR.success }}>{notice}</p>}
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 mb-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 2xl:grid-cols-3 gap-2 mb-3">
             {KUVA_WEAPONS.map(({ name, category }) => {
               const cycled = cycle.rejected.includes(name);
               const hunted = cycle.target === name;
