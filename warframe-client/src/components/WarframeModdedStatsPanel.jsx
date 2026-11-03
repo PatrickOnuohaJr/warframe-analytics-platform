@@ -20,16 +20,28 @@ function resolveEquippedMods(slotsByPosition, modsById, ownedByModId) {
   return equipped;
 }
 
-const TILES = [
-  { key: 'health', label: 'Health', format: v => v },
-  { key: 'shield', label: 'Shield', format: v => v },
-  { key: 'armor', label: 'Armor', format: v => v },
-  { key: 'energy', label: 'Energy', format: v => v },
-  { key: 'sprintSpeed', label: 'Sprint Speed', format: v => `${v}x` },
-  { key: 'abilityDuration', label: 'Ability Duration', format: v => `${v}%` },
-  { key: 'abilityEfficiency', label: 'Ability Efficiency', format: v => `${v}%` },
-  { key: 'abilityRange', label: 'Ability Range', format: v => `${v}%` },
-  { key: 'abilityStrength', label: 'Ability Strength', format: v => `${v}%` },
+// Two groups, like the game's own upgrade screen: survival numbers first,
+// then the four ability stats that drive every ability (and the forecaster).
+const STAT_GROUPS = [
+  {
+    title: 'Survival',
+    rows: [
+      { key: 'health', label: 'Health', format: v => v },
+      { key: 'shield', label: 'Shield', format: v => v },
+      { key: 'armor', label: 'Armor', format: v => v },
+      { key: 'energy', label: 'Energy', format: v => v },
+      { key: 'sprintSpeed', label: 'Sprint Speed', format: v => `${v}x` },
+    ],
+  },
+  {
+    title: 'Abilities',
+    rows: [
+      { key: 'abilityDuration', label: 'Duration', format: v => `${v}%` },
+      { key: 'abilityEfficiency', label: 'Efficiency', format: v => `${v}%` },
+      { key: 'abilityRange', label: 'Range', format: v => `${v}%` },
+      { key: 'abilityStrength', label: 'Strength', format: v => `${v}%` },
+    ],
+  },
 ];
 
 // Live "modded stats" panel for the Warframe Loadout tab -- shows this
@@ -76,15 +88,20 @@ export default function WarframeModdedStatsPanel({
   return (
     <Panel accent={accent} className="mb-6">
       <h3 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: accent }}>Stats</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {TILES.map(tile => (
-          <div
-            key={tile.key}
-            className="rounded-xl p-3"
-            style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}` }}
-          >
-            <p className="text-[9px] uppercase tracking-widest mb-1" style={{ color: COLOR.mutedInk }}>{tile.label}</p>
-            <p className="text-lg font-black" style={{ color: COLOR.ink }}>{tile.format(result[tile.key])}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+        {STAT_GROUPS.map(group => (
+          <div key={group.title}>
+            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: COLOR.mutedInk }}>{group.title}</p>
+            {group.rows.map(row => (
+              <div
+                key={row.key}
+                className="flex items-baseline justify-between py-1.5 border-b"
+                style={{ borderColor: COLOR.border }}
+              >
+                <span className="text-sm" style={{ color: COLOR.mutedInk }}>{row.label}</span>
+                <span className="text-base font-bold tabular-nums" style={{ color: COLOR.ink }}>{row.format(result[row.key])}</span>
+              </div>
+            ))}
           </div>
         ))}
       </div>

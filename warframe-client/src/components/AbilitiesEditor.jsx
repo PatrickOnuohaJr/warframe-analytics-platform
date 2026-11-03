@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import AbilityForecaster from './AbilityForecaster'
 import { wfUser } from '../lib/supabase'
 import { COLOR } from '../constants/theme'
 import ModalShell from './ui/ModalShell'
@@ -25,6 +26,33 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
   const [helminthSearch, setHelminthSearch] = useState('')
 
   const activeConfig = configs.find(c => c.config_slot === activeConfigSlot) ?? null
+
+  // Same build stats shape computeAbilityStats takes (see render below),
+  // shared with the forecaster so both read one set of numbers.
+  const forecastStats = useMemo(
+    () => buildStats
+      ? {
+          duration: buildStats.abilityDuration,
+          efficiency: buildStats.abilityEfficiency,
+          range: buildStats.abilityRange,
+          strength: buildStats.abilityStrength,
+          armor: buildStats.armor,
+        }
+      : null,
+    [buildStats]
+  )
+
+  // Abilities of the active config that have canonical data, with the cast
+  // context (Helminth-subsumed or base) each one resolves in.
+  const forecastable = useMemo(
+    () => (frame.abilities ?? []).flatMap(ability => {
+      const isSubsumed = activeConfig?.subsumed_slot === ability.ability_slot
+      const name = isSubsumed ? activeConfig.subsumed_ability : ability.ability_name
+      const canonical = abilityCanonicalByName?.[name]
+      return canonical ? [{ slot: ability.ability_slot, name, parameters: canonical.parameters, context: isSubsumed ? 'subsumed' : 'base' }] : []
+    }),
+    [frame.abilities, activeConfig, abilityCanonicalByName]
+  )
 
   async function saveHelminthConfig(helminthName) {
     if (!selectedAbilitySlot) return
@@ -63,7 +91,7 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
   }
 
   return (
-    <div className="mt-6">
+    <div>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color }}>Abilities</h3>
 
@@ -145,12 +173,18 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
                 )}
 
                 {moddedStats && moddedStats.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1" onClick={e => e.stopPropagation()}>
+                  // Label left, value right, two columns: easier to scan than
+                  // a run-on line of "value label" pairs.
+                  <div className="mt-2 grid grid-cols-1 xl:grid-cols-2 gap-x-6" onClick={e => e.stopPropagation()}>
                     {moddedStats.map(stat => (
-                      <span key={stat.parameterKey} className="text-xs" style={{ color: COLOR.mutedInk }}>
-                        <span style={{ color: COLOR.ink }}>{stat.value === null ? '—' : stat.value}</span>
-                        {stat.unit === 'percent' && stat.value !== null ? '%' : ''} {stat.label}
-                      </span>
+                      <div key={stat.parameterKey} className="flex items-baseline justify-between gap-3 py-0.5 border-b text-xs" style={{ borderColor: COLOR.border }}>
+                        <span style={{ color: COLOR.mutedInk }}>{stat.label}</span>
+                        <span className="font-semibold tabular-nums" style={{ color: COLOR.ink }}>
+                          {stat.value === null ? '—' : stat.value}
+                          {stat.unit === 'percent' && stat.value !== null ? '%' : ''}
+                          {stat.capped && <span className="ml-1 font-normal" style={{ color: COLOR.mutedInk }}>(cap)</span>}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -161,6 +195,8 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
           <p style={{ color: COLOR.mutedInk }}>No ability data yet</p>
         )}
       </div>
+
+      <AbilityForecaster abilities={forecastable} buildStats={forecastStats} accent={color} />
 
       {selectedAbilitySlot && (
         <div className="mt-4 rounded-lg border p-4" style={{ borderColor: color }}>

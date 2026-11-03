@@ -24,6 +24,11 @@ import useDebouncedField from '../hooks/useDebouncedField';
 
 const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
+// Mod-grid columns: 2 on phones, 4 on tablets (full width), 2 again at `lg`
+// where the mods only get half the page, 4 at `xl` when each half is wide
+// enough for four slots.
+const MOD_GRID_CLASS = 'grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-3';
+
 // Maps each weapon equipment type to its three my_frames columns.
 const WEAPON_FIELDS = {
   Primary: { weapon: 'primary_weapon', incarnon: 'primary_is_incarnon', arcane: 'primary_arcane', copySlot: 'primary' },
@@ -285,8 +290,15 @@ export default function LoadoutEquipmentSection({
         </div>
       </div>
 
+      {/* 50/50 split like the game's own upgrade screen: mods on the left,
+          stats (and, for a Warframe, abilities) on the right, so the stats
+          are on screen the moment the tab opens. Stacks below `lg`. The
+          `xl` breakpoints below put the mod grid back to 4 columns once each
+          half is wide enough. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="min-w-0" data-testid="loadout-mods-half">
       {isWarframe && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 mb-4">
           <div>
             <WeaponInput
               label="Arcane 1"
@@ -314,7 +326,7 @@ export default function LoadoutEquipmentSection({
             )}
           </div>
 
-          <div className="sm:col-span-2 rounded-xl p-3" style={{ background: COLOR.surface2, border: `1px solid ${accent}30` }}>
+          <div className="xl:col-span-2 rounded-xl p-3" style={{ background: COLOR.surface2, border: `1px solid ${accent}30` }}>
             <p className="text-[10px] uppercase tracking-widest mb-2 font-bold" style={{ color: accent }}>
               Copy Arcane Setup
             </p>
@@ -345,7 +357,7 @@ export default function LoadoutEquipmentSection({
 
       {!isWarframe && weaponFields && (
         <div className="space-y-3 mb-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
             <div>
               <WeaponInput
                 label={`${equipmentType} Weapon`}
@@ -484,13 +496,13 @@ export default function LoadoutEquipmentSection({
         if (isWarframe || isMelee) {
           return (
             <div className="mb-3">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                <div className="hidden sm:block" />
+              <div className={MOD_GRID_CLASS + ' mb-3'}>
+                <div className="hidden sm:block lg:hidden xl:block" />
                 {isWarframe ? auraBox : stanceBox}
                 {exilusBox}
-                <div className="hidden sm:block" />
+                <div className="hidden sm:block lg:hidden xl:block" />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className={MOD_GRID_CLASS}>
                 {numberedBoxes}
               </div>
             </div>
@@ -501,17 +513,19 @@ export default function LoadoutEquipmentSection({
         // as a 4x2 grid, with Exilus as its own slot to the right,
         // vertically centered against that grid (confirmed 2026-08-27).
         return (
-          <div className="flex flex-col sm:flex-row gap-3 mb-3">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 mb-3">
+            <div className={MOD_GRID_CLASS + ' flex-1'}>
               {numberedBoxes}
             </div>
-            <div className="sm:w-40 sm:flex sm:items-center">
+            <div className="sm:w-40 lg:w-auto xl:w-40 sm:flex sm:items-center">
               {exilusBox}
             </div>
           </div>
         );
       })()}
+      </div>
 
+      <div className="min-w-0" data-testid="loadout-stats-half">
       {isWarframe && (
         <WarframeModdedStatsPanel
           baseStats={warframeStats}
@@ -537,6 +551,19 @@ export default function LoadoutEquipmentSection({
           accent={accent}
         />
       )}
+
+      {isWarframe && (
+        <AbilitiesEditor
+          frame={frame}
+          onSaved={onSaved}
+          color={accent}
+          abilityCanonicalByName={abilityCanonicalByName}
+          buildStats={warframeStatsResult}
+          key={frame.my_frame_id}
+        />
+      )}
+      </div>
+      </div>
 
       {picker && (
         <LoadoutSlotPickerModal
@@ -597,17 +624,6 @@ export default function LoadoutEquipmentSection({
             }
             setRivenEditor(null);
           }}
-        />
-      )}
-
-      {isWarframe && (
-        <AbilitiesEditor
-          frame={frame}
-          onSaved={onSaved}
-          color={accent}
-          abilityCanonicalByName={abilityCanonicalByName}
-          buildStats={warframeStatsResult}
-          key={frame.my_frame_id}
         />
       )}
 
