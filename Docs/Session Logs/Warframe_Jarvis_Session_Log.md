@@ -1560,3 +1560,11 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Forecast is not saved between visits.
 
 **Next:** Patrick checks the loadout screen and Forecast panel in the real app and says what the real Eclipse reads; identify the third source; optional "scale from my in-game value" proportion mode; plus the Session 025 queue (re-run weapon-cycles migration, check CI, companion mod import, 3->6 configs, multi-user).
+
+## Session 027 — November 3, 2026 — Requiem page three-column layout
+
+- Patrick showed the Requiem page at full screen (about 2000px): content capped at `max-w-6xl`, large empty sides. Chose option 1 of three: a three-column layout at 1536px and wider.
+- `RequiemSolverPage.jsx` now builds three named blocks (settings, recommendation, evidence) and arranges them by screen width via new `hooks/useMinWidth.js`: 1536px+ = settings | recommendation | evidence + Kuva cycle tracker, container `2xl:max-w-[1800px]`; narrower screens keep the earlier two-column layout (answer first on phones). Each block renders once (CSS alone could not regroup columns without duplicating components). Kuva tracker chips are 3 across in the narrow third column.
+- Commit `65706f3`. Lint, 110 Node tests, 23 UI tests (two new: block order at narrow and wide widths), build pass. Not seen in a browser: the Browser pane was signed out on a new port (5175) and Claude cannot sign in; layout is covered by the order tests only. Patrick to check at full screen.
+- Other pages (Armory, Mods and the rest) likely have the same cap; not changed.
+

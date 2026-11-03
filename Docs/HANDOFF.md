@@ -1,5 +1,9 @@
 # Handoff — Cephalon Gu
 
+## Update — November 3, 2026 (Session 027: Requiem three-column layout)
+
+Pushed `main` is at `65706f3` (plus a docs-only reconcile commit). Requiem page is three columns at 1536px+ (`hooks/useMinWidth.js`; settings | recommendation | evidence + Kuva tracker), two columns below. Verified by jsdom order tests only; Patrick to eyeball it at full screen. Other pages may need the same wide-screen treatment. Open queue is the Session 026 section below.
+
 ## Update — November 3, 2026 (Session 026: 50/50 loadout + ability forecaster; supersedes the Open queue below)
 
 Pushed `main` is at `f36924a` (plus a docs-only reconcile commit). Lint, 110 Node tests, 21 UI tests, build pass; CI not checked. Layout verified at 1280/1030/390 px only with a fake-data harness, not the real signed-in app (Browser pane was signed out; Claude cannot sign in).
