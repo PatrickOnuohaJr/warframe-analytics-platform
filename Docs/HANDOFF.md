@@ -10,7 +10,7 @@ Pushed `main` is at `f36924a` (plus a docs-only reconcile commit). Lint, 110 Nod
 
 **Shipped:** loadout screen is mods left / stats + abilities right (`LoadoutEquipmentSection.jsx`); Forecast panel (`components/AbilityForecaster.jsx`, pure math in `utils/abilityForecast.js`, tests `tests/abilityForecast.test.js`, `tests/ui/AbilityForecaster.test.jsx`). Changes add to the stat total (additive). Also fixed: Efficiency now lowers Energy cost (wiki formula), and `*_cap` rows (Eclipse reduction 90%) are applied.
 
-**Unconfirmed (ask Patrick):** (1) Eclipse at 243% Strength computes 486%, he reads 480% in game, cause unknown; (2) the third +60% source ("Grimwar") is unidentified; (3) Helminth Eclipse has different numbers (cap 75%, bonus 2/9/15/30%) not in the DB; (4) Molt Augmented stacks are not in the build's current Strength; (5) no Duration/Range floor applied (wiki lists none). Possible next: "scale from my in-game value" proportion mode.
+**Unconfirmed (ask Patrick):** (1) RESOLVED Nov 3: Eclipse at 243% Strength is 486%; Patrick misspoke when he said 480%, so the forecaster maths is correct; (2) the third +60% source ("Grimwar") is unidentified; (3) Helminth Eclipse has different numbers (cap 75%, bonus 2/9/15/30%) not in the DB; (4) Molt Augmented stacks are not in the build's current Strength; (5) no Duration/Range floor applied (wiki lists none). Possible next: "scale from my in-game value" proportion mode.
 
 **Open queue:** the Session 025 queue below minus the forecaster/loadout item (re-run weapon-cycles migration, CI check, companion mod import, 3->6 configs, multi-user, small items).
 

@@ -1553,7 +1553,7 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 **Bugs fixed (found while reading):** Efficiency was modelled as base x efficiency/100, which raised Energy cost; now the wiki formula cost = base x max(200% - Efficiency, 25%), ceiling 175%. `*_cap` parameter rows (Eclipse damage reduction 90%) were stored but never applied; now applied, shown as "(cap)".
 
 **Assumptions not confirmed / open:**
-- Eclipse is 200% x Strength, so 243% Strength gives 486%, not the 480% Patrick read in game. Unknown cause (rounded Strength, a different Eclipse rank?). Tests use 486.
+- Eclipse is 200% x Strength, so 243% Strength gives 486%, not the 480% Patrick read in game. Unknown cause (rounded Strength, a different Eclipse rank?). Tests use 486. Resolved Nov 3: Patrick confirmed 486% is correct and 480% was a slip of the tongue.
 - The third +60% source ("Grimwar" in the voice note) is unidentified; the panel takes any free-text source. Presets: Molt Augmented (+60% max, rank 5) and Tauforged Crimson shard (+15% Strength or Duration each; 5 = +75%), both wiki-confirmed.
 - No Duration/Range floor or cap is applied (the wiki lists none). Subsumed Eclipse has its own cap (75%) and bonus (2/9/15/30%) per the wiki; only the base cap row exists in the DB, so a Helminth Eclipse is not modelled correctly.
 - Arcane stacks (Molt Augmented) are not counted in the build's current Strength; only entered in the forecast.
