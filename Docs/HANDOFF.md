@@ -1,5 +1,21 @@
 # Handoff — Cephalon Gu
 
+## Update — November 3, 2026 (Session 025: Kuva cycle tracker; supersedes the Open queue below)
+
+Pushed `main` is at `e31b152` (feature commit), plus a docs-only reconcile commit. Remote CI not checked for `e31b152`. Lint, 102 Node tests, 17 UI tests, build pass.
+
+**Patrick must re-run `DB/Migrations/20261102_add_weapon_cycles.sql` in Supabase.** He ran an earlier version; the file now also adds `wf_user.weapon_cycles.current_lich` and is safe to re-run. Until it is re-run the Kuva Weapon Cycle panel shows "Could not load the saved cycle (column ... does not exist)".
+
+**What shipped:**
+- Kuva Weapon Cycle tracker (bottom of the Requiem tab): `components/requiem/KuvaCycleTracker.jsx`, pure rules in `utils/kuvaCycle.js` (reject / take / finish Lich / hunt odds), store `lib/weaponCycleStore.js` (one row per user per pool, `kuva` only for now), the 21 weapons in `constants/kuvaWeapons.js` (copied from `wf_base.weapons`, a test checks it stays 21 distinct Kuva names). Wiki rules: finishing a mission cycles an ignored Larvling's weapon; abort/extract does not; taking a weapon, converting/vanquishing the Lich, or cycling all 21 resets the list.
+- Requiem page shows a Finished summary (`RequiemDone.jsx`) instead of a recommendation after a win.
+- Armory is a 50/50 split with the clipped first chip fixed.
+- The built-in Browser pane works for seeing the real app: Patrick signs in once at the dev server URL (it chose port 5174 because 5173 was busy); sign-in persists. Claude must never sign in; see the Requiem save/reload check in Session 025.
+
+**Gotchas learned:** `getAllByRole('combobox').slice(-3)` in UI tests breaks when another select is added to the page; query slot selects by label (`Slot 1`..`Slot 3`). Wiki: Tenet/Sister weapons likely have their own pool; the `pool` column leaves room, not built.
+
+**Open queue now:** 1. NEW SESSION (brief ready): ability stat forecaster plus a 50/50 loadout screen (mods one half, abilities and stats the other). Mirage example: 243% power strength gives 480% Eclipse; forecast with +60% (Molt Augmented), +75% (5 Tau Forge shards) and another +60% (Patrick said "Grimwar"; confirm the source) strength; must treat strength, duration, range and efficiency separately per ability; existing groundwork: `utils/abilityStats.js`, `utils/abilityFormulas.js`. 2. Patrick re-runs the migration and enters his cycle state (hunting Karak, Quartakk is the current Lich). 3. Companion mod import. 4. Warframe 3->6 configs. 5. Multi-user stages. 6. Smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds, drop the two arcane backup tables).
+
 ## Update — October 30, 2026 (Session 024: Requiem Solver; supersedes the Open queue below)
 
 Pushed `main` is at `a8553c8` (plus a docs-only reconcile commit). Remote CI green on runs #39-#44 (read from GitHub public run list). Lint, 90 Node tests, 14 UI tests, build pass.

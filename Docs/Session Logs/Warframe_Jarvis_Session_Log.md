@@ -1520,3 +1520,23 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 **Limits:** Claude cannot sign in, so none of the new UI has been seen in a real browser (the UI is covered by jsdom tests, including the Khra/Netra history). Ultimatum SAVE/OPTIONAL thresholds are judgement calls; Lich rank changes are not modelled. Secondary (38/145) and Melee (27/227) owned counts still look low.
 
 **Next:** (1) Patrick: try the Requiem tab on a real Lich (check save and reload) and the Moa/Hound picker; (2) import companion mods; (3) Warframe 3->6 configs; (4) multi-user stages; (5) smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds mods, drop the two arcane backup tables).
+
+## Session 025 — November 2-3, 2026 — Browser sign-in check, Requiem polish, Kuva weapon cycle tracker
+
+**Seeing the app (built-in browser)**
+- Patrick signed in once in the Claude desktop Browser pane (dev server on port 5174); Claude then drove the real app. Verified: Requiem tab loads the saved Lich from Supabase on a fresh origin; a test stab saved, survived a reload, and was deleted (read-only service-key check confirmed only the two original stabs remained).
+- Replayed Patrick's dead Lich (Netra and Khra known, Oull, stabs Oull-Netra-Khra and Oull-Khra-Netra both failed at slot 2) through the engine offline: his two stabs were exactly the solver's first two picks, so nothing was saved; third pick Netra-Oull-Khra (50%) won with an Ultimatum.
+
+**Shipped (commit `e31b152`)**
+- Requiem page: once a stab wins, the recommendation panel is replaced by a Finished summary (winning setup, stabs, Ultimatums used and left). New `components/requiem/RequiemDone.jsx`.
+- Armory: builds and weapon shelf now a 50/50 split (`lg:grid-cols-2`, `min-w-0`, shelf padding) so the first filter chip is no longer clipped; weapon cards go two across only at 2xl. Measured 591px/591px at 1280 and 466/466 at 1030, no horizontal scroll.
+- Kuva Weapon Cycle tracker at the bottom of the Requiem tab (`components/requiem/KuvaCycleTracker.jsx`, `utils/kuvaCycle.js`, `lib/weaponCycleStore.js`, `constants/kuvaWeapons.js`, migration `DB/Migrations/20261102_add_weapon_cycles.sql`). Rules from the wiki: finishing a mission while ignoring a Larvling cycles its weapon (not shown again until the others cycle); aborting or extracting does not; accepting a weapon, converting or vanquishing the Lich, or cycling all 21 resets the list. Tracker: tap a weapon to cycle it, pick the weapon you took (resets the list, becomes the current Lich), mark the Lich converted or vanquished, set the weapon being hunted with "at most N more finished missions" (the 1-in-N chance assumes even picks, which the wiki does not confirm).
+- Repo hygiene: the working copy of `20261030_add_requiem_solver.sql` had a stray typo ("selyeect") that Claude did not write; fixed to match the committed `select`.
+
+**Verification:** lint, 102 Node tests, 17 UI tests, build pass locally. Remote CI not checked for `e31b152`. The tracker was rendered in the real app (21 weapons, offline notice before the migration) but not exercised against real saved data; the table exists and was empty at last read-only check.
+
+**Needs Patrick:** re-run `DB/Migrations/20261102_add_weapon_cycles.sql` in Supabase. The first run happened before the `current_lich` column was added to the file; the file is safe to re-run. Until then the tracker will fail to load with a "column does not exist" message.
+
+**Patrick's Kuva state to enter:** hunting Kuva Karak; cycled Tonkor and Grattler, then took the Kuva Quartakk (list reset, Quartakk is the current Lich).
+
+**Next:** (1) new session: ability stat forecaster (Mirage Eclipse example: 243% strength, 480% Eclipse, with +60%, +75%, +60% strength sources) and a 50/50 loadout screen with mods on one half and abilities and stats on the other, as in the game; (2) check CI for `e31b152`; (3) companion mod import; (4) Warframe 3->6 configs; (5) multi-user stages; (6) smaller items (Zid-An-Asheir, A3 roadmap gate, four reference builds mods, drop the two arcane backup tables).
