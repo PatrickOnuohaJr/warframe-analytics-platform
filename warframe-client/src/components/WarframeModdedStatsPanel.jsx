@@ -2,6 +2,7 @@ import { useMemo, useEffect } from 'react';
 import Panel from './ui/Panel';
 import { computeModdedWarframeStats } from '../utils/survivability';
 import { COLOR } from '../constants/theme';
+import { formatNumber } from '../utils/formatNumber';
 
 const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 const SPECIAL_SLOTS = ['aura', 'exilus'];
@@ -26,20 +27,20 @@ const STAT_GROUPS = [
   {
     title: 'Survival',
     rows: [
-      { key: 'health', label: 'Health', format: v => v },
-      { key: 'shield', label: 'Shield', format: v => v },
-      { key: 'armor', label: 'Armor', format: v => v },
-      { key: 'energy', label: 'Energy', format: v => v },
-      { key: 'sprintSpeed', label: 'Sprint Speed', format: v => `${v}x` },
+      { key: 'health', label: 'Health', format: formatNumber },
+      { key: 'shield', label: 'Shield', format: formatNumber },
+      { key: 'armor', label: 'Armor', format: formatNumber },
+      { key: 'energy', label: 'Energy', format: formatNumber },
+      { key: 'sprintSpeed', label: 'Sprint Speed', format: v => `${formatNumber(v)}x` },
     ],
   },
   {
     title: 'Abilities',
     rows: [
-      { key: 'abilityDuration', label: 'Duration', format: v => `${v}%` },
-      { key: 'abilityEfficiency', label: 'Efficiency', format: v => `${v}%` },
-      { key: 'abilityRange', label: 'Range', format: v => `${v}%` },
-      { key: 'abilityStrength', label: 'Strength', format: v => `${v}%` },
+      { key: 'abilityDuration', label: 'Duration', format: v => `${formatNumber(v)}%` },
+      { key: 'abilityEfficiency', label: 'Efficiency', format: v => `${formatNumber(v)}%` },
+      { key: 'abilityRange', label: 'Range', format: v => `${formatNumber(v)}%` },
+      { key: 'abilityStrength', label: 'Strength', format: v => `${formatNumber(v)}%` },
     ],
   },
 ];

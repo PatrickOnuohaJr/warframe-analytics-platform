@@ -6,6 +6,7 @@ import ModalShell from './ui/ModalShell'
 import { computeAbilityStats } from '../utils/abilityStats'
 import { HELMINTH_ABILITIES } from '../constants/helminthAbilities'
 import { augmentParameters } from '../utils/augmentAbilityStats'
+import { formatNumber } from '../utils/formatNumber'
 
 // Stable empty default so the memo below does not re-run every render.
 const NO_MODS = []
@@ -185,7 +186,7 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
                       <div key={stat.parameterKey} className="flex items-baseline justify-between gap-3 py-0.5 border-b text-xs" style={{ borderColor: COLOR.border }}>
                         <span style={{ color: COLOR.mutedInk }}>{stat.label}</span>
                         <span className="font-semibold tabular-nums" style={{ color: COLOR.ink }}>
-                          {stat.value === null ? '—' : stat.value}
+                          {formatNumber(stat.value)}
                           {stat.unit === 'percent' && stat.value !== null ? '%' : ''}
                           {stat.capped && <span className="ml-1 font-normal" style={{ color: COLOR.mutedInk }}>(cap)</span>}
                         </span>

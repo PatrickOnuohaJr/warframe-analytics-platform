@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { COLOR } from '../constants/theme';
+import { formatNumber } from '../utils/formatNumber';
 import { FORECAST_STATS, FORECAST_STAT_LABELS, sumChanges, forecastAbility } from '../utils/abilityForecast';
 
 // "What if" panel for ability stats. The player lists hypothetical changes
@@ -36,7 +37,7 @@ const inputStyle = { background: COLOR.surface1, border: `1px solid ${COLOR.bord
 // metres and energy have no reliable unit string in the data).
 function fmt(value, unit) {
   if (value == null) return '—';
-  return unit === 'percent' ? `${value}%` : `${value}`;
+  return unit === 'percent' ? `${formatNumber(value)}%` : formatNumber(value);
 }
 
 export default function AbilityForecaster({ abilities, buildStats, accent }) {
@@ -149,9 +150,9 @@ export default function AbilityForecaster({ abilities, buildStats, accent }) {
         {FORECAST_STATS.filter(stat => totals[stat] !== 0 && buildStats[stat] != null).map(stat => (
           <span key={stat} style={{ color: COLOR.mutedInk }}>
             {FORECAST_STAT_LABELS[stat]}{' '}
-            <span style={{ color: COLOR.ink }}>{buildStats[stat]}%</span>
+            <span style={{ color: COLOR.ink }}>{formatNumber(buildStats[stat])}%</span>
             {' → '}
-            <span className="font-bold" style={{ color: accent }}>{Math.round((buildStats[stat] + totals[stat]) * 100) / 100}%</span>
+            <span className="font-bold" style={{ color: accent }}>{formatNumber(Math.round((buildStats[stat] + totals[stat]) * 100) / 100)}%</span>
           </span>
         ))}
         {!hasChange && <span className="text-xs italic" style={{ color: COLOR.mutedInk }}>No change entered yet.</span>}
@@ -189,11 +190,11 @@ export default function AbilityForecaster({ abilities, buildStats, accent }) {
                         <span className="font-bold" style={{ color: COLOR.ink }}>{fmt(r.forecast, r.unit)}</span>
                         {r.delta != null && r.delta !== 0 && (
                           <span className="ml-1 text-xs" style={{ color: r.delta > 0 ? COLOR.success : COLOR.danger }}>
-                            ({r.delta > 0 ? '+' : ''}{r.delta})
+                            ({r.delta > 0 ? '+' : ''}{formatNumber(r.delta)})
                           </span>
                         )}
                         {r.capped && (
-                          <span className="ml-1 text-xs" style={{ color: COLOR.mutedInk }}>capped at {r.cap}{r.unit === 'percent' ? '%' : ''}</span>
+                          <span className="ml-1 text-xs" style={{ color: COLOR.mutedInk }}>capped at {formatNumber(r.cap)}{r.unit === 'percent' ? '%' : ''}</span>
                         )}
                       </span>
                     </div>

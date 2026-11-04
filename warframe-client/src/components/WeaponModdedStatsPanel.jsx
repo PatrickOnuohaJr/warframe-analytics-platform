@@ -3,6 +3,7 @@ import Panel from './ui/Panel';
 import { extractBaseWeaponStats, computeModdedWeaponStats } from '../utils/weaponStats';
 import { weaponByName } from '../utils/weaponMeta';
 import { COLOR } from '../constants/theme';
+import { formatNumber } from '../utils/formatNumber';
 
 const NUMBERED_SLOTS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
@@ -39,18 +40,18 @@ function resolveEquippedWeaponItems(slotsByPosition, modsById, ownedByModId, riv
 
 const GUN_TILES = [
   { key: 'fireRate', label: 'Fire Rate', format: v => (v == null ? '—' : `${v}/s`) },
-  { key: 'magazineSize', label: 'Magazine', format: v => (v == null ? '—' : v) },
+  { key: 'magazineSize', label: 'Magazine', format: v => formatNumber(v) },
   { key: 'reloadTime', label: 'Reload', format: v => (v == null ? '—' : `${v}s`) },
   { key: 'criticalChance', label: 'Crit Chance', format: v => (v == null ? '—' : `${v}%`) },
   { key: 'criticalMultiplier', label: 'Crit Damage', format: v => (v == null ? '—' : `${v}%`) },
   { key: 'procChance', label: 'Status Chance', format: v => (v == null ? '—' : `${v}%`) },
-  { key: 'punchThrough', label: 'Punch Through', format: v => (v == null ? '—' : v) },
-  { key: 'multishot', label: 'Multishot', format: v => (v == null ? '—' : v) },
+  { key: 'punchThrough', label: 'Punch Through', format: v => formatNumber(v) },
+  { key: 'multishot', label: 'Multishot', format: v => formatNumber(v) },
 ];
 
 const MELEE_TILES = [
-  { key: 'fireRate', label: 'Attack Speed', format: v => (v == null ? '—' : v) },
-  { key: 'damage', label: 'Damage', format: v => (v == null ? '—' : v) },
+  { key: 'fireRate', label: 'Attack Speed', format: v => formatNumber(v) },
+  { key: 'damage', label: 'Damage', format: v => formatNumber(v) },
   { key: 'criticalChance', label: 'Crit Chance', format: v => (v == null ? '—' : `${v}%`) },
   { key: 'criticalMultiplier', label: 'Crit Damage', format: v => (v == null ? '—' : `${v}%`) },
   { key: 'procChance', label: 'Status Chance', format: v => (v == null ? '—' : `${v}%`) },

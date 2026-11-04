@@ -165,3 +165,12 @@ test('Icy Avalanche adds Overguard, cap and Armor conversion to Avalanche', asyn
   assert.equal(get('icy_avalanche_overguard_cap'), 41400);
   assert.equal(get('icy_avalanche_armor_conversion'), 55.2); // game shows 55%
 });
+
+test('formatNumber adds thousands commas and keeps decimals', async () => {
+  const { formatNumber } = await import('../src/utils/formatNumber.js');
+  assert.equal(formatNumber(41400), '41,400');
+  assert.equal(formatNumber(1000000), '1,000,000');
+  assert.equal(formatNumber(49.75), '49.75');
+  assert.equal(formatNumber(999), '999');
+  assert.equal(formatNumber(null), '—');
+});
