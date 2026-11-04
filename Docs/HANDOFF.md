@@ -1,5 +1,9 @@
 # Handoff — Cephalon Gu
 
+## Update — November 3, 2026 (Invigoration log + Override counter, Phase 1)
+
+Built, not yet seen in the signed-in app. **Patrick must run `DB/Migrations/20261103_add_invigoration_events.sql`** (adds `slot` A/B/C to `helminth_invigorations`, backfilled in entry order, plus the append-only `invigoration_events` table; no deletes, no inferred events). Until then the Home page shows a "run the migration" note and saving a NEW offer fails with that message. Rules: `utils/invigorationLedger.js` (counter derived from live events ordered by `event_id`; only applied raises it; cap 10; Override selection resets and is separate from applying; recipient-application counting is ONE flag `COUNT_OVERRIDE_RECIPIENT_APPLICATION`, default false, unverified; events snapshot the offer). Store `lib/invigorationStore.js`, hook `hooks/useInvigorationLog.js`, UI `components/InvigorationLedger.jsx`, wired into `pages/HomePage.jsx` (offers now update in place, never delete; week start is UTC). Docs: `Docs/Invigoration Tracker Phase 1 Proposal.md`. Recommendation engine (Phase 2) NOT started. Patrick should enter his current in-game count with "Match the game".
+
 ## PARKED — augment pass (Patrick, Nov 3, 2026)
 
 Do NOT start until Patrick says all his builds are entered. Then: read every saved build, list equipped ability augments, and make each accurate in `utils/augmentAbilityStats.js` (wiki scaling rows, tests). Confirmed in game so far: Healing Flame, Icy Avalanche, Intrepid Stand. Wiki-only: Rumbled, Intrepid Stand allies. Rhythm Guard intentionally not added (no Strength scaling).

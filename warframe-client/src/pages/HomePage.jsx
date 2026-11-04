@@ -4,6 +4,9 @@ import FrameCard from '../components/FrameCard'
 import Panel from '../components/ui/Panel'
 import Button from '../components/ui/Button'
 import ModalShell from '../components/ui/ModalShell'
+import { OfferStatus, OverridePanel } from '../components/InvigorationLedger'
+import useInvigorationLog from '../hooks/useInvigorationLog'
+import { utcWeekStart, offerChanged, offerEvents } from '../utils/invigorationLedger'
 
 const PANEL_BG = '#4A443B'
 const BORDER = '#6F6A62'
@@ -19,12 +22,12 @@ const SHARD_CONFIG = [
   { type: 'violet',  label: 'Violet',  color: '#9B59B6' },
 ]
 
+// The game's weekly reset is Monday 00:00 UTC, not the viewer's local Monday.
 function getCurrentMonday() {
-  const d = new Date()
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  return new Date(d.setDate(diff)).toISOString().split('T')[0]
+  return utcWeekStart()
 }
+
+const SLOTS = ['A', 'B', 'C']
 
 export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCodex }) {
   const [invigorations, setInvigorations] = useState([])
@@ -36,6 +39,8 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
     { frame_name: '', offense_buff: '', utility_buff: '' },
   ])
   const [editingInvig, setEditingInvig] = useState(null) // { index, inv }
+  const [invigError, setInvigError] = useState(null)
+  const invigLog = useInvigorationLog()
   const [editInvigInput, setEditInvigInput] = useState({ frame_name: '', offense_buff: '', utility_buff: '' })
 
   const recentFrames = [...frames]
@@ -63,7 +68,8 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
       console.error('Failed to fetch invigorations:', error)
       return
     }
-    setInvigorations(data ?? [])
+    // Slot A, B, C (offers without a slot, before the migration, go last by id).
+    setInvigorations([...(data ?? [])].sort((x, y) => (x.slot ?? '~').localeCompare(y.slot ?? '~') || x.id - y.id))
   }
 
   async function fetchShardInventory() {
@@ -87,67 +93,63 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
     setShardInventory(grouped)
   }
 
+  // Corrects an offer IN PLACE (same row id, so its history stays attached).
+  // Recorded events keep their own snapshot of the offer, so this never
+  // rewrites what was logged. If the offer already has events the change is
+  // consequential and needs an explicit confirmation.
+  async function updateOffer(inv, next) {
+    const changed = offerChanged(inv, next)
+    if (changed.length === 0) return true
+    if (offerEvents(invigLog.events, inv.id).length > 0 &&
+      !window.confirm('This offer already has recorded activity. Editing it will NOT change that history (it keeps a copy of the original offer), but the card will show the corrected offer. Continue?')) {
+      return false
+    }
+    const { error } = await wfUser
+      .from('helminth_invigorations')
+      .update({ frame_name: next.frame_name, offense_buff: next.offense_buff, utility_buff: next.utility_buff })
+      .eq('id', inv.id)
+    if (error) {
+      console.error('Failed to update invigoration offer:', error)
+      setInvigError(error.message)
+      return false
+    }
+    return true
+  }
+
   async function saveEditedInvig() {
-    const monday = getCurrentMonday()
-
-    const { error: deleteError } = await wfUser
-      .from('helminth_invigorations')
-      .delete()
-      .eq('week_start', monday)
-      .eq('frame_name', editingInvig.inv.frame_name)
-
-    if (deleteError) {
-      console.error('Failed to delete old invigoration:', deleteError)
-      return
-    }
-
-    const { error: insertError } = await wfUser
-      .from('helminth_invigorations')
-      .insert([{ ...editInvigInput, week_start: monday }])
-
-    if (insertError) {
-      console.error('Failed to save invigoration:', insertError)
-      return
-    }
-
+    const ok = await updateOffer(editingInvig.inv, editInvigInput)
+    if (!ok) return
     setEditingInvig(null)
     fetchInvigorations()
   }
-  
+
+  // Row 1/2/3 of the form are slots A/B/C. Existing offers in a slot are
+  // updated in place; empty slots are inserted. Nothing is ever deleted.
   async function submitInvigorations() {
-  const monday = getCurrentMonday()
-  const validRows = invigInputs.filter(
-    row => row.frame_name && row.offense_buff && row.utility_buff
-  )
+    const monday = getCurrentMonday()
+    setInvigError(null)
 
-  if (validRows.length === 0) {
+    for (let i = 0; i < invigInputs.length && i < SLOTS.length; i++) {
+      const row = invigInputs[i]
+      if (!(row.frame_name && row.offense_buff && row.utility_buff)) continue
+      const existing = invigorations.find(o => o.slot === SLOTS[i])
+      if (existing) {
+        if (!(await updateOffer(existing, row))) return
+      } else {
+        const { error } = await wfUser
+          .from('helminth_invigorations')
+          .insert([{ ...row, week_start: monday, slot: SLOTS[i] }])
+        if (error) {
+          console.error('Failed to save invigoration:', error)
+          setInvigError(error.code === '42703' ? 'Run DB/Migrations/20261103_add_invigoration_events.sql first (the slot column is missing).' : error.message)
+          return
+        }
+      }
+    }
+
     setShowInvigForm(false)
-    return
+    fetchInvigorations()
   }
-
-  const { error: deleteError } = await wfUser
-    .from('helminth_invigorations')
-    .delete()
-    .eq('week_start', monday)
-
-  if (deleteError) {
-    console.error('Failed to clear existing invigorations:', deleteError)
-    return
-  }
-
-  const { error: insertError } = await wfUser
-    .from('helminth_invigorations')
-    .insert(validRows.map(row => ({ ...row, week_start: monday })))
-
-  if (insertError) {
-    console.error('Failed to save invigorations:', insertError)
-    return
-  }
-
-  setShowInvigForm(false)
-  fetchInvigorations()
-}
-
 
   const totalShards = Object.values(shardInventory)
     .reduce((sum, { base, tau }) => sum + base + tau, 0)
@@ -304,7 +306,7 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
                   className="text-[9px] uppercase tracking-widest font-bold mb-1"
                   style={{ color: '#4CAF50' }}
                 >
-                  Invigorated
+                  Offer{inv.slot ? ` · Slot ${inv.slot}` : ''}
                 </p>
                 <p className="text-sm font-semibold mb-1" style={{ color: '#E8E4DC' }}>
                   {inv.frame_name}
@@ -323,10 +325,17 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
                     {inv.utility_buff}
                   </span>
                 </div>
+                <OfferStatus offer={inv} log={invigLog} onError={setInvigError} />
               </Panel>
             ))}
           </div>
         )}
+
+        {invigError && (
+          <p className="mt-3 text-sm" style={{ color: '#E63946' }} role="alert">{invigError}</p>
+        )}
+
+        <OverridePanel offers={invigorations} frames={frames} log={invigLog} onError={setInvigError} />
 
         {/* Invigoration entry form */}
         {showInvigForm && (
