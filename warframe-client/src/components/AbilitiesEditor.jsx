@@ -5,6 +5,10 @@ import { COLOR } from '../constants/theme'
 import ModalShell from './ui/ModalShell'
 import { computeAbilityStats } from '../utils/abilityStats'
 import { HELMINTH_ABILITIES } from '../constants/helminthAbilities'
+import { augmentParameters } from '../utils/augmentAbilityStats'
+
+// Stable empty default so the memo below does not re-run every render.
+const NO_MODS = []
 
 // Base kit + Helminth subsume editor for the Warframe piece of the Loadout
 // tab. Extracted from App.jsx's old standalone Abilities modal -- same
@@ -16,7 +20,7 @@ import { HELMINTH_ABILITIES } from '../constants/helminthAbilities'
 // Render this with `key={frame.my_frame_id}` from the caller so switching
 // which Warframe is open resets the local config-slot/picker state instead
 // of carrying it over from the previous frame.
-export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, abilityCanonicalByName = {}, buildStats }) {
+export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, abilityCanonicalByName = {}, buildStats, equippedMods = NO_MODS }) {
   const configs = frame.ability_configs ?? []
   const sortedConfigs = configs.slice().sort((a, b) => a.config_slot.localeCompare(b.config_slot))
 
@@ -49,9 +53,10 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
       const isSubsumed = activeConfig?.subsumed_slot === ability.ability_slot
       const name = isSubsumed ? activeConfig.subsumed_ability : ability.ability_name
       const canonical = abilityCanonicalByName?.[name]
-      return canonical ? [{ slot: ability.ability_slot, name, parameters: canonical.parameters, context: isSubsumed ? 'subsumed' : 'base' }] : []
+      const context = isSubsumed ? 'subsumed' : 'base'
+      return canonical ? [{ slot: ability.ability_slot, name, parameters: [...canonical.parameters, ...augmentParameters(name, equippedMods, context)], context }] : []
     }),
-    [frame.abilities, activeConfig, abilityCanonicalByName]
+    [frame.abilities, activeConfig, abilityCanonicalByName, equippedMods]
   )
 
   async function saveHelminthConfig(helminthName) {
@@ -131,7 +136,7 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
             // this rename, see utils/survivability.js.
             const moddedStats = canonical && buildStats
               ? computeAbilityStats({
-                  parameters: canonical.parameters,
+                  parameters: [...canonical.parameters, ...augmentParameters(displayedName, equippedMods, castContext)],
                   buildStats: {
                     duration: buildStats.abilityDuration,
                     efficiency: buildStats.abilityEfficiency,

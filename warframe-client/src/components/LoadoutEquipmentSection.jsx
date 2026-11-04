@@ -246,6 +246,16 @@ export default function LoadoutEquipmentSection({
 
   const overBudget = used > netCapacity;
 
+  // Name/rank/max rank of every mod on the Warframe, so augment mods can add
+  // their numbers to the abilities (see utils/augmentAbilityStats.js).
+  const equippedModInfo = useMemo(() => {
+    if (!isWarframe) return [];
+    return [...NUMBERED_SLOTS, 'aura', 'exilus'].flatMap(pos => {
+      const mod = slotsByPosition.get(pos)?.mod_id ? modsById.get(slotsByPosition.get(pos).mod_id) : null;
+      return mod ? [{ name: mod.name, rank: ownedByModId.get(mod.mod_id)?.owned_rank ?? 0, maxRank: mod.max_rank ?? 0 }] : [];
+    });
+  }, [isWarframe, slotsByPosition, modsById, ownedByModId]);
+
   // Every augment that fits this Warframe (owned or not) for the picker's
   // Augments filter. Only the Warframe piece has frame-specific augments.
   const frameAugments = useMemo(
@@ -559,6 +569,7 @@ export default function LoadoutEquipmentSection({
           color={accent}
           abilityCanonicalByName={abilityCanonicalByName}
           buildStats={warframeStatsResult}
+          equippedMods={equippedModInfo}
           key={frame.my_frame_id}
         />
       )}

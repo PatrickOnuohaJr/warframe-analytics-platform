@@ -1,5 +1,9 @@
 # Handoff — Cephalon Gu
 
+## Update — November 3, 2026 (augment numbers on abilities)
+
+Healing Flame (Ember, Fire Blast augment) now adds its heal (25-50) and Overguard cap (10,000) to Fire Blast on the loadout screen and in the Forecast, scaled by Strength (checked against Patrick's in-game 199% tooltip: 49.75-99.5, 19,900). Mechanism: `utils/augmentAbilityStats.js` (hand-checked rows per augment, max rank only, not when Helminth-subsumed). Only Healing Flame is entered; add other augments one at a time after wiki + tooltip check. Not yet seen in the signed-in app.
+
 ## Update — November 3, 2026 (Session 028: third strength source, ability rank bug, Helminth data)
 
 Pushed `main` is at `cfbc393` (plus a docs-only reconcile commit). This is the newest section; it adds to Session 026 (forecaster) below.

@@ -132,3 +132,25 @@ test('forecasting a Helminth Eclipse uses the subsumed numbers', () => {
   assert.equal(row(rows, 'damage_bonus').forecast, 90.9); // 30% x 3.03
   assert.deepEqual(row(rows, 'damage_bonus').affectedBy, ['strength']);
 });
+
+// Healing Flame (Ember's Fire Blast augment), checked against Patrick's in-game
+// tooltip at 199% Strength: heal 25-50 -> 49.75-99.5, Overguard cap 10,000 -> 19,900.
+test('Healing Flame adds heal and Overguard cap to Fire Blast, scaled by Strength', async () => {
+  const { augmentParameters } = await import('../src/utils/augmentAbilityStats.js');
+  const equipped = [{ name: 'Healing Flame', rank: 3, maxRank: 3 }];
+  const rows = augmentParameters('Fire Blast', equipped);
+  const stats = computeAbilityStats({ parameters: rows, buildStats: { strength: 199 } });
+  const get = k => stats.find(s => s.parameterKey === k).value;
+  assert.equal(get('healing_flame_heal_min'), 49.75);
+  assert.equal(get('healing_flame_heal_max'), 99.5);
+  assert.equal(get('healing_flame_overguard_cap'), 19900);
+
+  // Forecast: +60% Strength -> 259% -> cap 25,900.
+  const f = forecastAbility({ parameters: rows, buildStats: { strength: 199, duration: 100, range: 100, efficiency: 100 }, changes: [{ stat: 'strength', percent: 60 }] });
+  assert.equal(f.find(r => r.parameterKey === 'healing_flame_overguard_cap').forecast, 25900);
+
+  // Not on another ability, not below max rank, not when subsumed.
+  assert.deepEqual(augmentParameters('Eclipse', equipped), []);
+  assert.deepEqual(augmentParameters('Fire Blast', [{ name: 'Healing Flame', rank: 2, maxRank: 3 }]), []);
+  assert.deepEqual(augmentParameters('Fire Blast', equipped, 'subsumed'), []);
+});
