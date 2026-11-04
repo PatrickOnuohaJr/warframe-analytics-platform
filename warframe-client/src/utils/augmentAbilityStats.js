@@ -21,6 +21,39 @@ const AUGMENTS = {
       { parameter_key: 'healing_flame_overguard_cap', label: 'Healing Flame Overguard cap', base_value: 10000, unit: 'flat', scales_with: 'strength' },
     ],
   },
+  // Icy Avalanche (Frost, Avalanche). Wiki: 60 Overguard per enemy hit, +20% of
+  // Armor once per enemy, cap 15,000; all three "affected by Ability Strength".
+  // Checked in game by Patrick (Frost Prime, 276% Strength): 60 -> 165.6,
+  // cap 15,000 -> 41,400, Armor conversion 20% -> 55%.
+  'Icy Avalanche': {
+    ability: 'Avalanche',
+    rows: [
+      { parameter_key: 'icy_avalanche_overguard', label: 'Icy Avalanche Overguard per hit', base_value: 60, unit: 'flat', scales_with: 'strength' },
+      { parameter_key: 'icy_avalanche_overguard_cap', label: 'Icy Avalanche Overguard cap', base_value: 15000, unit: 'flat', scales_with: 'strength' },
+      { parameter_key: 'icy_avalanche_armor_conversion', label: 'Icy Avalanche Armor to Overguard', base_value: 20, unit: 'percent', scales_with: 'strength' },
+    ],
+  },
+
+  // Intrepid Stand (Styanax, Final Stand). Wiki only (not yet checked in game):
+  // 60 Overguard to Styanax and 30 to allies per javelin hit, cap 15,000, "the
+  // amount and the cap are affected by Ability Strength".
+  'Intrepid Stand': {
+    ability: 'Final Stand',
+    rows: [
+      { parameter_key: 'intrepid_stand_overguard_self', label: 'Intrepid Stand Overguard (Styanax)', base_value: 60, unit: 'flat', scales_with: 'strength' },
+      { parameter_key: 'intrepid_stand_overguard_ally', label: 'Intrepid Stand Overguard (allies)', base_value: 30, unit: 'flat', scales_with: 'strength' },
+      { parameter_key: 'intrepid_stand_overguard_cap', label: 'Intrepid Stand Overguard cap', base_value: 15000, unit: 'flat', scales_with: 'strength' },
+    ],
+  },
+
+  // Rumbled (Atlas, Rumblers). Wiki only: the Rumbler's Overguard absorbs up to
+  // 300% of Max Health, "health multiplier affected by Ability Strength".
+  'Rumbled': {
+    ability: 'Rumblers',
+    rows: [
+      { parameter_key: 'rumbled_overguard_health', label: 'Rumbled Overguard (% of Max Health)', base_value: 300, unit: 'percent', scales_with: 'strength' },
+    ],
+  },
 };
 
 // Extra parameter rows for `abilityName` from the augments currently

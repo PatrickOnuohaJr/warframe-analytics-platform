@@ -154,3 +154,14 @@ test('Healing Flame adds heal and Overguard cap to Fire Blast, scaled by Strengt
   assert.deepEqual(augmentParameters('Fire Blast', [{ name: 'Healing Flame', rank: 2, maxRank: 3 }]), []);
   assert.deepEqual(augmentParameters('Fire Blast', equipped, 'subsumed'), []);
 });
+
+// Icy Avalanche (Frost), checked against Patrick's in-game tooltip at 276% Strength.
+test('Icy Avalanche adds Overguard, cap and Armor conversion to Avalanche', async () => {
+  const { augmentParameters } = await import('../src/utils/augmentAbilityStats.js');
+  const rows = augmentParameters('Avalanche', [{ name: 'Icy Avalanche', rank: 3, maxRank: 3 }]);
+  const stats = computeAbilityStats({ parameters: rows, buildStats: { strength: 276 } });
+  const get = k => stats.find(s => s.parameterKey === k).value;
+  assert.equal(get('icy_avalanche_overguard'), 165.6);
+  assert.equal(get('icy_avalanche_overguard_cap'), 41400);
+  assert.equal(get('icy_avalanche_armor_conversion'), 55.2); // game shows 55%
+});
