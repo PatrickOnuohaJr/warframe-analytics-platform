@@ -1,5 +1,15 @@
 # Handoff — Cephalon Gu
 
+## Update — November 4, 2026 (Session 029: Kullervo cards, subsumed augments, Flawed mods)
+
+Pushed `main` at `13e3e8a` plus a docs-only reconcile commit. Lint, 133 Node tests, 29 UI tests, build pass; none of it seen in the signed-in app.
+
+**Patrick must run:** `DB/Migrations/20261103_add_invigoration_events.sql` (then Home: "Match the game" = 10, Record Override for Override week) and `DB/Migrations/20261104_remove_flawed_mods_from_inventory.sql` (27 owned Flawed mods, none equipped).
+
+**Shipped:** `utils/abilityCardData.js` (in-game-checked rows replacing unusable wiki rank-list rows: Wrathful Advance, Recompense, Collective Curse, subsumed Warcry; interim until loaded via the static-data pipeline); cards show numbers only; augment rows for Wrath Of Ukko (wiki only), Eternal War, Volatile Recompense; augments apply to subsumed casts; picker lists augments of subsumed abilities (`modMeta.augmentsForSubsumed`).
+
+**Next session queue:** 1. Patrick checks Home (Invigoration) and Kullervo loadout in the real app. 2. Final augment pass once all builds are entered (PARKED). 3. Enter Warframe mods on the 4 reference builds. 4. Helminth coverage (parked, medium). 5. Check Storm of Ukko and other abilities with stored rank-list rows the same way (one tooltip screenshot each). 6. Invigoration Phase 2 only on Patrick's go-ahead; verify Override recipient counting and counting after 10. 7. Catalog still lists Flawed mods (hide if wanted).
+
 ## Update — November 3, 2026 (Invigoration log + Override counter, Phase 1)
 
 Built, not yet seen in the signed-in app. **Patrick must run `DB/Migrations/20261103_add_invigoration_events.sql`** (adds `slot` A/B/C to `helminth_invigorations`, backfilled in entry order, plus the append-only `invigoration_events` table; no deletes, no inferred events). Until then the Home page shows a "run the migration" note and saving a NEW offer fails with that message. Rules: `utils/invigorationLedger.js` (counter derived from live events ordered by `event_id`; only applied raises it; cap 10; Override selection resets and is separate from applying; recipient-application counting is ONE flag `COUNT_OVERRIDE_RECIPIENT_APPLICATION`, default false, unverified; events snapshot the offer). Store `lib/invigorationStore.js`, hook `hooks/useInvigorationLog.js`, UI `components/InvigorationLedger.jsx`, wired into `pages/HomePage.jsx` (offers now update in place, never delete; week start is UTC). Docs: `Docs/Invigoration Tracker Phase 1 Proposal.md`. Recommendation engine (Phase 2) NOT started. Patrick should enter his current in-game count with "Match the game".

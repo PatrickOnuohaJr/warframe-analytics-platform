@@ -1578,3 +1578,14 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Commit `cfbc393`. Lint, 112 Node tests, 24 UI tests, build pass. Not seen in a browser; remote CI not checked.
 - Patrick parked the rest of the Helminth work: **medium priority, do not lose it** (see HANDOFF "Parked, medium priority").
 
+## Session 029 — November 3-4, 2026 — Augment numbers, Invigoration log + Override counter, Kullervo ability cards
+
+- Augment numbers added to ability cards and the Forecast (max rank, hand-checked): Healing Flame, Icy Avalanche, Intrepid Stand (all checked in game), Rumbled, Wrath Of Ukko (wiki only), Eternal War and Volatile Recompense (checked in game on Kullervo). Thousands commas on all stat numbers. The broad augment audit over every saved build is PARKED until Patrick says all builds are entered.
+- Invigoration engine: design doc written (design only). Phase 1 shipped (`b615e72`): append-only `invigoration_events`, A/B/C slots on the weekly offers, derived Override counter (cap 10, Ready until used), void instead of delete, UTC week start, offers update in place. Phase 2 (recommendation engine) NOT started. Migration `20261103_add_invigoration_events.sql` run by Patrick pending/at his hand; he needs the counter at 10/10 for Override week ("Match the game" then Record Override).
+- Picker: Augments tab now also lists augments for any Helminth-subsumed ability (Eternal War on a Kullervo carrying Warcry), matched by the "<Ability> Augment:" text; augment rows now apply to subsumed casts (`79fd327`).
+- Kullervo cards (`13e3e8a`): `utils/abilityCardData.js` holds in-game-checked rows for Wrathful Advance, Recompense, Collective Curse and subsumed Warcry (stored wiki rank-list rows were unscaled text); cards show modded values only; Forecast now works on his 1 and 2 (Overguard cap, crit chance). Wrathful Advance crit computes 432% vs the game's 431% (assumed game rounding). Storm of Ukko left unchecked.
+- Migration `20261104_remove_flawed_mods_from_inventory.sql` removes the 27 owned Flawed mods (none equipped); Patrick to run it. The catalog still lists Flawed mods.
+- Lint, 133 Node tests, 29 UI tests, build pass. None of the UI was seen in the signed-in app (Claude cannot sign in).
+
+**Next:** Patrick runs the Invigoration and Flawed-mods migrations, sets the counter to 10, checks Home and the Kullervo loadout in the real app; final augment pass once all builds are entered; enter Warframe mods on the 4 reference builds; Helminth coverage (parked, medium); load ability-card numbers into wf_base via the static-data pipeline; Invigoration Phase 2 only on Patrick's go-ahead; open rules to verify (Override recipient counting, counting after 10).
+

@@ -20,3 +20,4 @@ where inv.mod_id = m.mod_id
 -- Check afterwards: should return 0 rows (or only any that are equipped).
 -- select m.name from wf_user.mod_inventory inv
 -- join wf_base.mods m using (mod_id) where m.name like 'Flawed %';
+  
