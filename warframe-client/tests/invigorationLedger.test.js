@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  deriveCounter, offerStatus, validateEvent, buildEvent, offerChanged, utcWeekStart, describeEvent, liveEvents,
+  deriveCounter, offerStatus, validateEvent, buildEvent, offerChanged, utcWeekStart, describeEvent, liveEvents, timeLeftInWeek,
 } from '../src/utils/invigorationLedger.js';
 
 let id = 0;
@@ -116,4 +116,13 @@ test('the weekly boundary is Monday 00:00 UTC and the counter ignores it', () =>
   // The counter is a pure function of events: events in different weeks accumulate.
   const events = [ev('counter_set', { counter_value: 2 }), { ...applied(1), occurred_at: '2026-11-03T00:00:00Z' }, { ...applied(2), occurred_at: '2026-11-10T00:00:00Z' }];
   assert.equal(deriveCounter(events).progress, 4);
+});
+
+test('week countdown shows whole days and hours until Monday 00:00 UTC', () => {
+  // Patrick's case: Wednesday 09:50 UTC -> 4 days 14 hours (and 10 min) left.
+  assert.deepEqual(timeLeftInWeek(new Date('2026-11-04T09:50:00Z')), { days: 4, hours: 14 });
+  // The reset instant starts a fresh week with the full 7 days left.
+  assert.deepEqual(timeLeftInWeek(new Date('2026-11-02T00:00:00Z')), { days: 7, hours: 0 });
+  assert.deepEqual(timeLeftInWeek(new Date('2026-11-08T23:30:00Z')), { days: 0, hours: 0 });
+  assert.deepEqual(timeLeftInWeek(new Date('2026-11-08T22:59:00Z')), { days: 0, hours: 1 });
 });

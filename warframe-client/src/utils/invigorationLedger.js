@@ -158,6 +158,16 @@ export function utcWeekStart(date = new Date()) {
   return d.toISOString().slice(0, 10);
 }
 
+// Whole days and hours left until the weekly reset (next Monday 00:00 UTC),
+// rounded DOWN, so 4d 14h 10m reads "4 days 14 hours". Exactly at the reset it
+// is a fresh week with the full 7 days left.
+export function timeLeftInWeek(now = new Date()) {
+  const start = Date.parse(`${utcWeekStart(now)}T00:00:00Z`);
+  const end = start + 7 * 24 * 3600 * 1000;
+  const hoursLeft = Math.floor((end - now.getTime()) / 3600000);
+  return { days: Math.floor(hoursLeft / 24), hours: hoursLeft % 24 };
+}
+
 // One readable line per event for the history list.
 export function describeEvent(e) {
   const slot = e.snap_slot ? `Slot ${e.snap_slot}` : '';

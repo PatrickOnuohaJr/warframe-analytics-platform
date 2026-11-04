@@ -4,7 +4,7 @@
 
 Pushed `main` at `13e3e8a` plus a docs-only reconcile commit. Lint, 133 Node tests, 29 UI tests, build pass; none of it seen in the signed-in app.
 
-**Patrick must run:** `DB/Migrations/20261103_add_invigoration_events.sql` (then Home: "Match the game" = 10, Record Override for Override week) and `DB/Migrations/20261104_remove_flawed_mods_from_inventory.sql` (27 owned Flawed mods, none equipped).
+**Both migrations were run by Patrick** (`20261103_add_invigoration_events.sql`, `20261104_remove_flawed_mods_from_inventory.sql`). Still to do on Home: "Match the game" = 10, then Record Override for Override week. Home also has a days/hours countdown to the weekly reset (Monday 00:00 UTC) next to "Week of ...".
 
 **Shipped:** `utils/abilityCardData.js` (in-game-checked rows replacing unusable wiki rank-list rows: Wrathful Advance, Recompense, Collective Curse, subsumed Warcry; interim until loaded via the static-data pipeline); cards show numbers only; augment rows for Wrath Of Ukko (wiki only), Eternal War, Volatile Recompense; augments apply to subsumed casts; picker lists augments of subsumed abilities (`modMeta.augmentsForSubsumed`).
 

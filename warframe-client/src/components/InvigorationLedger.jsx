@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Panel from './ui/Panel'
 import Button from './ui/Button'
 import { COLOR } from '../constants/theme'
 import {
-  deriveCounter, offerStatus, overrideFor, offerEvents, describeEvent, COUNTER_CAP,
+  deriveCounter, offerStatus, overrideFor, offerEvents, describeEvent, COUNTER_CAP, timeLeftInWeek,
 } from '../utils/invigorationLedger'
 
 // Invigoration activity UI for the Home page: per-offer status controls and the
@@ -15,6 +15,29 @@ const STATUS_LOOK = {
   pending: { label: 'Pending', color: '#B8B3AC' },
   applied: { label: 'Applied', color: '#4CAF50' },
   skipped: { label: 'Skipped', color: '#E8B84B' },
+}
+
+// "X days Y hours left" until the weekly reset. Re-reads the clock every
+// minute so the hour changes on time while the page stays open; shows hours
+// only, no minutes or seconds.
+export function WeekCountdown() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+  const { days, hours } = timeLeftInWeek(now)
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
+  return (
+    <span
+      className="text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 rounded"
+      style={{ border: '1px solid rgba(232,184,75,0.4)', color: '#E8B84B' }}
+      data-testid="week-countdown"
+      title="Time until the weekly reset (Monday 00:00 UTC)"
+    >
+      {plural(days, 'day')} {plural(hours, 'hour')} left
+    </span>
+  )
 }
 
 // Status chip + Applied / Skipped / Undo for one offer card. `log` is the

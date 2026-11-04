@@ -4,7 +4,7 @@ import FrameCard from '../components/FrameCard'
 import Panel from '../components/ui/Panel'
 import Button from '../components/ui/Button'
 import ModalShell from '../components/ui/ModalShell'
-import { OfferStatus, OverridePanel } from '../components/InvigorationLedger'
+import { OfferStatus, OverridePanel, WeekCountdown } from '../components/InvigorationLedger'
 import useInvigorationLog from '../hooks/useInvigorationLog'
 import { utcWeekStart, offerChanged, offerEvents } from '../utils/invigorationLedger'
 
@@ -249,6 +249,7 @@ export default function HomePage({ frames, onOpenFrame, onOpenTracker, onOpenCod
             >
               Week of {getCurrentMonday()}
             </span>
+            <WeekCountdown />
             {invigorations.length > 0 && (
               <Button
                 variant="success"
