@@ -5,7 +5,7 @@ import { COLOR } from '../constants/theme'
 import ModalShell from './ui/ModalShell'
 import { computeAbilityStats } from '../utils/abilityStats'
 import { HELMINTH_ABILITIES } from '../constants/helminthAbilities'
-import { augmentParameters } from '../utils/augmentAbilityStats'
+import { abilityParameters } from '../utils/abilityCardData'
 import { formatNumber } from '../utils/formatNumber'
 
 // Stable empty default so the memo below does not re-run every render.
@@ -55,7 +55,7 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
       const name = isSubsumed ? activeConfig.subsumed_ability : ability.ability_name
       const canonical = abilityCanonicalByName?.[name]
       const context = isSubsumed ? 'subsumed' : 'base'
-      return canonical ? [{ slot: ability.ability_slot, name, parameters: [...canonical.parameters, ...augmentParameters(name, equippedMods)], context }] : []
+      return canonical ? [{ slot: ability.ability_slot, name, parameters: abilityParameters(name, canonical.parameters, equippedMods), context }] : []
     }),
     [frame.abilities, activeConfig, abilityCanonicalByName, equippedMods]
   )
@@ -137,7 +137,7 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
             // this rename, see utils/survivability.js.
             const moddedStats = canonical && buildStats
               ? computeAbilityStats({
-                  parameters: [...canonical.parameters, ...augmentParameters(displayedName, equippedMods)],
+                  parameters: abilityParameters(displayedName, canonical.parameters, equippedMods),
                   buildStats: {
                     duration: buildStats.abilityDuration,
                     efficiency: buildStats.abilityEfficiency,
@@ -178,11 +178,14 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
                   <p className="mt-1 text-xs italic" style={{ color: COLOR.mutedInk }}>Waiting on build stats...</p>
                 )}
 
-                {moddedStats && moddedStats.length > 0 && (
+                {/* Modded values only: rows with no number (the wiki's
+                    "50 / 100 / 150 / 200" rank lists and other unparsed text)
+                    are left off the card. */}
+                {moddedStats && moddedStats.some(s => s.value !== null) && (
                   // Label left, value right, two columns: easier to scan than
                   // a run-on line of "value label" pairs.
                   <div className="mt-2 grid grid-cols-1 xl:grid-cols-2 gap-x-6" onClick={e => e.stopPropagation()}>
-                    {moddedStats.map(stat => (
+                    {moddedStats.filter(s => s.value !== null).map(stat => (
                       <div key={stat.parameterKey} className="flex items-baseline justify-between gap-3 py-0.5 border-b text-xs" style={{ borderColor: COLOR.border }}>
                         <span style={{ color: COLOR.mutedInk }}>{stat.label}</span>
                         <span className="font-semibold tabular-nums" style={{ color: COLOR.ink }}>

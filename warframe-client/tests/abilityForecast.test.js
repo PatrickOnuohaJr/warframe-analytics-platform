@@ -164,7 +164,7 @@ test('Wrath Of Ukko and Eternal War add duration rows that scale with Duration, 
   assert.equal(val(ukko, 'wrath_of_ukko_duration'), 12);
   assert.equal(val(war, 'eternal_war_duration_per_kill'), 4);
   // Subsumed Warcry on another frame still gets the augment row.
-  assert.equal(augmentParameters('Warcry', [{ name: 'Eternal War', rank: 3, maxRank: 3 }]).length, 1);
+  assert.equal(augmentParameters('Warcry', [{ name: 'Eternal War', rank: 3, maxRank: 3 }]).length, 2);
 });
 
 test('augment picker finds augments of a subsumed ability by the ability named in their text', async () => {
@@ -207,4 +207,37 @@ test('Intrepid Stand scales Overguard and its cap with Strength', async () => {
   const get = k => stats.find(s => s.parameterKey === k).value;
   assert.equal(get('intrepid_stand_overguard_self'), 187.8);
   assert.equal(get('intrepid_stand_overguard_cap'), 46950);
+});
+
+// Kullervo exactly as Patrick's in-game tooltips read at 155% Duration, 45%
+// Efficiency, 190% Range, 216% Strength (rank 30). Every number below is the
+// game's own.
+test('Kullervo ability cards reproduce the in-game tooltips', async () => {
+  const { abilityParameters } = await import('../src/utils/abilityCardData.js');
+  const buildStats = { duration: 155, efficiency: 45, range: 190, strength: 216 };
+  const eq = [{ name: 'Volatile Recompense', rank: 3, maxRank: 3 }, { name: 'Eternal War', rank: 3, maxRank: 3 }];
+  const read = (name, context = 'base', stored = []) => {
+    const out = computeAbilityStats({ parameters: abilityParameters(name, stored, eq), buildStats, context });
+    return k => out.find(s => s.parameterKey === k).value;
+  };
+  const wa = read('Wrathful Advance');
+  assert.deepEqual([wa('energy_cost'), wa('range'), wa('duration')], [38.75, 47.5, 15.5]);
+  assert.equal(Math.round(wa('melee_crit_chance')), 432); // game shows 431 (its own rounding)
+  const rc = read('Recompense');
+  assert.deepEqual([rc('energy_cost'), rc('range'), rc('damage'), rc('health'), rc('health_drain'), rc('overguard_cap')], [77.5, 15.2, 1080, 702, 75.6, 21600]);
+  assert.deepEqual([rc('volatile_recompense_duration'), rc('volatile_recompense_damage')], [38.75, 2160]);
+  const cc = read('Collective Curse');
+  assert.deepEqual([cc('energy_cost'), cc('range'), cc('duration'), cc('damage_redirection'), cc('angle')], [116.25, 47.5, 38.75, 100, 65]);
+  // Helminth Warcry on Kullervo, with Eternal War, over the stored (wrong) Valkyr rows.
+  const stored = [
+    { parameter_key: 'energy_cost', label: 'Energy Cost', base_value: 75, unit: 'flat', scales_with: 'efficiency', context: 'base' },
+    { parameter_key: 'duration', label: 'Duration', base_value: 10, unit: 'flat', scales_with: 'duration', context: 'base' },
+  ];
+  const wc = read('Warcry', 'subsumed', stored);
+  assert.deepEqual([wc('energy_cost'), wc('duration'), wc('armor_buff'), wc('attack_speed_buff')], [116.25, 31, 108, 64.8]);
+  assert.deepEqual([wc('eternal_war_duration_per_kill'), wc('eternal_war_max_duration')], [3.1, 62]);
+
+  // Forecast: how much Overguard cap and melee crit +60% Strength would give.
+  const f = forecastAbility({ parameters: abilityParameters('Recompense', [], eq), buildStats, changes: [{ stat: 'strength', percent: 60 }] });
+  assert.equal(f.find(r => r.parameterKey === 'overguard_cap').forecast, 27600);
 });

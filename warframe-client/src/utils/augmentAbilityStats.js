@@ -67,13 +67,24 @@ const AUGMENTS = {
     ],
   },
 
-  // Eternal War (Valkyr, Warcry). Wiki: +2s Warcry duration per melee kill at
-  // rank 3, "affected by Ability Duration". Total is capped at double the
-  // ability's duration after mods (not modeled). Wiki only, not checked in game.
+  // Eternal War (Valkyr, Warcry), checked in game by Patrick on a Kullervo with
+  // Warcry subsumed (155% Duration): time per kill 2 -> 3.1s, max duration
+  // 40 -> 62s (i.e. double the 20s Helminth Warcry, after Duration).
   'Eternal War': {
     ability: 'Warcry',
     rows: [
-      { parameter_key: 'eternal_war_duration_per_kill', label: 'Eternal War duration per melee kill', base_value: 2, unit: 'flat', scales_with: 'duration' },
+      { parameter_key: 'eternal_war_duration_per_kill', label: 'Eternal War time per kill (s)', base_value: 2, unit: 'flat', scales_with: 'duration' },
+      { parameter_key: 'eternal_war_max_duration', label: 'Eternal War max duration (s)', base_value: 40, unit: 'flat', scales_with: 'duration' },
+    ],
+  },
+
+  // Volatile Recompense (Kullervo, Recompense), checked in game at 155%
+  // Duration / 216% Strength: Duration 25 -> 38.75s, Damage 1,000 -> 2,160.
+  'Volatile Recompense': {
+    ability: 'Recompense',
+    rows: [
+      { parameter_key: 'volatile_recompense_duration', label: 'Volatile Recompense duration (s)', base_value: 25, unit: 'flat', scales_with: 'duration' },
+      { parameter_key: 'volatile_recompense_damage', label: 'Volatile Recompense blast damage', base_value: 1000, unit: 'flat', scales_with: 'strength' },
     ],
   },
 };
