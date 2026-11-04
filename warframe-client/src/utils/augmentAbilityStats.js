@@ -55,14 +55,35 @@ const AUGMENTS = {
       { parameter_key: 'rumbled_overguard_health', label: 'Rumbled Overguard (% of Max Health)', base_value: 300, unit: 'percent', scales_with: 'strength' },
     ],
   },
+
+  // Wrath Of Ukko (Kullervo, Storm of Ukko). Wiki: Wrathful Advance moves the
+  // active storm and adds 3s (rank 0) to 6s (rank 3) of duration; the page says
+  // the duration refresh "is affected by Ability Duration". Wiki only, not yet
+  // checked in game. Rank 3 is the stored value.
+  'Wrath Of Ukko': {
+    ability: 'Storm of Ukko',
+    rows: [
+      { parameter_key: 'wrath_of_ukko_duration', label: 'Wrath Of Ukko duration added', base_value: 6, unit: 'flat', scales_with: 'duration' },
+    ],
+  },
+
+  // Eternal War (Valkyr, Warcry). Wiki: +2s Warcry duration per melee kill at
+  // rank 3, "affected by Ability Duration". Total is capped at double the
+  // ability's duration after mods (not modeled). Wiki only, not checked in game.
+  'Eternal War': {
+    ability: 'Warcry',
+    rows: [
+      { parameter_key: 'eternal_war_duration_per_kill', label: 'Eternal War duration per melee kill', base_value: 2, unit: 'flat', scales_with: 'duration' },
+    ],
+  },
 };
 
 // Extra parameter rows for `abilityName` from the augments currently
 // equipped. `equippedMods`: [{ name, rank, maxRank }]. Only a max-rank augment
-// counts (the stored numbers are rank 3). A Helminth-subsumed cast gets
-// nothing: the augment belongs to the ability's home frame.
-export function augmentParameters(abilityName, equippedMods = [], context = 'base') {
-  if (context !== 'base') return [];
+// counts (the stored numbers are rank 3). Applies to a Helminth-subsumed cast
+// too: it matches by ability name, and in game the augment works on whichever
+// frame carries the ability. Rows keep context 'base' so they resolve in both.
+export function augmentParameters(abilityName, equippedMods = []) {
   return equippedMods.flatMap(({ name, rank, maxRank }) => {
     const augment = AUGMENTS[name];
     if (!augment || augment.ability !== abilityName || rank < maxRank) return [];

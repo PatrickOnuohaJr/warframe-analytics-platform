@@ -55,7 +55,7 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
       const name = isSubsumed ? activeConfig.subsumed_ability : ability.ability_name
       const canonical = abilityCanonicalByName?.[name]
       const context = isSubsumed ? 'subsumed' : 'base'
-      return canonical ? [{ slot: ability.ability_slot, name, parameters: [...canonical.parameters, ...augmentParameters(name, equippedMods, context)], context }] : []
+      return canonical ? [{ slot: ability.ability_slot, name, parameters: [...canonical.parameters, ...augmentParameters(name, equippedMods)], context }] : []
     }),
     [frame.abilities, activeConfig, abilityCanonicalByName, equippedMods]
   )
@@ -137,7 +137,7 @@ export default function AbilitiesEditor({ frame, onSaved, color = COLOR.gold, ab
             // this rename, see utils/survivability.js.
             const moddedStats = canonical && buildStats
               ? computeAbilityStats({
-                  parameters: [...canonical.parameters, ...augmentParameters(displayedName, equippedMods, castContext)],
+                  parameters: [...canonical.parameters, ...augmentParameters(displayedName, equippedMods)],
                   buildStats: {
                     duration: buildStats.abilityDuration,
                     efficiency: buildStats.abilityEfficiency,

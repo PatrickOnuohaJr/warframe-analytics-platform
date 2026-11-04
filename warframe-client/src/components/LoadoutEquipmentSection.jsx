@@ -3,7 +3,7 @@ import Panel from './ui/Panel';
 import Button from './ui/Button';
 import LoadoutSlotPickerModal from './LoadoutSlotPickerModal';
 import { resolveCatalogWeapon } from '../utils/weaponAssign';
-import { augmentsForWarframe } from '../utils/modMeta';
+import { augmentsForWarframe, augmentsForSubsumed } from '../utils/modMeta';
 import SlotBox from './SlotBox';
 import WeaponInput from './WeaponInput';
 import IncarnonToggle from './IncarnonToggle';
@@ -258,10 +258,17 @@ export default function LoadoutEquipmentSection({
 
   // Every augment that fits this Warframe (owned or not) for the picker's
   // Augments filter. Only the Warframe piece has frame-specific augments.
-  const frameAugments = useMemo(
-    () => (isWarframe ? augmentsForWarframe([...modsById.values()], frame.warframe_name) : []),
-    [isWarframe, modsById, frame.warframe_name]
-  );
+  // Includes augments for any ability Helminth-subsumed onto this frame in
+  // any config (e.g. Eternal War on a Kullervo carrying Warcry), since those
+  // name the ability's home frame, not this one.
+  const frameAugments = useMemo(() => {
+    if (!isWarframe) return [];
+    const catalogMods = [...modsById.values()];
+    const own = augmentsForWarframe(catalogMods, frame.warframe_name);
+    const subsumed = augmentsForSubsumed(catalogMods, (frame.ability_configs ?? []).map(c => c.subsumed_ability));
+    const seen = new Set(own.map(m => m.mod_id));
+    return [...own, ...subsumed.filter(m => !seen.has(m.mod_id))];
+  }, [isWarframe, modsById, frame.warframe_name, frame.ability_configs]);
 
   return (
     <Panel accent={accent} className="mb-6">

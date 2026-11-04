@@ -39,6 +39,29 @@ export function augmentsForWarframe(catalogMods, warframeName) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+// The ability an augment changes, read from its own effect text: every
+// per-ability augment's text opens "<Ability> Augment: ..." (e.g. Eternal War
+// -> "Warcry Augment:"). Null when the text has no such prefix.
+export function augmentAbility(mod) {
+  const levels = mod.raw_json?.levelStats;
+  const text = levels?.length ? (levels[levels.length - 1].stats || []).join(' ') : '';
+  const match = text.match(/^\s*(.+?) Augment\s*:/);
+  return match ? match[1].trim() : null;
+}
+
+// Augments that belong to a Helminth-SUBSUMED ability. The augment names its
+// home frame (Valkyr), not the frame carrying the ability (Kullervo), so the
+// frame match in augmentsForWarframe misses it; match by ability name instead.
+// `subsumedNames`: ability names currently subsumed onto the frame.
+export function augmentsForSubsumed(catalogMods, subsumedNames = []) {
+  const wanted = new Set(subsumedNames.filter(Boolean));
+  if (wanted.size === 0) return [];
+  return catalogMods
+    .filter(m => m.category === 'Warframe' && isAugment(m))
+    .filter(m => wanted.has(augmentAbility(m)))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export function isPrimeMod(mod) {
   return mod.raw_json?.isPrime === true;
 }

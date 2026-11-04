@@ -149,10 +149,34 @@ test('Healing Flame adds heal and Overguard cap to Fire Blast, scaled by Strengt
   const f = forecastAbility({ parameters: rows, buildStats: { strength: 199, duration: 100, range: 100, efficiency: 100 }, changes: [{ stat: 'strength', percent: 60 }] });
   assert.equal(f.find(r => r.parameterKey === 'healing_flame_overguard_cap').forecast, 25900);
 
-  // Not on another ability, not below max rank, not when subsumed.
+  // Not on another ability, not below max rank.
   assert.deepEqual(augmentParameters('Eclipse', equipped), []);
   assert.deepEqual(augmentParameters('Fire Blast', [{ name: 'Healing Flame', rank: 2, maxRank: 3 }]), []);
-  assert.deepEqual(augmentParameters('Fire Blast', equipped, 'subsumed'), []);
+});
+
+// Kullervo's Wrath Of Ukko (Storm of Ukko) and Eternal War (Valkyr's Warcry, which
+// Kullervo can carry via Helminth): +6s / +2s, scaled by Ability Duration (wiki).
+test('Wrath Of Ukko and Eternal War add duration rows that scale with Duration, subsumed or not', async () => {
+  const { augmentParameters } = await import('../src/utils/augmentAbilityStats.js');
+  const ukko = augmentParameters('Storm of Ukko', [{ name: 'Wrath Of Ukko', rank: 3, maxRank: 3 }]);
+  const war = augmentParameters('Warcry', [{ name: 'Eternal War', rank: 3, maxRank: 3 }]);
+  const val = (rows, k) => computeAbilityStats({ parameters: rows, buildStats: { duration: 200 } }).find(s => s.parameterKey === k).value;
+  assert.equal(val(ukko, 'wrath_of_ukko_duration'), 12);
+  assert.equal(val(war, 'eternal_war_duration_per_kill'), 4);
+  // Subsumed Warcry on another frame still gets the augment row.
+  assert.equal(augmentParameters('Warcry', [{ name: 'Eternal War', rank: 3, maxRank: 3 }]).length, 1);
+});
+
+test('augment picker finds augments of a subsumed ability by the ability named in their text', async () => {
+  const { augmentAbility, augmentsForSubsumed } = await import('../src/utils/modMeta.js');
+  const mk = (name, compatName, text) => ({ mod_id: name.length, name, category: 'Warframe', raw_json: { isAugment: true, compatName, levelStats: [{ stats: [text] }] } });
+  const eternal = mk('Eternal War', 'Valkyr', "Warcry Augment: While active, Warcry's duration is increased by 2s for each Melee Kill.");
+  const ukko = mk('Wrath Of Ukko', 'Kullervo', 'Storm of Ukko Augment: Wrathful Advance moves the storm.');
+  const generic = mk('Augur Message', 'WARFRAME', '+24% Ability Duration');
+  assert.equal(augmentAbility(eternal), 'Warcry');
+  assert.equal(augmentAbility(generic), null);
+  assert.deepEqual(augmentsForSubsumed([eternal, ukko, generic], ['Warcry']).map(m => m.name), ['Eternal War']);
+  assert.deepEqual(augmentsForSubsumed([eternal], [null]), []);
 });
 
 // Icy Avalanche (Frost), checked against Patrick's in-game tooltip at 276% Strength.
