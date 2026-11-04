@@ -14,8 +14,15 @@ import { FORECAST_STATS, FORECAST_STAT_LABELS, sumChanges, forecastAbility } fro
 // One-click sources that are confirmed on the wiki (wiki.warframe.com).
 // Molt Augmented: +0.24% Strength per kill, max +60% at rank 5.
 // Tauforged Crimson Archon Shard: +15% Ability Strength / +15% Ability Duration each.
+// Grimoire (Dante's Tome secondary) Invocation mods, from this project's own mod
+// data (wf_base.mods, max rank): the Alternate Fire gives +4% per enemy hit,
+// stacking up to 15 times, so +60% once fully stacked for 20s. Vome = Strength,
+// Ris = Duration, Netra = Efficiency. Needs the Alt-Fire orb hitting enemies.
 const PRESETS = [
   { label: 'Molt Augmented (max)', stat: 'strength', percent: 60 },
+  { label: 'Grimoire Vome Invocation (15 stacks)', stat: 'strength', percent: 60 },
+  { label: 'Grimoire Ris Invocation (15 stacks)', stat: 'duration', percent: 60 },
+  { label: 'Grimoire Netra Invocation (15 stacks)', stat: 'efficiency', percent: 60 },
   { label: 'Tauforged Crimson shard', stat: 'strength', percent: 15 },
   { label: 'Tauforged Crimson shard', stat: 'duration', percent: 15 },
 ];

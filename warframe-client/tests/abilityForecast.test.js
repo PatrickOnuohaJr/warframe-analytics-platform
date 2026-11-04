@@ -4,14 +4,17 @@ import { computeAbilityStats, scaleFactor } from '../src/utils/abilityStats.js';
 import { forecastAbility, sumChanges, applyChanges } from '../src/utils/abilityForecast.js';
 
 // Mirage's Eclipse exactly as stored in wf_base.ability_parameters
-// (read from the live DB 2026-11-03; wiki: 50/100/150/200% damage bonus,
-// 25/40/60/75% damage reduction capped at 90%, 10/15/20/25 s, 25 energy).
+// (live DB 2026-11-03 plus the rank-3 duration fix and Helminth rows from
+// migration 20261103; wiki: 50/100/150/200% damage bonus, 25/40/60/75% damage
+// reduction capped at 90%, 10/15/20/25 s, 25 energy; Helminth: 30% bonus, 75% cap).
 const ECLIPSE = [
   { parameter_key: 'energy_cost', label: 'Energy Cost', base_value: 25, unit: 'flat', scales_with: 'efficiency', context: 'base', sort_order: 0 },
   { parameter_key: 'damage_reduction', label: 'damage reduction', base_value: 75, unit: 'percent', scales_with: 'strength', context: 'base', sort_order: 1 },
   { parameter_key: 'damage_bonus', label: 'damage bonus', base_value: 200, unit: 'percent', scales_with: 'strength', context: 'base', sort_order: 2 },
-  { parameter_key: 'duration', label: 'Duration', base_value: 10, unit: 'flat', scales_with: 'duration', context: 'base', sort_order: 3 },
+  { parameter_key: 'duration', label: 'Duration', base_value: 25, unit: 'flat', scales_with: 'duration', context: 'base', sort_order: 3 },
   { parameter_key: 'damage_reduction_cap', label: 'damage reduction cap', base_value: 90, unit: 'percent', scales_with: 'none', context: 'base', sort_order: 4 },
+  { parameter_key: 'damage_bonus', label: 'damage bonus', base_value: 30, unit: 'percent', scales_with: 'strength', context: 'subsumed', sort_order: 2 },
+  { parameter_key: 'damage_reduction_cap', label: 'damage reduction cap', base_value: 75, unit: 'percent', scales_with: 'none', context: 'subsumed', sort_order: 4 },
 ];
 
 const row = (rows, key) => rows.find(r => r.parameterKey === key);
@@ -66,8 +69,8 @@ test('duration and efficiency changes move only their own numbers', () => {
     buildStats: { strength: 100, duration: 150, range: 100, efficiency: 100 },
     changes: [{ stat: 'duration', percent: 50 }, { stat: 'efficiency', percent: 30 }],
   });
-  assert.equal(row(rows, 'duration').current, 15);
-  assert.equal(row(rows, 'duration').forecast, 20); // 10 s x 2.0
+  assert.equal(row(rows, 'duration').current, 37.5); // 25 s x 1.5
+  assert.equal(row(rows, 'duration').forecast, 50); // 25 s x 2.0
   assert.equal(row(rows, 'energy_cost').current, 25);
   assert.equal(row(rows, 'energy_cost').forecast, 17.5);
   assert.equal(row(rows, 'damage_bonus').delta, 0);
@@ -102,4 +105,30 @@ test('formula-driven numbers follow their formula (Snow Globe health uses Streng
   assert.equal(row(rows, 'health').current, 10000);
   assert.equal(row(rows, 'health').forecast, 15000);
   assert.deepEqual(row(rows, 'health').affectedBy, ['strength']);
+});
+
+test('Helminth Eclipse: damage bonus is 30% base (not 200%) and reduction caps at 75', () => {
+  const stats = { strength: 243, duration: 100, range: 100, efficiency: 100 };
+  const home = computeAbilityStats({ parameters: ECLIPSE, buildStats: stats, context: 'base' });
+  const helminth = computeAbilityStats({ parameters: ECLIPSE, buildStats: stats, context: 'subsumed' });
+  assert.equal(row(home, 'damage_bonus').value, 486);
+  assert.equal(row(helminth, 'damage_bonus').value, 72.9); // 30% x 2.43
+  assert.equal(row(helminth, 'damage_reduction').value, 75);
+  assert.equal(row(helminth, 'damage_reduction').capped, true);
+  assert.equal(row(helminth, 'damage_reduction').cap, 75);
+  // Numbers Helminth does not change fall back to the home values.
+  assert.equal(row(helminth, 'duration').value, 25);
+  assert.equal(row(helminth, 'energy_cost').value, 25);
+});
+
+test('forecasting a Helminth Eclipse uses the subsumed numbers', () => {
+  const rows = forecastAbility({
+    parameters: ECLIPSE,
+    context: 'subsumed',
+    buildStats: { strength: 243, duration: 100, range: 100, efficiency: 100 },
+    changes: [{ stat: 'strength', percent: 60 }],
+  });
+  assert.equal(row(rows, 'damage_bonus').current, 72.9);
+  assert.equal(row(rows, 'damage_bonus').forecast, 90.9); // 30% x 3.03
+  assert.deepEqual(row(rows, 'damage_bonus').affectedBy, ['strength']);
 });

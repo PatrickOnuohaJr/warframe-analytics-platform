@@ -121,6 +121,27 @@ SUBSUMED_VARIANT_OVERRIDES = {
     ("Nourish", "self_heal_on_cast"): {"base_value": None, "note": "Subsumed Nourish does not provide healing at all."},
     ("Nourish", "viral_status_stacks"): {"base_value": 1, "note": "10 base stacks at home, reduced to 1 when subsumed."},
     ("Nourish", "energy_multiplier"): {"formula_key": "nourish_subsumed_energy_multiplier", "base_value": None},
+    ("Nourish", "viral_damage_buff"): {"base_value": 45, "note": "Wiki Helminth prose: Viral weapon bonus damage is +24/30/36/45% when subsumed (75% at home)."},
+
+    # Added 2026-11-03 from each ability's "| helminth =" wiki prose (read by
+    # hand; values are the maxed Ability Rank 3 figure, matching the base
+    # rows). Only numbers that already have a parsed base row are covered.
+    # Not covered yet because the base row did not parse (unparsed keys):
+    # Wyrd Scythes slow, Brightbonnet, Fractured Blast, Wrathful Advance,
+    # Remedium, Thermal Sunder, Reave. Also skipped: Evade (the wiki says the
+    # subsumed cap is currently bugged), Fire Blast (no cap row exists), Gloom
+    # (Lavos-only), Vial Rush (stored values already match).
+    ("Eclipse", "damage_bonus"): {"base_value": 30, "note": "Subsumed damage bonus is 2/9/15/30% (200% at home)."},
+    ("Eclipse", "damage_reduction_cap"): {"base_value": 75, "note": "Subsumed damage reduction caps at 75% (90% at home)."},
+    ("Larva", "grab_radius"): {"base_value": 8, "note": "Subsumed grab radius is 5.33/6/6.67/8 m (12 m at home)."},
+    ("Roar", "strength"): {"base_value": 30, "note": "Subsumed damage bonus is 2/9/15/30% (50% at home)."},
+    ("Smite", "percentage_damage_cap"): {"base_value": 50, "note": "Subsumed percentage damage cap is 50% (75% at home)."},
+    ("Smite", "aoe_percentage_damage_cap"): {"base_value": 20, "note": "Subsumed AoE percentage damage cap is 20% (30% at home)."},
+    ("Warcry", "attack_speed_buff"): {"base_value": 30, "note": "Subsumed attack speed bonus is 9/12/15/30% (50% at home)."},
+    ("Defy", "armor_bonus_cap"): {"base_value": 750, "note": "Subsumed armor bonus is capped at 750 (1,500 at home)."},
+    ("Pull", "target_range"): {"base_value": 12.5, "note": "Subsumed pull range is 7.5/10/11/12.5 m (25 m at home)."},
+    ("Self Portrait", "maximum_damage_reduction_cap"): {"base_value": 75, "note": "Subsumed maximum damage reduction caps at 75% (90% at home)."},
+    ("Pillage", "energy_cost"): {"base_value": 50, "note": "Subsumed Pillage spends 50 Energy instead of shields (0 at home)."},
 }
 
 
@@ -226,7 +247,11 @@ def parse_field_fragments(raw_field_value, field_name):
             continue
 
         if len(pieces) == 1:
-            bare = parse_value_and_unit(piece)
+            # A bare rank list ("10 / 15 / 20 / 25 s") must resolve to the LAST
+            # rank like the labelled path does. Before 2026-11-03 this parsed
+            # the whole piece and silently stored rank 0 (Eclipse duration
+            # was 10 instead of 25; about 160 abilities were affected).
+            bare = parse_value_and_unit(piece.split("/")[-1])
             if bare:
                 value, unit = bare
                 results.append({"raw": piece, "value": value, "label": field_name.capitalize(), "unit": unit})

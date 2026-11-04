@@ -8,7 +8,7 @@ const ECLIPSE = [
   { parameter_key: 'energy_cost', label: 'Energy Cost', base_value: 25, unit: 'flat', scales_with: 'efficiency', context: 'base', sort_order: 0 },
   { parameter_key: 'damage_reduction', label: 'damage reduction', base_value: 75, unit: 'percent', scales_with: 'strength', context: 'base', sort_order: 1 },
   { parameter_key: 'damage_bonus', label: 'damage bonus', base_value: 200, unit: 'percent', scales_with: 'strength', context: 'base', sort_order: 2 },
-  { parameter_key: 'duration', label: 'Duration', base_value: 10, unit: 'flat', scales_with: 'duration', context: 'base', sort_order: 3 },
+  { parameter_key: 'duration', label: 'Duration', base_value: 25, unit: 'flat', scales_with: 'duration', context: 'base', sort_order: 3 },
   { parameter_key: 'damage_reduction_cap', label: 'damage reduction cap', base_value: 90, unit: 'percent', scales_with: 'none', context: 'base', sort_order: 4 },
 ];
 const ABILITIES = [{ slot: 3, name: 'Eclipse', parameters: ECLIPSE, context: 'base' }];
@@ -47,6 +47,16 @@ describe('AbilityForecaster', () => {
     await user.type(screen.getByLabelText('Source 1 percent'), '30');
     expect(screen.getByTestId('forecast-3-energy_cost').textContent).toContain('25 → 17.5');
     expect(screen.queryByTestId('forecast-3-damage_bonus')).toBeNull();
+  });
+
+  it('has one-click Grimoire Invocation sources: Vome adds 60% Strength', async () => {
+    const user = userEvent.setup();
+    render(<AbilityForecaster abilities={ABILITIES} buildStats={BUILD} accent="#C9A961" />);
+    await user.click(screen.getByRole('button', { name: 'Clear all' }));
+    await user.click(screen.getByRole('button', { name: /Grimoire Vome Invocation.*\+60% Strength/ }));
+    expect(screen.getByTestId('forecast-totals').textContent).toContain('303%');
+    expect(screen.getByRole('button', { name: /Grimoire Ris Invocation.*\+60% Duration/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Grimoire Netra Invocation.*\+60% Efficiency/ })).toBeTruthy();
   });
 
   it('renders nothing before build stats exist', () => {
