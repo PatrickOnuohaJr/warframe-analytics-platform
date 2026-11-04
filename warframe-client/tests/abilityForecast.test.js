@@ -174,3 +174,13 @@ test('formatNumber adds thousands commas and keeps decimals', async () => {
   assert.equal(formatNumber(999), '999');
   assert.equal(formatNumber(null), '—');
 });
+
+// Intrepid Stand (Styanax), checked against Patrick's in-game tooltip at 313% Strength.
+test('Intrepid Stand scales Overguard and its cap with Strength', async () => {
+  const { augmentParameters } = await import('../src/utils/augmentAbilityStats.js');
+  const rows = augmentParameters('Final Stand', [{ name: 'Intrepid Stand', rank: 3, maxRank: 3 }]);
+  const stats = computeAbilityStats({ parameters: rows, buildStats: { strength: 313 } });
+  const get = k => stats.find(s => s.parameterKey === k).value;
+  assert.equal(get('intrepid_stand_overguard_self'), 187.8);
+  assert.equal(get('intrepid_stand_overguard_cap'), 46950);
+});

@@ -34,9 +34,10 @@ const AUGMENTS = {
     ],
   },
 
-  // Intrepid Stand (Styanax, Final Stand). Wiki only (not yet checked in game):
-  // 60 Overguard to Styanax and 30 to allies per javelin hit, cap 15,000, "the
-  // amount and the cap are affected by Ability Strength".
+  // Intrepid Stand (Styanax, Final Stand). Wiki: 60 Overguard to Styanax and 30
+  // to allies per javelin hit, cap 15,000, both "affected by Ability Strength".
+  // Checked in game by Patrick (Styanax Prime, 313% Strength): Overguard 60 ->
+  // 187.8, cap 15,000 -> 46,950. The allies' 30 is wiki-only.
   'Intrepid Stand': {
     ability: 'Final Stand',
     rows: [
