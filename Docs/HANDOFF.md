@@ -1,5 +1,9 @@
 # Handoff — Cephalon Gu
 
+## PARKED — augment pass (Patrick, Nov 3, 2026)
+
+Do NOT start until Patrick says all his builds are entered. Then: read every saved build, list equipped ability augments, and make each accurate in `utils/augmentAbilityStats.js` (wiki scaling rows, tests). Confirmed in game so far: Healing Flame, Icy Avalanche, Intrepid Stand. Wiki-only: Rumbled, Intrepid Stand allies. Rhythm Guard intentionally not added (no Strength scaling).
+
 ## Update — November 3, 2026 (augment numbers on abilities)
 
 Healing Flame (Ember, Fire Blast augment) now adds its heal (25-50) and Overguard cap (10,000) to Fire Blast on the loadout screen and in the Forecast, scaled by Strength (checked against Patrick's in-game 199% tooltip: 49.75-99.5, 19,900). Mechanism: `utils/augmentAbilityStats.js` (hand-checked rows per augment, max rank only, not when Helminth-subsumed). Only Healing Flame is entered; add other augments one at a time after wiki + tooltip check. Not yet seen in the signed-in app.
