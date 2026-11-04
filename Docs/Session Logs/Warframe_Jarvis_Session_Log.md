@@ -1568,3 +1568,13 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 - Commit `65706f3`. Lint, 110 Node tests, 23 UI tests (two new: block order at narrow and wide widths), build pass. Not seen in a browser: the Browser pane was signed out on a new port (5175) and Claude cannot sign in; layout is covered by the order tests only. Patrick to check at full screen.
 - Other pages (Armory, Mods and the rest) likely have the same cap; not changed.
 
+## Session 028 — November 3, 2026 — Third strength source, ability rank bug, Helminth data (parked)
+
+- Third +60% Strength source identified: the Grimoire (Dante's Tome secondary), Vome Invocation mod: +4% Strength per Alt-Fire hit at max rank, 15 stacks = +60%. Forecaster now has presets for Vome (+60% Strength), Ris (+60% Duration), Netra (+60% Efficiency). Xata Invocation is Energy regen, not offered.
+- Eclipse 486% at 243% Strength was on Patrick's real Mirage (home cast), so it stands; Helminth Eclipse is a separate version.
+- Bug found: `seed_ability_data.py` stored rank 0 instead of the maxed rank 3 value for 159 ability numbers whenever a wiki field was a bare rank list (Eclipse duration was 10 s, should be 25 s). Parser fixed. Existing forecaster tests had the wrong 10 baked in; corrected.
+- Helminth (subsumed) rows: 12 rows for 10 abilities (Eclipse, Nourish, Larva, Roar, Smite, Warcry, Defy, Pull, Self Portrait, Pillage) added to `SUBSUMED_VARIANT_OVERRIDES`. Of the 66 subsumable abilities: 10 covered; 10 have wiki number changes but unparsed base rows (Sentient Wrath, Fractured Blast, Evade, Wyrd Scythes, Fire Blast, Thermal Sunder, Wrathful Advance, Brightbonnet, Reave, Remedium); 18 have Helminth notes without number changes; 26 have no Helminth section; 2 (Rest & Rage, Jade Stars) have no ability data.
+- Migration `DB/Migrations/20261103_fix_ability_rank_values_and_helminth.sql` (159 updates + 12 upserts, one transaction). **Not run yet** (Patrick has not confirmed). Until it runs, the app still shows the old rank-0 numbers and no Helminth variants.
+- Commit `cfbc393`. Lint, 112 Node tests, 24 UI tests, build pass. Not seen in a browser; remote CI not checked.
+- Patrick parked the rest of the Helminth work: **medium priority, do not lose it** (see HANDOFF "Parked, medium priority").
+

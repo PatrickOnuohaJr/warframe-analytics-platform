@@ -1,5 +1,18 @@
 # Handoff — Cephalon Gu
 
+## Update — November 3, 2026 (Session 028: third strength source, ability rank bug, Helminth data)
+
+Pushed `main` is at `cfbc393` (plus a docs-only reconcile commit). This is the newest section; it adds to Session 026 (forecaster) below.
+
+**What changed since the forecaster session was spun off**
+- Third +60% Strength source = Grimoire Vome Invocation (Tome secondary, 15 stacks x 4%). Forecaster presets added for Vome/Ris/Netra. The Eclipse 486% at 243% Strength is correct and was on the real Mirage (home cast).
+- Real data bug fixed in the seeder: bare wiki rank lists ("10 / 15 / 20 / 25 s") were stored as rank 0, not rank 3. 159 numbers affected (Eclipse duration 10 -> 25 s). Forecaster tests corrected.
+- 12 Helminth (subsumed) rows for 10 abilities written into the seeder and the migration. Helminth Eclipse = 30% damage bonus, damage reduction cap 75%.
+
+**Patrick must run** `DB/Migrations/20261103_fix_ability_rank_values_and_helminth.sql` in the Supabase SQL editor (one transaction, safe to re-run). Until then the app shows old rank-0 numbers and no Helminth variants. Check Eclipse duration reads 25 s afterwards.
+
+**Parked, medium priority (Patrick, Nov 3): finish Helminth coverage. Do not bury this.** Of 66 subsumable abilities, 10 are done. Remaining: (a) fix seeder parsing so 10 abilities with wiki number changes get base rows (Sentient Wrath, Fractured Blast, Evade, Wyrd Scythes, Fire Blast, Thermal Sunder, Wrathful Advance, Brightbonnet, Reave, Remedium) then add their Helminth numbers; (b) add ability data for Rest & Rage and Jade Stars; (c) decide how to treat the 26 abilities whose wiki page has no Helminth section (may be identical; wiki is the only source). Patrick said he is not hitting a Helminth need right now.
+
 ## Update — November 3, 2026 (Session 027: Requiem three-column layout)
 
 Pushed `main` is at `65706f3` (plus a docs-only reconcile commit). Requiem page is three columns at 1536px+ (`hooks/useMinWidth.js`; settings | recommendation | evidence + Kuva tracker), two columns below. Verified by jsdom order tests only; Patrick to eyeball it at full screen. Other pages may need the same wide-screen treatment. Open queue is the Session 026 section below.
