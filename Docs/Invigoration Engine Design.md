@@ -48,6 +48,8 @@ Gu proposes its #1.
 
 ## Storage (proposed, nothing created)
 
+> Correction: Gu already has a weekly Invigoration tracker (`helminth_invigorations` + Home page). The `invigoration_weeks`/`invigoration_applied` tables below are SUPERSEDED by `Docs/Invigoration Tracker Phase 1 Proposal.md`, which reuses the existing table. Only `invigoration_ranking` and `invigoration_feedback` (Phase 2) remain valid.
+
 All in `wf_user`, owner-only like the rest.
 
 - `invigoration_ranking` — `my_frame_id`, `stat` (strength / duration / range / energy_max), `rank` (1-4), `source` (`confirmed` | `automated`), `score`, `confidence`, `explanation` (jsonb), `computed_at`; unique on `(my_frame_id, stat, source)`.
