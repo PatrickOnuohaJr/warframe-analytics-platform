@@ -3,6 +3,7 @@ import Panel from './ui/Panel';
 import Button from './ui/Button';
 import LoadoutSlotPickerModal from './LoadoutSlotPickerModal';
 import { resolveCatalogWeapon } from '../utils/weaponAssign';
+import { stancesForWeapon } from '../utils/stanceFit';
 import { augmentsForWarframe, augmentsForSubsumed } from '../utils/modMeta';
 import SlotBox from './SlotBox';
 import WeaponInput from './WeaponInput';
@@ -587,7 +588,9 @@ export default function LoadoutEquipmentSection({
         <LoadoutSlotPickerModal
           mods={
             picker.slotPosition === 'aura' ? auraMods
-              : picker.slotPosition === 'stance' ? stanceMods
+              // Only stances the equipped weapon can use (e.g. Dual Daggers
+              // stances for Okina Prime), not all of the player's stances.
+              : picker.slotPosition === 'stance' ? stancesForWeapon(stanceMods, frame[weaponFields.weapon])
               : picker.allowRiven ? numberedPool
               : ownedMods
           }
