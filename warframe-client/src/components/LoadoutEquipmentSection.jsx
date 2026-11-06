@@ -596,6 +596,8 @@ export default function LoadoutEquipmentSection({
           augmentCatalog={frameAugments}
           auraCatalog={auraMods.filter(m => m.category === equipmentType)}
           isAuraSlot={picker.slotPosition === 'aura'}
+          stanceCatalog={equipmentType === 'Melee' ? stanceMods : []}
+          isStanceSlot={picker.slotPosition === 'stance'}
           slotPolarity={picker.slot.polarity}
           onSelect={item => {
             onSetSlot(picker.slotPosition, {
