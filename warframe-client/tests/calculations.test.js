@@ -65,3 +65,9 @@ test('a stance mod in a matching slot doubles its capacity bonus (in-game Okina 
   // Same mod in a normal slot is untouched by the stance rule.
   assert.equal(effectiveDrain(stance, 3, 'vazarin'), Math.ceil(-5 / 2));
 });
+
+test('cleanStatText turns a literal backslash-n into a space', async () => {
+  const { cleanStatText } = await import('../src/utils/modMeta.js');
+  assert.equal(cleanStatText('On Melee Kill:\\n+64.2% Attack Speed for 10s.'), 'On Melee Kill: +64.2% Attack Speed for 10s.');
+  assert.equal(cleanStatText('<b>+40%</b>  Range'), '+40% Range');
+});

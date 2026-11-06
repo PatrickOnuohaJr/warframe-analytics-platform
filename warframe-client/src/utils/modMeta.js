@@ -222,5 +222,8 @@ export function effectTextAtRank(mod, rank) {
 
 export function cleanStatText(text) {
   if (!text) return text;
-  return text.replace(/<[^>]+>/g, '').replace(/\s{2,}/g, ' ').trim();
+  // Some catalog rows carry a literal backslash + n (two characters, as in
+  // "On Melee Kill:" then backslash-n then "+64.2% ...") instead of a real
+  // line break. Turn those into a space so cards don't print them raw.
+  return text.replace(/<[^>]+>/g, '').replace(/\\n|\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
