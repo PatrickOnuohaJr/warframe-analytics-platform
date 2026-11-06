@@ -31,6 +31,7 @@ export default function ModsPage() {
   const [exilusOnly, setExilusOnly] = useState(false);
   const [augmentOnly, setAugmentOnly] = useState(false);
   const [conclaveOnly, setConclaveOnly] = useState(false);
+  const [stanceOnly, setStanceOnly] = useState(false);
   const [statFilter, setStatFilter] = useState(null);
   const [notMaxedOnly, setNotMaxedOnly] = useState(false);
   const [search, setSearch] = useState('');
@@ -96,6 +97,7 @@ export default function ModsPage() {
       if (exilusOnly && !m.is_exilus) return false;
       if (augmentOnly && !isAugment(m)) return false;
       if (conclaveOnly && !m.is_conclave) return false;
+      if (stanceOnly && !m.is_stance) return false;
       if (statFilter && !statGroups(m).includes(statFilter)) return false;
       if (notMaxedOnly) {
         const rank = owned.get(m.mod_id)?.owned_rank ?? 0;
@@ -104,7 +106,7 @@ export default function ModsPage() {
       if (q && !m.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, conclaveOnly, statFilter, notMaxedOnly, owned, search]);
+  }, [ownedMods, categoryFilter, auraOnly, exilusOnly, augmentOnly, conclaveOnly, stanceOnly, statFilter, notMaxedOnly, owned, search]);
 
   async function handleRemove(mod) {
     const confirmed = window.confirm(`Remove ${mod.name} from your inventory?`);
@@ -267,6 +269,8 @@ export default function ModsPage() {
                 // Warframe's) -- stale selections from the old category
                 // would otherwise silently filter to nothing.
                 if (c !== 'Warframe' && c !== 'All') setAuraOnly(false);
+                // Stance is Melee-only, same stale-filter reasoning.
+                if (c !== 'Melee' && c !== 'All') setStanceOnly(false);
                 setStatFilter(null);
               }}
               className="rounded-xl px-4 py-2 text-[10px] uppercase font-bold tracking-[0.25em] transition-colors"
@@ -362,6 +366,19 @@ export default function ModsPage() {
         >
           Conclave Only
         </button>
+        {(categoryFilter === 'All' || categoryFilter === 'Melee') && (
+          <button
+            onClick={() => setStanceOnly(v => !v)}
+            className="text-[10px] uppercase tracking-widest px-2 py-1 rounded"
+            style={{
+              background: stanceOnly ? `${COLOR.gold}22` : 'transparent',
+              color: stanceOnly ? COLOR.gold : COLOR.mutedInk,
+              border: `1px solid ${stanceOnly ? COLOR.gold : COLOR.border}`,
+            }}
+          >
+            Stance Only
+          </button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-1.5 mb-4">
@@ -498,6 +515,7 @@ export default function ModsPage() {
                     {' · '}{mod.rarity ?? '—'}
                     {mod.is_aura ? ' · Aura' : ''}
                     {mod.is_exilus ? ' · Exilus' : ''}
+                    {mod.is_stance ? ' · Stance' : ''}
                     {mod.is_conclave ? ' · Conclave' : ''}
                   </p>
                   {augment && (
