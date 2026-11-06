@@ -12,6 +12,14 @@ import ConclaveBadge from './ConclaveBadge';
 // showing them under Primary/Secondary/Melee would just be a menu option
 // that always selects nothing.
 
+// "Hide Conclave" is remembered between visits (default ON: Conclave mods are
+// PvP-only and most players never want them listed). Wrapped in try/catch
+// because storage can be unavailable (private windows, blocked site data).
+const HIDE_CONCLAVE_KEY = 'gu.addMods.hideConclave';
+function loadHideConclave() {
+  try { return localStorage.getItem(HIDE_CONCLAVE_KEY) !== 'false'; } catch { return true; }
+}
+
 const CATEGORIES = ['All', 'Warframe', 'Primary', 'Secondary', 'Melee', 'Companion'];
 
 // Bulk ownership picker for Mod Inventory -- same pattern as
@@ -23,6 +31,7 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(new Set());
   const [showSelectedOnly, setShowSelectedOnly] = useState(false);
+  const [hideConclave, setHideConclave] = useState(loadHideConclave);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -30,11 +39,12 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
     const q = search.trim().toLowerCase();
     return catalog
       .filter(m => !ownedIds.has(m.mod_id))
+      .filter(m => !hideConclave || !m.is_conclave)
       .filter(m => category === 'All' || m.category === category)
       .filter(m => !q || m.name.toLowerCase().includes(q))
       .filter(m => !showSelectedOnly || selected.has(m.mod_id))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [catalog, ownedIds, category, search, showSelectedOnly, selected]);
+  }, [catalog, ownedIds, category, search, showSelectedOnly, selected, hideConclave]);
 
   // Real WFCD data behind "groupable": isAugment flag, isPrime flag, and
   // modSet (parsed to a human name, e.g. "Umbra", "Augur", "Strain") --
@@ -74,7 +84,7 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   // Stance mods are Melee-only (and have their own loadout slot), so they get
   // a dedicated entry here -- otherwise they hide among ~230 melee mods.
   const showStance = category === 'All' || category === 'Melee';
-  const typeStatGroupNames = useMemo(() => [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), ...(showStance ? ['Stance'] : []), 'Conclave', ...statGroupNames], [showTypeGroups, showStance, statGroupNames]);
+  const typeStatGroupNames = useMemo(() => [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), ...(showStance ? ['Stance'] : []), ...(hideConclave ? [] : ['Conclave']), ...statGroupNames], [showTypeGroups, showStance, hideConclave, statGroupNames]);
 
   const typeStatCounts = useMemo(() => {
     const inCategory = catalog.filter(m => category === 'All' || m.category === category);
@@ -85,7 +95,7 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
       if (showTypeGroups && m.is_exilus) counts.Exilus += 1;
       if (showTypeGroups && isAugment(m)) counts.Augment += 1;
       if (showStance && m.is_stance) counts.Stance += 1;
-      if (m.is_conclave) counts.Conclave += 1;
+      if (m.is_conclave && 'Conclave' in counts) counts.Conclave += 1;
       statGroups(m).forEach(g => { if (g in counts) counts[g] += 1; });
     });
     return counts;
@@ -104,7 +114,9 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
     // Scoped to the active category, matching the counts shown next to
     // each option -- otherwise "All Prime Mods (21)" for Primary would
     // actually pull in Prime mods from every category.
-    const inCategory = m => category === 'All' || m.category === category;
+    // Bulk group picks honour Hide Conclave too, so they can't pull in mods
+    // the list is hiding.
+    const inCategory = m => (category === 'All' || m.category === category) && (!hideConclave || !m.is_conclave);
 
     let matches;
     if (groupKey === 'prime') matches = catalog.filter(m => isPrimeMod(m) && inCategory(m));
@@ -204,6 +216,21 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
             {c}
           </button>
         ))}
+        <button
+          onClick={() => {
+            const next = !hideConclave;
+            setHideConclave(next);
+            try { localStorage.setItem(HIDE_CONCLAVE_KEY, String(next)); } catch { /* storage unavailable: still works this visit */ }
+          }}
+          className="rounded-xl px-3 py-1.5 text-[10px] uppercase font-bold tracking-[0.2em] transition-colors ml-auto"
+          style={{
+            background: hideConclave ? `${COLOR.gold}18` : COLOR.surface1,
+            border: `1px solid ${hideConclave ? `${COLOR.gold}55` : COLOR.border}`,
+            color: hideConclave ? COLOR.gold : COLOR.mutedInk,
+          }}
+        >
+          {hideConclave ? 'Conclave hidden' : 'Hide Conclave'}
+        </button>
       </div>
 
       <select

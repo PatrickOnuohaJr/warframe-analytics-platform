@@ -147,7 +147,7 @@ const STAT_GROUP_KEYWORDS = {
   Melee: {
     'Attack Speed': ['Attack Speed'],
     Range: ['Range'],
-    Chance: ['Status Chance'],
+    'Status Chance': ['Status Chance'],
     Damage: ['Damage'],
     IPS: ['DT_SLASH_COLOR', 'DT_IMPACT_COLOR', 'DT_PUNCTURE_COLOR'],
   },

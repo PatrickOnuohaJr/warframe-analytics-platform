@@ -591,6 +591,9 @@ export default function LoadoutEquipmentSection({
               // Only stances the equipped weapon can use (e.g. Dual Daggers
               // stances for Okina Prime), not all of the player's stances.
               : picker.slotPosition === 'stance' ? stancesForWeapon(stanceMods, frame[weaponFields.weapon])
+              // The Exilus slot only takes Exilus-capable mods, so only those
+              // are listed (everything else would just be noise).
+              : picker.slotPosition === 'exilus' ? ownedMods.filter(m => m.is_exilus)
               : picker.allowRiven ? numberedPool
               : ownedMods
           }
@@ -599,6 +602,7 @@ export default function LoadoutEquipmentSection({
           augmentCatalog={frameAugments}
           auraCatalog={auraMods.filter(m => m.category === equipmentType)}
           isAuraSlot={picker.slotPosition === 'aura'}
+          isExilusSlot={picker.slotPosition === 'exilus'}
           slotPolarity={picker.slot.polarity}
           onSelect={item => {
             onSetSlot(picker.slotPosition, {

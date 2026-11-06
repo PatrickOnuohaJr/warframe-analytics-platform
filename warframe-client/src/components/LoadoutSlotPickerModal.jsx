@@ -20,6 +20,7 @@ export default function LoadoutSlotPickerModal({
   augmentCatalog = [],
   auraCatalog = [],
   isAuraSlot = false,
+  isExilusSlot = false,
   slotPolarity,
   onSelect,
   onClear,
@@ -38,7 +39,9 @@ export default function LoadoutSlotPickerModal({
   //                 slot; they can only be equipped in the Aura slot, so they
   //                 show dimmed unless this IS the Aura slot picker.
   const [view, setView] = useState(null);
-  const hasExilus = mods.some(m => m.is_exilus);
+  // The Exilus chip is pointless inside the Exilus slot's own picker: every
+  // mod listed there is already Exilus.
+  const hasExilus = !isExilusSlot && mods.some(m => m.is_exilus);
   const showAuraChip = auraCatalog.length > 0 && !isAuraSlot;
   const groups = statGroupsFor(category);
 
