@@ -61,7 +61,7 @@ export default function ModsPage() {
     const { data: modRows, error: modsError } = await fetchAll(() =>
       wfBase
         .from('mods')
-        .select('mod_id, name, category, polarity, base_drain, max_rank, rarity, is_aura, is_exilus, is_conclave, raw_json')
+        .select('mod_id, name, category, polarity, base_drain, max_rank, rarity, is_aura, is_exilus, is_stance, is_conclave, raw_json')
         .order('name', { ascending: true })
     );
 

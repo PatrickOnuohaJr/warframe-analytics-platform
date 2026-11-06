@@ -71,7 +71,10 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
   // Conclave, unlike Aura/Exilus/Augment, isn't Warframe-only -- every
   // weapon category has real Conclave-origin mods mixed in (WFCD
   // uniqueName contains "/PvPMods/"), so it's always offered.
-  const typeStatGroupNames = useMemo(() => [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), 'Conclave', ...statGroupNames], [showTypeGroups, statGroupNames]);
+  // Stance mods are Melee-only (and have their own loadout slot), so they get
+  // a dedicated entry here -- otherwise they hide among ~230 melee mods.
+  const showStance = category === 'All' || category === 'Melee';
+  const typeStatGroupNames = useMemo(() => [...(showTypeGroups ? ['Aura', 'Exilus', 'Augment'] : []), ...(showStance ? ['Stance'] : []), 'Conclave', ...statGroupNames], [showTypeGroups, showStance, statGroupNames]);
 
   const typeStatCounts = useMemo(() => {
     const inCategory = catalog.filter(m => category === 'All' || m.category === category);
@@ -81,16 +84,18 @@ export default function AddModToInventoryModal({ catalog, ownedIds, initialCateg
       if (showTypeGroups && m.is_aura) counts.Aura += 1;
       if (showTypeGroups && m.is_exilus) counts.Exilus += 1;
       if (showTypeGroups && isAugment(m)) counts.Augment += 1;
+      if (showStance && m.is_stance) counts.Stance += 1;
       if (m.is_conclave) counts.Conclave += 1;
       statGroups(m).forEach(g => { if (g in counts) counts[g] += 1; });
     });
     return counts;
-  }, [catalog, category, typeStatGroupNames, showTypeGroups]);
+  }, [catalog, category, typeStatGroupNames, showTypeGroups, showStance]);
 
   function matchesTypeStatGroup(mod, group) {
     if (group === 'Aura') return mod.is_aura;
     if (group === 'Exilus') return mod.is_exilus;
     if (group === 'Augment') return isAugment(mod);
+    if (group === 'Stance') return mod.is_stance;
     if (group === 'Conclave') return mod.is_conclave;
     return statGroups(mod).includes(group);
   }

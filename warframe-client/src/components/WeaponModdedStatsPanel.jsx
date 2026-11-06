@@ -38,12 +38,17 @@ function resolveEquippedWeaponItems(slotsByPosition, modsById, ownedByModId, riv
   return { mods, rivens };
 }
 
+// Crit damage is a multiplier in the game's own terms (Okina Prime = 2.6x).
+// The stats engine hands us a percent (260), so divide by 100 and show "x";
+// the Number() round-trip drops floating-point noise and trailing zeros.
+const formatMultiplier = v => (v == null ? '—' : `${Number((v / 100).toFixed(2))}x`);
+
 const GUN_TILES = [
   { key: 'fireRate', label: 'Fire Rate', format: v => (v == null ? '—' : `${v}/s`) },
   { key: 'magazineSize', label: 'Magazine', format: v => formatNumber(v) },
   { key: 'reloadTime', label: 'Reload', format: v => (v == null ? '—' : `${v}s`) },
   { key: 'criticalChance', label: 'Crit Chance', format: v => (v == null ? '—' : `${v}%`) },
-  { key: 'criticalMultiplier', label: 'Crit Damage', format: v => (v == null ? '—' : `${v}%`) },
+  { key: 'criticalMultiplier', label: 'Crit Damage', format: formatMultiplier },
   { key: 'procChance', label: 'Status Chance', format: v => (v == null ? '—' : `${v}%`) },
   { key: 'punchThrough', label: 'Punch Through', format: v => formatNumber(v) },
   { key: 'multishot', label: 'Multishot', format: v => formatNumber(v) },
@@ -53,7 +58,7 @@ const MELEE_TILES = [
   { key: 'fireRate', label: 'Attack Speed', format: v => formatNumber(v) },
   { key: 'damage', label: 'Damage', format: v => formatNumber(v) },
   { key: 'criticalChance', label: 'Crit Chance', format: v => (v == null ? '—' : `${v}%`) },
-  { key: 'criticalMultiplier', label: 'Crit Damage', format: v => (v == null ? '—' : `${v}%`) },
+  { key: 'criticalMultiplier', label: 'Crit Damage', format: formatMultiplier },
   { key: 'procChance', label: 'Status Chance', format: v => (v == null ? '—' : `${v}%`) },
   { key: 'range', label: 'Range', format: v => (v == null ? '—' : `${v}m`) },
 ];
