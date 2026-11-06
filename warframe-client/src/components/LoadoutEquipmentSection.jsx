@@ -225,7 +225,7 @@ export default function LoadoutEquipmentSection({
   const stanceSlot = slotsByPosition.get('stance') ?? { mod_id: null, riven_id: null, polarity: null };
   const stanceMod = stanceSlot.mod_id ? modsById.get(stanceSlot.mod_id) : null;
   const stanceRank = stanceMod ? (ownedByModId.get(stanceMod.mod_id)?.owned_rank ?? 0) : 0;
-  const stanceDrain = stanceMod ? effectiveDrain(stanceMod, stanceRank, stanceSlot.polarity) : 0;
+  const stanceDrain = stanceMod ? effectiveDrain(stanceMod, stanceRank, stanceSlot.polarity, false, true) : 0;
 
   const { used, netCapacity } = (() => {
     let total = exilusDrain + stanceDrain;
@@ -602,6 +602,7 @@ export default function LoadoutEquipmentSection({
           augmentCatalog={frameAugments}
           auraCatalog={auraMods.filter(m => m.category === equipmentType)}
           isAuraSlot={picker.slotPosition === 'aura'}
+          isStanceSlot={picker.slotPosition === 'stance'}
           isExilusSlot={picker.slotPosition === 'exilus'}
           slotPolarity={picker.slot.polarity}
           onSelect={item => {

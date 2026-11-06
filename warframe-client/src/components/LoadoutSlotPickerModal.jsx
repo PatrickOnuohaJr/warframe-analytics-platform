@@ -20,6 +20,7 @@ export default function LoadoutSlotPickerModal({
   augmentCatalog = [],
   auraCatalog = [],
   isAuraSlot = false,
+  isStanceSlot = false,
   isExilusSlot = false,
   slotPolarity,
   onSelect,
@@ -160,7 +161,7 @@ export default function LoadoutSlotPickerModal({
           // Rivens carry their own rank inline (owned_rank); real mods
           // still resolve rank from the shared inventory map.
           const rank = mod.owned_rank ?? ownedByModId.get(mod.mod_id)?.owned_rank ?? 0;
-          const cost = effectiveDrain(mod, rank, slotPolarity);
+          const cost = effectiveDrain(mod, rank, slotPolarity, false, isStanceSlot);
           const discounted = isDiscounted(mod, slotPolarity);
           const key = mod.mod_id ?? `riven-${mod.riven_id}`;
 

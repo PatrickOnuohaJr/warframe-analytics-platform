@@ -48,8 +48,17 @@ export function isDiscounted(mod, slotPolarity, isAuraSlot = false) {
 // Aura mods: no polarity set keeps the listed bonus; a match doubles it;
 // a mismatch shrinks it to 80% (wiki's Aura page) -- opposite direction
 // from regular mods, since aura "cost" is already negative (a refund).
-export function effectiveDrain(mod, rank, slotPolarity, isAuraSlot = false) {
+export function effectiveDrain(mod, rank, slotPolarity, isAuraSlot = false, isStanceSlot = false) {
   const cost = drainAtRank(mod?.base_drain, rank);
+
+  // Stance mods carry a negative drain (a capacity bonus), and like an Aura
+  // a matching slot polarity DOUBLES that bonus instead of halving a cost.
+  // Confirmed against Patrick's in-game Okina Prime: Spinning Needle at rank
+  // 3 (drain -5) in a matching slot shows +10. A mismatch keeps the listed
+  // value (not verified in game).
+  if (isStanceSlot && cost < 0) {
+    return isDiscounted(mod, slotPolarity) ? cost * 2 : cost;
+  }
 
   if (isAuraSlot) {
     if (!slotPolarity) return cost;

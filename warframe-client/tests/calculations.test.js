@@ -56,3 +56,12 @@ test('resilience combines percent mods with flat shards and leaves shields unmit
   assert.equal(result.effectiveHealth, 600);
   assert.equal(result.totalEffectivePool, 650);
 });
+
+test('a stance mod in a matching slot doubles its capacity bonus (in-game Okina Prime: Spinning Needle rank 3 = -10)', () => {
+  const stance = { base_drain: -2, polarity: 'vazarin' };
+  assert.equal(effectiveDrain(stance, 3, 'vazarin', false, true), -10);
+  // No match: listed value stands.
+  assert.equal(effectiveDrain(stance, 3, 'madurai', false, true), -5);
+  // Same mod in a normal slot is untouched by the stance rule.
+  assert.equal(effectiveDrain(stance, 3, 'vazarin'), Math.ceil(-5 / 2));
+});
