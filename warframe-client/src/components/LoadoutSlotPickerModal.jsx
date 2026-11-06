@@ -20,8 +20,6 @@ export default function LoadoutSlotPickerModal({
   augmentCatalog = [],
   auraCatalog = [],
   isAuraSlot = false,
-  stanceCatalog = [],
-  isStanceSlot = false,
   slotPolarity,
   onSelect,
   onClear,
@@ -39,13 +37,9 @@ export default function LoadoutSlotPickerModal({
   //   'aura'     -- owned Aura mods, for browsing while filling a numbered
   //                 slot; they can only be equipped in the Aura slot, so they
   //                 show dimmed unless this IS the Aura slot picker.
-  //   'stance'   -- owned Stance mods, same dimmed browse-only behaviour.
   const [view, setView] = useState(null);
   const hasExilus = mods.some(m => m.is_exilus);
   const showAuraChip = auraCatalog.length > 0 && !isAuraSlot;
-  // Same idea for Stance (Melee only): browse owned stances from a numbered
-  // slot, dimmed, since they can only be equipped in the Stance slot.
-  const showStanceChip = stanceCatalog.length > 0 && !isStanceSlot;
   const groups = statGroupsFor(category);
 
   const results = useMemo(() => {
@@ -61,18 +55,12 @@ export default function LoadoutSlotPickerModal({
         .map(m => ({ ...m, disabledLabel: 'Aura slot only' }))
         .sort((a, b) => a.name.localeCompare(b.name));
     }
-    if (view === 'stance') {
-      return stanceCatalog
-        .filter(m => !q || m.name.toLowerCase().includes(q))
-        .map(m => ({ ...m, disabledLabel: 'Stance slot only' }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-    }
     return mods
       .filter(m => !q || m.name.toLowerCase().includes(q))
       .filter(m => view !== 'exilus' || m.is_exilus)
       .filter(m => !statFilter || statGroups(m).includes(statFilter))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [mods, search, statFilter, view, augmentCatalog, auraCatalog, stanceCatalog, ownedByModId]);
+  }, [mods, search, statFilter, view, augmentCatalog, auraCatalog, ownedByModId]);
 
   return (
     <ModalShell onClose={onClose} accent={COLOR.gold} maxWidth="max-w-lg" zIndex={70}>
@@ -124,7 +112,6 @@ export default function LoadoutSlotPickerModal({
         {[
           augmentCatalog.length > 0 && { id: 'augments', label: `Augments (${augmentCatalog.length})` },
           showAuraChip && { id: 'aura', label: `Aura (${auraCatalog.length})` },
-          showStanceChip && { id: 'stance', label: `Stance (${stanceCatalog.length})` },
           hasExilus && { id: 'exilus', label: 'Exilus' },
         ].filter(Boolean).map(chip => (
           <button
@@ -161,7 +148,6 @@ export default function LoadoutSlotPickerModal({
           <p className="text-sm" style={{ color: COLOR.mutedInk }}>
             {view === 'augments' ? 'No augments match.'
               : view === 'aura' ? 'No owned Aura mods match.'
-              : view === 'stance' ? 'No owned Stance mods match.'
               : view === 'exilus' ? 'No owned Exilus mods match.'
               : 'No owned mods match this slot. Add some from the Mods page first.'}
           </p>
