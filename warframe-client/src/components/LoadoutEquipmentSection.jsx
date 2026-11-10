@@ -20,6 +20,7 @@ import { arcaneEffectText } from '../utils/arcaneMeta';
 import { getShardBonusTexts } from '../utils/survivability';
 import { effectTextAtRank } from '../utils/modMeta';
 import { cleanValue } from '../utils/shardHelpers';
+import { planSlotMove, planPickerDrop, planUmbralFill, describeUmbralFill } from '../utils/slotMoves';
 import { wfUser } from '../lib/supabase';
 import useDebouncedField from '../hooks/useDebouncedField';
 
@@ -91,7 +92,10 @@ export default function LoadoutEquipmentSection({
   arcanes,
   abilityCanonicalByName,
   onSaved,
+  usageByModId,
 }) {
+  // One-line feedback for drag-and-drop refusals and the Umbral set fill.
+  const [notice, setNotice] = useState(null);
   const [picker, setPicker] = useState(null); // { slotPosition, pool, slot }
   const [rivenEditor, setRivenEditor] = useState(null); // { riven, autoEquipSlot } | null
   const [showCopyWeapon, setShowCopyWeapon] = useState(false);
@@ -208,6 +212,41 @@ export default function LoadoutEquipmentSection({
 
   const capacity = pieceCapacity({ hasCatalyst: meta.has_catalyst });
 
+  // A slot's polarity belongs to the socket, so it survives any mod change.
+  const polarityAt = pos => slotsByPosition.get(pos)?.polarity ?? null;
+  function applyChanges(changes) {
+    changes.forEach(c => onSetSlot(c.position, { mod_id: c.mod_id, riven_id: c.riven_id, polarity: polarityAt(c.position) }));
+  }
+
+  // A mod was dropped on slot `to`: either dragged from another slot (move or
+  // swap) or from the picker list. Rules live in utils/slotMoves.js.
+  function handleDropMod(to, payload) {
+    setNotice(null);
+    let plan;
+    if (payload.kind === 'slot') {
+      plan = planSlotMove({ from: payload.from, to, slotsByPosition, resolveItem: resolveSlotItem });
+    } else {
+      const item = payload.riven_id
+        ? (rivensById.get(payload.riven_id) ? toRivenPoolItem(rivensById.get(payload.riven_id)) : null)
+        : modsById.get(payload.mod_id);
+      plan = planPickerDrop({ to, item });
+      setPicker(null); // a picker drop is done with the picker either way
+    }
+    if (plan.error) setNotice(plan.error);
+    else applyChanges(plan.changes);
+  }
+
+  // One click: equip the owned Umbral mods into FREE numbered slots (never
+  // overwrites a filled slot) and say what was added or skipped.
+  function equipUmbralSet() {
+    const warframeMods = [...modsById.values()].filter(m => m.category === 'Warframe');
+    const plan = planUmbralFill({ catalog: warframeMods, ownedByModId, slotsByPosition });
+    plan.placements.forEach(p =>
+      onSetSlot(p.position, { mod_id: p.mod_id, riven_id: null, polarity: polarityAt(p.position) })
+    );
+    setNotice(describeUmbralFill(plan) || 'Nothing to add.');
+  }
+
   // Aura/Exilus never hold Rivens (real Rivens only fit the 8 numbered
   // slots), so these stay mod-only.
   const auraSlot = slotsByPosition.get('aura') ?? { mod_id: null, riven_id: null, polarity: null };
@@ -302,11 +341,30 @@ export default function LoadoutEquipmentSection({
             {isWarframe ? 'Reactor' : 'Catalyst'} {meta.has_catalyst ? 'Installed' : 'Not Installed'}
           </button>
 
+          {isWarframe && (
+            <button
+              type="button"
+              onClick={equipUmbralSet}
+              title="Equip your owned Umbral Intensify, Fiber and Vitality into free slots"
+              className="rounded-lg px-3 py-1.5 text-[10px] uppercase font-bold tracking-widest"
+              style={{ background: COLOR.surface2, border: `1px solid ${COLOR.border}`, color: COLOR.mutedInk }}
+            >
+              Umbral Set
+            </button>
+          )}
+
           <span className="font-bold" style={{ color: overBudget ? COLOR.danger : COLOR.ink }}>
             {netCapacity - used} / {netCapacity} Capacity
           </span>
         </div>
       </div>
+
+      {notice && (
+        <p role="status" className="text-xs mb-3" style={{ color: COLOR.mutedInk }}>
+          {notice}{' '}
+          <button type="button" onClick={() => setNotice(null)} className="underline">dismiss</button>
+        </p>
+      )}
 
       {/* 50/50 split like the game's own upgrade screen: mods on the left,
           stats (and, for a Warframe, abilities) on the right, so the stats
@@ -442,6 +500,8 @@ export default function LoadoutEquipmentSection({
             description={modDescription(auraMod, auraRank)}
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'aura', slot: auraSlot })}
+            slotId="aura"
+            onDropMod={payload => handleDropMod('aura', payload)}
             onSetPolarity={polarity => onSetSlot('aura', { mod_id: auraSlot.mod_id, riven_id: null, polarity })}
             onClear={() => onSetSlot('aura', { mod_id: null, riven_id: null, polarity: auraSlot.polarity })}
             onSetRank={nextRank => onSetRank(auraMod.mod_id, nextRank)}
@@ -459,6 +519,8 @@ export default function LoadoutEquipmentSection({
             description={modDescription(stanceMod, stanceRank)}
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'stance', slot: stanceSlot })}
+            slotId="stance"
+            onDropMod={payload => handleDropMod('stance', payload)}
             onSetPolarity={polarity => onSetSlot('stance', { mod_id: stanceSlot.mod_id, riven_id: null, polarity })}
             onClear={() => onSetSlot('stance', { mod_id: null, riven_id: null, polarity: stanceSlot.polarity })}
             onSetRank={nextRank => onSetRank(stanceMod.mod_id, nextRank)}
@@ -476,6 +538,8 @@ export default function LoadoutEquipmentSection({
             description={modDescription(exilusMod, exilusRank)}
             accent={accent}
             onOpenPicker={() => setPicker({ slotPosition: 'exilus', slot: exilusSlot })}
+            slotId="exilus"
+            onDropMod={payload => handleDropMod('exilus', payload)}
             onSetPolarity={polarity => onSetSlot('exilus', { mod_id: exilusSlot.mod_id, riven_id: null, polarity })}
             onClear={() => onSetSlot('exilus', { mod_id: null, riven_id: null, polarity: exilusSlot.polarity })}
             onSetRank={nextRank => onSetRank(exilusMod.mod_id, nextRank)}
@@ -500,6 +564,8 @@ export default function LoadoutEquipmentSection({
               description={modDescription(item, rank)}
               accent={accent}
               onOpenPicker={() => setPicker({ slotPosition: pos, slot, allowRiven: true })}
+              slotId={pos}
+              onDropMod={payload => handleDropMod(pos, payload)}
               onSetPolarity={polarity => onSetSlot(pos, { mod_id: slot.mod_id, riven_id: slot.riven_id, polarity })}
               onClear={() => onSetSlot(pos, { mod_id: null, riven_id: null, polarity: slot.polarity })}
               onSetRank={nextRank => setRankForItem(item, nextRank)}
@@ -605,6 +671,7 @@ export default function LoadoutEquipmentSection({
           isStanceSlot={picker.slotPosition === 'stance'}
           isExilusSlot={picker.slotPosition === 'exilus'}
           slotPolarity={picker.slot.polarity}
+          usageByModId={usageByModId}
           onSelect={item => {
             onSetSlot(picker.slotPosition, {
               mod_id: item.riven_id ? null : item.mod_id,

@@ -4,6 +4,8 @@ import PolaritySymbol from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
 import { effectiveDrain, isDiscounted } from '../utils/modCapacity';
 import { statGroups, statGroupsFor, effectTextAtRank } from '../utils/modMeta';
+import { sortByUsage } from '../utils/modUsage';
+import { DRAG_MIME } from '../utils/slotMoves';
 
 // Mod picker for a single loadout slot. `mods` is already pre-filtered by
 // the caller (right equipment category, aura-only / exilus-only as
@@ -13,6 +15,14 @@ import { statGroups, statGroupsFor, effectTextAtRank } from '../utils/modMeta';
 // slot never offers Health/Shield/Armor, a Warframe slot never offers Fire
 // Rate/Multishot. `onCreateRiven`/`onEditRiven` are only passed for weapon
 // slots that allow Rivens (see LoadoutEquipmentSection).
+//
+// `usageByModId` (Map<mod_id, count> from the user's saved builds) floats the
+// mods he equips most to the top of every list, so e.g. the Duration chip
+// leads with Primed Continuity. Ties and unused mods keep name order.
+//
+// Rows are draggable onto the loadout's slots behind the modal: once a drag
+// starts the modal goes invisible and click-through (`passThrough`) so the
+// slots can receive the drop. The caller handles the drop itself.
 export default function LoadoutSlotPickerModal({
   mods,
   category,
@@ -28,7 +38,9 @@ export default function LoadoutSlotPickerModal({
   onClose,
   onCreateRiven,
   onEditRiven,
+  usageByModId,
 }) {
+  const [dragging, setDragging] = useState(false);
   const [search, setSearch] = useState('');
   const [statFilter, setStatFilter] = useState(null);
   // Special views, one at a time:
@@ -59,15 +71,17 @@ export default function LoadoutSlotPickerModal({
         .map(m => ({ ...m, disabledLabel: 'Aura slot only' }))
         .sort((a, b) => a.name.localeCompare(b.name));
     }
-    return mods
+    // Name order first, then a stable most-used-first pass on top.
+    const byName = mods
       .filter(m => !q || m.name.toLowerCase().includes(q))
       .filter(m => view !== 'exilus' || m.is_exilus)
       .filter(m => !statFilter || statGroups(m).includes(statFilter))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [mods, search, statFilter, view, augmentCatalog, auraCatalog, ownedByModId]);
+    return sortByUsage(byName, usageByModId);
+  }, [mods, search, statFilter, view, augmentCatalog, auraCatalog, ownedByModId, usageByModId]);
 
   return (
-    <ModalShell onClose={onClose} accent={COLOR.gold} maxWidth="max-w-lg" zIndex={70}>
+    <ModalShell onClose={onClose} accent={COLOR.gold} maxWidth="max-w-lg" zIndex={70} passThrough={dragging}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold" style={{ color: COLOR.gold }}>Choose a Mod</h2>
         <button onClick={onClose} className="text-xl leading-none" style={{ color: COLOR.mutedInk }}>×</button>
@@ -164,9 +178,23 @@ export default function LoadoutSlotPickerModal({
           const cost = effectiveDrain(mod, rank, slotPolarity, false, isStanceSlot);
           const discounted = isDiscounted(mod, slotPolarity);
           const key = mod.mod_id ?? `riven-${mod.riven_id}`;
+          const uses = mod.mod_id != null ? usageByModId?.get(mod.mod_id) ?? 0 : 0;
 
           return (
-            <div key={key} className="w-full flex items-center gap-1" style={{ opacity: mod.disabledLabel ? 0.5 : 1 }}>
+            <div
+              key={key}
+              className="w-full flex items-center gap-1"
+              style={{ opacity: mod.disabledLabel ? 0.5 : 1 }}
+              draggable={!mod.disabledLabel}
+              onDragStart={e => {
+                e.dataTransfer.setData(DRAG_MIME, JSON.stringify({ kind: 'picker', mod_id: mod.mod_id ?? null, riven_id: mod.riven_id ?? null }));
+                e.dataTransfer.effectAllowed = 'move';
+                // Hide the modal AFTER the browser has captured the drag
+                // image; hiding synchronously can cancel the drag.
+                setTimeout(() => setDragging(true), 0);
+              }}
+              onDragEnd={() => setDragging(false)}
+            >
               <button
                 onClick={() => onSelect(mod)}
                 disabled={!!mod.disabledLabel}
@@ -187,6 +215,11 @@ export default function LoadoutSlotPickerModal({
                   <span className="text-xs" style={{ color: COLOR.mutedInk }}>
                     {mod.disabledLabel ?? `Rank ${rank}/${mod.max_rank ?? 0}`}
                   </span>
+                  {uses > 0 && (
+                    <span className="text-[10px]" style={{ color: COLOR.gold }} title="Slots using this mod across your builds">
+                      used {uses}×
+                    </span>
+                  )}
                 </div>
                 {view === 'augments' && (
                   // The augment's own effect text names the ability it changes.

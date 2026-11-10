@@ -4,6 +4,7 @@ import { fetchAll } from '../lib/fetchAll';
 import LoadoutEquipmentSection from './LoadoutEquipmentSection';
 import AssignWeaponPanel from './AssignWeaponPanel';
 import useArcanes from '../hooks/useArcanes';
+import { countModUsage } from '../utils/modUsage';
 import { COLOR } from '../constants/theme';
 
 // ============================================================================
@@ -51,6 +52,9 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
   const [meta, setMeta] = useState([]); // raw loadout_meta rows for this frame
   const [rivens, setRivens] = useState([]); // raw wf_user.rivens rows, all of them
   const [warframeStats, setWarframeStats] = useState(null); // wf_base.warframes base-stat row
+  // Map<mod_id, slots using it> across EVERY saved build, so the picker can
+  // float his most-used mods to the top (see utils/modUsage.js).
+  const [usageByModId, setUsageByModId] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeEquipment, setActiveEquipment] = useState('Warframe');
@@ -62,7 +66,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
       setLoading(true);
       setError(null);
 
-      const [modsRes, invRes, slotsRes, metaRes, rivensRes, warframeStatsRes] = await Promise.all([
+      const [modsRes, invRes, slotsRes, metaRes, rivensRes, warframeStatsRes, usageRes] = await Promise.all([
         // Paged -- the mod catalog is past PostgREST's 1000-row default
         // cap, which silently truncates (see lib/fetchAll.js).
         fetchAll(() =>
@@ -77,6 +81,9 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
         frame.warframe_id
           ? wfBase.from('warframes').select('warframe_id, name, health, shield, armor, energy, sprint_speed').eq('warframe_id', frame.warframe_id).maybeSingle()
           : Promise.resolve({ data: null, error: null }),
+        // Usage is a nicety: a failure here must not block the loadout, so
+        // it is checked separately below instead of joining the error chain.
+        fetchAll(() => wfUser.from('loadout_slots').select('mod_id').not('mod_id', 'is', null).order('slot_id')),
       ]);
 
       if (cancelled) return;
@@ -94,6 +101,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
       setMeta(metaRes.data || []);
       setRivens(rivensRes.data || []);
       setWarframeStats(warframeStatsRes.data || null);
+      setUsageByModId(usageRes.error ? new Map() : countModUsage(usageRes.data));
       setLoading(false);
     }
 
@@ -329,6 +337,7 @@ export default function ModsLoadoutTab({ frame, frames, weapons, abilityCanonica
         arcanes={arcanes}
         abilityCanonicalByName={abilityCanonicalByName}
         onSaved={onSaved}
+        usageByModId={usageByModId}
       />
       )}
     </div>

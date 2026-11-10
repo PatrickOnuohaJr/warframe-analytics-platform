@@ -11,11 +11,15 @@ export default function ModalShell({
   accent,
   zIndex = 60,
   id,
+  // While true the whole modal turns invisible and click-through, so the page
+  // underneath can receive a drag that started inside the modal (the mod
+  // picker uses this to let you drag a mod onto a slot).
+  passThrough = false,
 }) {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center p-6"
-      style={{ background: 'rgba(0,0,0,0.8)', zIndex }}
+      style={{ background: 'rgba(0,0,0,0.8)', zIndex, ...(passThrough ? { opacity: 0, pointerEvents: 'none' } : {}) }}
       onClick={onClose}
     >
       <div
