@@ -1,5 +1,19 @@
 # Handoff — Cephalon Gu
 
+## Update — November 10, 2026 (Session 030: stance rules, Conclave/Flawed removal, Expert-variant defect)
+
+Pushed `main` at `cf1f568`. 141 Node tests pass; not seen in the signed-in app by Claude; not deployed.
+
+**Patrick must run (if not already):** `DB/Migrations/20261106_remove_flawed_mods_entirely.sql` (written, not confirmed run) and `20261106_fix_berserker_fury_max_rank.sql`. The Conclave inventory migration was run.
+
+**Key finding:** WFCD catalog contains "Expert" variant entries (uniqueName path `/Expert/...ModExpert`, 10 ranks, larger numbers) under the same names as real mods. Detect by comparing InternalName with the wiki `Module:Mods/data` after stripping `/Expert/` and trailing `Expert`. Effect scaling is linear, so truncating level tables is wrong: regenerate `levelStats` from wiki max values. 71 mods affected; audit in `Docs/Static Data/Mod Catalog Audit 2026-11-06.csv`.
+
+**Open thread:** Patrick got an interactive drain-check sheet (90 mods). When his answers arrive, classify catalog-right / wiki-right / neither, then write one migration (max_rank, base_drain, raw_json fusionLimit/baseDrain, regenerated levelStats, clamp owned ranks e.g. Shotgun Barrage and Speed Trigger owned at 10) plus a seeder override/skip for Expert uniqueNames. Confirmed: Berserker Fury (rank 5, drain 9), Eagle Eye and Hawk Eye (base 2, rank 5). Known drain rules from Patrick: regular +90% elemental 11, Primed elemental 16, Primed bane/speed/Flow/Continuity etc. 14, Primed utility 12, Cleanse/Smite/Bane/Ravage regular 9, Primed Cleanse/Ravage 14.
+
+**Shipped:** Crit Damage as 2.6x; Stance filter and "Stance Only" chip; stance picker limited to the equipped weapon's family; Exilus picker Exilus-only; "Status Chance" label; Hide Conclave toggle; stance matched-polarity capacity doubling (`effectiveDrain(..., isStanceSlot)`); literal backslash-n fix. Flawed mods skipped by the seeder.
+
+**Secondary to-do (not urgent):** Energy Channel and other unbuilt/unowned mods in the audit. Augment pass still parked. Invigoration: Patrick saw that in Override week unused offers keep the same upgrades while the frames rotate; non-Override weeks untested.
+
 ## Update — November 4, 2026 (Session 029: Kullervo cards, subsumed augments, Flawed mods)
 
 Pushed `main` at `13e3e8a` plus a docs-only reconcile commit. Lint, 133 Node tests, 29 UI tests, build pass; none of it seen in the signed-in app.

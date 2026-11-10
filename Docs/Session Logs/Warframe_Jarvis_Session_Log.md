@@ -1590,3 +1590,16 @@ Platform now contains: identity systems, doctrine systems, normalized weapon inf
 
 **Next:** Patrick sets the counter to 10 and checks Home and the Kullervo loadout in the real app; final augment pass once all builds are entered; enter Warframe mods on the 4 reference builds; Helminth coverage (parked, medium); load ability-card numbers into wf_base via the static-data pipeline; Invigoration Phase 2 only on Patrick's go-ahead; open rules to verify (Override recipient counting, counting after 10).
 
+
+## Session 030 — November 5-10, 2026 — Stance rules, Conclave/Flawed cleanup, Expert-variant mod defect
+
+- Crit Damage now shows as a multiplier (260% -> 2.6x) on gun and melee stat tiles. Stance filter added to Add Mods and a "Stance Only" chip on the Mods page.
+- Stance picker in a loadout lists only stances the equipped weapon can use (wiki melee class mapped in `constants/meleeStanceClass.js`, `utils/stanceFit.js`, fails open when the family is unknown). A Stance chip in the melee mod picker was built, pushed, then reverted at Patrick's request (`f84c81f`).
+- Exilus slot picker shows only Exilus mods. Mod stat chip renamed Chance -> Status Chance. "Hide Conclave" toggle in Add Mods (default on, remembered). Migration `20261106_remove_conclave_mods_from_inventory.sql` removes Conclave mods from Patrick's inventory only (run).
+- Capacity now matches the game: a stance in a matching-polarity slot doubles its bonus (Spinning Needle rank 3 = +10). Literal backslash-n in mod text is now a space.
+- Root cause found for wrong max ranks: WFCD data includes "Expert" variant entries (10 ranks, bigger numbers) under the same names as the real 5-rank mods. 71 mods affected by wiki comparison. Berserker Fury (rank 5, 9 drain) is fixed in `20261106_fix_berserker_fury_max_rank.sql`; Eagle Eye and Hawk Eye confirmed as base 2 / rank 5 but not yet migrated.
+- All Flawed mods removed from the catalog entirely: seeder skips them, migration `20261106_remove_flawed_mods_entirely.sql` deletes them. **Written, not confirmed run.**
+- Audit CSV: `Docs/Static Data/Mod Catalog Audit 2026-11-06.csv`. Interactive drain-check sheet sent to Patrick for the remaining 90 mods (6 review, 25 uncomparable, 59 Expert variants); his answers not back yet.
+- Commits `071b669` ... `ec22df5`, `cf1f568`. 141 Node tests pass. Not seen by Claude in the signed-in app. Not deployed.
+
+**Next:** Patrick runs the Flawed and Berserker migrations if not done; Patrick's drain-sheet answers -> one fix migration (max_rank, base_drain, regenerated levelStats, clamp owned ranks) plus seeder override for Expert uniqueNames; secondary to-do list (Energy Channel, unowned mods); augment pass still parked; Invigoration finding (Override week: offers stay, frames rotate) to be tested in a non-Override week.
