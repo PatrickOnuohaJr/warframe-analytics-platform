@@ -13,10 +13,16 @@ export default function useDebouncedField(value, onCommit, delay = 600) {
   const committing = useRef(onCommit)
   useEffect(() => { committing.current = onCommit }, [onCommit])
 
+  // Every value this field has itself committed. After a save the app refetches
+  // and the same value comes back as `value`; if the user has typed on since,
+  // that (older) echo must NOT overwrite their newer text -- that was the
+  // "my typing disappears and the old name comes back" bug.
+  const [committed, setCommitted] = useState(() => new Set())
+
   const [previousValue, setPreviousValue] = useState(value)
   if (!Object.is(previousValue, value)) {
     setPreviousValue(value)
-    setLocal(value)
+    if (!committed.has(value) || value === local) setLocal(value)
   }
 
   useEffect(() => {
@@ -29,7 +35,10 @@ export default function useDebouncedField(value, onCommit, delay = 600) {
   function set(next) {
     setLocal(next)
     clearTimeout(timer.current)
-    timer.current = setTimeout(() => committing.current(next), delay)
+    timer.current = setTimeout(() => {
+      setCommitted(prev => new Set(prev).add(next))
+      committing.current(next)
+    }, delay)
   }
 
   return [local, set]

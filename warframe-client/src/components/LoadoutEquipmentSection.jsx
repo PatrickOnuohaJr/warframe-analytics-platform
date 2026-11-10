@@ -172,15 +172,24 @@ export default function LoadoutEquipmentSection({
     if (!window.confirm(`Remove ${name} from this build's ${equipmentType} slot? The slot stays, you can assign a weapon again afterwards.`)) return;
     saveFrameField({ [weaponFields.weapon]: null });
   }
+  // Arcane boxes autosave while you type, so only commit a blank (clears it)
+  // or an EXACT catalog arcane name -- never a half-typed "Per". Case-insensitive
+  // match, saved with the catalog's own spelling.
+  function commitArcane(field, raw) {
+    const text = (raw ?? '').trim();
+    if (!text) { saveFrameField({ [field]: null }); return; }
+    const match = arcanes.find(a => a.name.toLowerCase() === text.toLowerCase());
+    if (match && match.name !== frame[field]) saveFrameField({ [field]: match.name });
+  }
   const [weaponArcaneValue, setWeaponArcaneValue] = useDebouncedField(
     weaponFields ? (frame[weaponFields.arcane] ?? '') : '',
-    v => saveFrameField({ [weaponFields.arcane]: cleanValue(v) })
+    v => commitArcane(weaponFields.arcane, v)
   );
   const [arcane1, setArcane1] = useDebouncedField(
-    frame.arcane_1 ?? '', v => saveFrameField({ arcane_1: cleanValue(v) })
+    frame.arcane_1 ?? '', v => commitArcane('arcane_1', v)
   );
   const [arcane2, setArcane2] = useDebouncedField(
-    frame.arcane_2 ?? '', v => saveFrameField({ arcane_2: cleanValue(v) })
+    frame.arcane_2 ?? '', v => commitArcane('arcane_2', v)
   );
   // Referentially stable across renders unless the arcanes actually
   // change -- required now that WarframeModdedStatsPanel lifts its result
