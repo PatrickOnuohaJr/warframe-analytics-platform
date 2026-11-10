@@ -270,6 +270,13 @@ def seed_mods():
                 reuse[winner_index] = orphan
 
         for i, (display_name, mod) in enumerate(group):
+            # Flawed mods (the weak starter versions) are deliberately NOT
+            # part of Cephalon Gu: Patrick doesn't use them, so they are
+            # never imported and were removed from the catalog entirely
+            # (DB/Migrations/20261106_remove_flawed_mods_entirely.sql).
+            if display_name.startswith("Flawed "):
+                skipped += 1
+                continue
             existing_row = reuse.get(i)
             try:
                 category = TYPE_TO_CATEGORY.get(mod.get("type"))

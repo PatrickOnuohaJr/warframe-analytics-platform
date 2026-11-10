@@ -1,0 +1,107 @@
+mod_id,name,category,class,issues,my_owned_rank,my_loadout_slots
+166,Charged Shell,Primary,drain_or_rank_only,base_drain db=6 wiki=4,,0
+169,Chilling Grasp,Primary,drain_or_rank_only,base_drain db=6 wiki=2,,0
+173,Cleanse Corpus,Primary,drain_or_rank_only,base_drain db=4 wiki=2,,0
+175,Cleanse Grineer,Primary,drain_or_rank_only,base_drain db=4 wiki=2,,0
+177,Cleanse Infested,Primary,drain_or_rank_only,base_drain db=4 wiki=2,,0
+234,Cryo Rounds,Primary,drain_or_rank_only,base_drain db=6 wiki=2,,0
+1275,Flawed Point Blank,Primary,drain_or_rank_only,base_drain db=2 wiki=4,,0
+811,Ravage,Primary,drain_or_rank_only,base_drain db=4 wiki=2,0,0
+1065,Suppress,Secondary,drain_or_rank_only,max_rank db=3 wiki=5,,0
+337,Flawed Fast Deflection,Warframe,drain_or_rank_only,base_drain db=2 wiki=4,,0
+104,Berserker Fury,Melee,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponCritFireRateBonusMod",5,1
+303,Energy Channel,Melee,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponPowerDamageMod",0,0
+349,Finishing Touch,Melee,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponMeleeFinisherDamageMod",0,0
+708,Power Throw,Melee,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponGlaivePowerthrowMod",0,0
+279,Eagle Eye,Primary,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponZoomFovMod",,0
+443,Hawk Eye,Secondary,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponPistolZoomFovMod",,0
+776,Primed Steady Hands,Secondary,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; base_drain db=2 wiki=6; DB has the ""Expert"" variant; wiki/game mod is WeaponRecoilReductionMod",10,0
+764,Primed Redirection,Warframe,expert_variant_REVIEW (effect differs from wiki),"base_drain db=6 wiki=2; DB has the ""Expert"" variant; wiki/game mod is AvatarShieldMaxMod",10,0
+806,Rage,Warframe,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarDamageToEnergyMod",0,0
+833,Reflection,Warframe,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarParryReflectMod",,0
+857,Retribution,Warframe,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=3; DB has the ""Expert"" variant; wiki/game mod is AvatarRevengeDamageMelee",,0
+1116,Thief's Wit,Warframe,expert_variant_REVIEW (effect differs from wiki),"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarLootRadarMod",,0
+522,Jagged Edge,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponSlashDamageMod",0,0
+594,Melee Prowess,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponStunChanceMod",0,0
+614,Molten Impact,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponFireDamageMod",0,0
+645,North Wind,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponFreezeDamageMod",0,0
+651,Organ Shatter,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponCritDamageMod",0,0
+957,Shocking Touch,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponElectricityDamageMod",0,0
+1061,Sundering Strike,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponArmorPiercingDamageMod",0,0
+1141,True Steel,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponCritChanceMod",0,0
+1207,Whirlwind,Melee,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponGlaiveSpeedMod",0,0
+40,Ammo Drum,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponAmmoMaxMod",,0
+66,Arrow Mutation,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=0 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponBowConvertAmmoMod",,0
+204,Contagious Spread,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=6 wiki=4; DB has the ""Expert"" variant; wiki/game mod is WeaponToxinDamageMod",,0
+264,Disruptor,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponImpactDamageMod",0,0
+360,Flechette,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponArmorPiercingDamageMod",0,0
+462,Hell's Chamber,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=10 wiki=4; DB has the ""Expert"" variant; wiki/game mod is WeaponFireIterationsMod",0,0
+465,Hellfire,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponFireDamageMod",,0
+497,Incendiary Coat,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponFireDamageMod",,0
+500,Infected Clip,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=6 wiki=4; DB has the ""Expert"" variant; wiki/game mod is WeaponToxinDamageMod",,0
+605,Metal Auger,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=10 wiki=6; DB has the ""Expert"" variant; wiki/game mod is WeaponPunctureDepthMod",0,0
+680,Piercing Hit,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponArmorPiercingDamageMod",0,0
+700,Point Strike,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponCritChanceMod",0,0
+887,Rupture,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponImpactDamageMod",0,0
+900,Sawtooth Clip,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponSlashDamageMod",0,0
+915,Seeking Force,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=10 wiki=6; DB has the ""Expert"" variant; wiki/game mod is WeaponPunctureDepthMod",0,0
+943,Shell Compression,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponAmmoMaxMod",,0
+963,Shotgun Barrage,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponFireRateMod",10,0
+967,Shotgun Savvy,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponStunChanceMod",0,0
+975,Shredder,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponSlashDamageMod",0,0
+1011,Speed Trigger,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponFireRateMod",10,0
+1016,Split Chamber,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=10 wiki=4; DB has the ""Expert"" variant; wiki/game mod is WeaponFireIterationsMod",0,0
+1046,Stormbringer,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponElectricityDamageMod",,0
+1120,Thunderbolt,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=3; DB has the ""Expert"" variant; wiki/game mod is BowExplosionChanceMod",,0
+1181,Vital Sense,Primary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponCritDamageMod",0,0
+99,Barrel Diffusion,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=6 wiki=4; DB has the ""Expert"" variant; wiki/game mod is WeaponFireIterationsMod",0,0
+195,Concussion Rounds,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponImpactDamageMod",,0
+211,Convulsion,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=6 wiki=4; DB has the ""Expert"" variant; wiki/game mod is WeaponElectricityDamageMod",,0
+247,Deep Freeze,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=6 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponFreezeDamageMod",,0
+428,Gunslinger,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is WeaponFireRateMod",0,0
+640,No Return,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponArmorPiercingDamageMod",,0
+669,Pathogen Rounds,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponToxinDamageMod",,0
+815,Razor Shot,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponSlashDamageMod",,0
+912,Seeker,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=10 wiki=4; DB has the ""Expert"" variant; wiki/game mod is WeaponPunctureDepthMod",,0
+1093,Target Cracker,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponCritDamageMod",,0
+1136,Trick Mag,Secondary,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is WeaponAmmoMaxMod",,0
+51,Antitoxin,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is AvatarDamageResistancePoison",,0
+82,Aviator,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=3; DB has the ""Expert"" variant; wiki/game mod is AvatarDamageReductionInAir",,0
+256,Diamond Skin,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarDamageResistanceLaser",,0
+299,Enemy Sense,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarEnemyRadarMod",,0
+357,Flame Repellent,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarDamageResistanceFire",,0
+435,Handspring,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=3; DB has the ""Expert"" variant; wiki/game mod is AvatarKnockdownRecoveryMod",,0
+455,Heavy Impact,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; base_drain db=4 wiki=2; DB has the ""Expert"" variant; wiki/game mod is AvatarFallingImpactMod",,0
+506,Insulation,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarDamageResistanceIce",,0
+509,Intensify,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarAbilityStrengthMod",0,0
+552,Lightning Rod,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarDamageResistanceElectricity",,0
+584,Master Thief,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=3; DB has the ""Expert"" variant; wiki/game mod is AvatarChanceToLoot",,0
+662,Parry,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarParryMeleeMod",5,0
+890,Rush,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarSprintSpeedMod",0,0
+1055,Stretch,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=5; DB has the ""Expert"" variant; wiki/game mod is AvatarAbilityRangeMod",0,0
+1202,Warm Coat,Warframe,expert_variant_safe_to_cap_at_wiki_rank,"max_rank db=10 wiki=3; DB has the ""Expert"" variant; wiki/game mod is AvatarMissionSpecificResistanceIce",0,0
+1800,Helminth Ferocity,Companion,not_compared (name/id collision with wiki),no wiki entry by internal name,5,0
+142,Butcher's Revelry,Melee,not_compared (name/id collision with wiki),no wiki entry by internal name,3,0
+404,Galvanized Steel,Melee,not_compared (name/id collision with wiki),no wiki entry by internal name,10,1
+573,Magnetic Rush,Melee,not_compared (name/id collision with wiki),no wiki entry by internal name,0,0
+715,Pressure Point,Melee,not_compared (name/id collision with wiki),no wiki entry by internal name,0,0
+819,Reach,Melee,not_compared (name/id collision with wiki),no wiki entry by internal name,0,0
+836,Reflex Coil,Melee,not_compared (name/id collision with wiki),no wiki entry by internal name,0,0
+164,Charged Chamber,Primary,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+574,Magnetic Strafe,Primary,not_compared (name/id collision with wiki),no wiki entry by internal name,3,0
+863,Rifle Ammo Mutation,Primary,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+866,Rifle Aptitude,Primary,not_compared (name/id collision with wiki),no wiki entry by internal name,0,0
+960,Shotgun Ammo Mutation,Primary,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+998,Sniper Ammo Mutation,Primary,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+1027,Stabilizer,Primary,not_compared (name/id collision with wiki),no wiki entry by internal name,3,1
+689,Pistol Ammo Mutation,Secondary,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+1002,Soaring Truth,Secondary,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+1036,Steady Hands,Secondary,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+1068,Sure Shot,Secondary,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+7,Adaptation,Warframe,not_compared (name/id collision with wiki),no wiki entry by internal name,0,0
+514,Intruder,Warframe,not_compared (name/id collision with wiki),no wiki entry by internal name,3,0
+953,Shock Absorbers,Warframe,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+1066,Sure Footed,Warframe,not_compared (name/id collision with wiki),no wiki entry by internal name,,0
+1076,Swift Bite,Warframe,not_compared (name/id collision with wiki),no wiki entry by internal name,3,0
+1112,The Relentless Lost,Warframe,not_compared (name/id collision with wiki),no wiki entry by internal name,3,0
+1156,Vampiric Grasp,Warframe,not_compared (name/id collision with wiki),no wiki entry by internal name,3,0
