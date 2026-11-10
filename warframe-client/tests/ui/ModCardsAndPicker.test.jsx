@@ -78,3 +78,20 @@ describe('picker usage ordering', () => {
     expect(screen.getByText('used 9×')).toBeTruthy();
   });
 });
+
+describe('picker hides mods equipped in other slots', () => {
+  it('drops excluded mods from the list', () => {
+    const mods = [
+      { mod_id: 1, name: 'Blind Rage', polarity: 'madurai', max_rank: 10, base_drain: 6, raw_json: {} },
+      { mod_id: 2, name: 'Primed Flow', polarity: 'madurai', max_rank: 10, base_drain: 6, raw_json: {} },
+    ];
+    render(
+      <LoadoutSlotPickerModal mods={mods} category="Warframe"
+        ownedByModId={new Map(mods.map(m => [m.mod_id, { owned_rank: 10 }]))}
+        excludeModIds={new Set([1])} excludeRivenIds={new Set()} slotPolarity={null}
+        onSelect={() => {}} onClear={() => {}} onClose={() => {}} />
+    );
+    expect(screen.queryByText('Blind Rage')).toBeNull();
+    expect(screen.getByText('Primed Flow')).toBeTruthy();
+  });
+});

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import MainNav from './MainNav'
 import ShardChip from './ShardChip'
 import { getTauBonusText } from '../constants/shardBonuses'
 import { wfUser } from '../lib/supabase'
@@ -151,6 +152,12 @@ export default function BuildDetailOverlay({
   onClose,
   onEditShards,
   onSaved,
+  // Masthead nav inside the build: clicking a page parks the build (App keeps
+  // it so "Return to <build>" can bring it back on the same tab).
+  onNavigate,
+  returnLabel = 'Codex',
+  activeTab: controlledTab,
+  onTabChange,
 }) {
   const color = getReadableColor(frame.cultivation_color ?? '#FBBF24')
   const school = frame.cultivation_school ?? 'Unknown School'
@@ -160,7 +167,10 @@ export default function BuildDetailOverlay({
   const targetShards = getShards(frame.target_shards)
   const currentConstitution = getConstitutionLabel(currentShards)
   const targetConstitution = getConstitutionLabel(targetShards)
-  const [activeTab, setActiveTab] = useState('identity')
+  // Tab can be controlled by the parent so it survives leaving to another page.
+  const [localTab, setLocalTab] = useState('identity')
+  const activeTab = controlledTab ?? localTab
+  const setActiveTab = tab => { setLocalTab(tab); onTabChange?.(tab) }
   const [attentionSaving, setAttentionSaving] = useState(false)
 
   return (
@@ -171,12 +181,13 @@ export default function BuildDetailOverlay({
       }}
     >
       <div className="min-h-screen p-8">
+        {onNavigate && <MainNav className="mb-6" activePage={null} onNavigate={onNavigate} />}
         <div className="flex justify-between items-start mb-10">
           <button
             onClick={onClose}
             className="text-[#9C9890] hover:text-[#E8E4DC] text-sm uppercase tracking-[0.25em] transition-colors"
           >
-            ← Return to Codex
+            ← Return to {returnLabel}
           </button>
 
           <button

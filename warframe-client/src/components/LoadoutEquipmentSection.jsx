@@ -210,6 +210,17 @@ export default function LoadoutEquipmentSection({
     onSaved();
   }
 
+  // Everything already equipped in this piece's OTHER slots; the picker hides
+  // those. (The slot being edited keeps its own mod visible.)
+  const equippedElsewhere = { mods: [], rivens: [] };
+  if (picker) {
+    for (const [pos, sl] of slotsByPosition) {
+      if (pos === picker.slotPosition) continue;
+      if (sl?.mod_id != null) equippedElsewhere.mods.push(sl.mod_id);
+      if (sl?.riven_id != null) equippedElsewhere.rivens.push(sl.riven_id);
+    }
+  }
+
   const capacity = pieceCapacity({ hasCatalyst: meta.has_catalyst });
 
   // A slot's polarity belongs to the socket, so it survives any mod change.
@@ -672,6 +683,8 @@ export default function LoadoutEquipmentSection({
           isExilusSlot={picker.slotPosition === 'exilus'}
           slotPolarity={picker.slot.polarity}
           usageByModId={usageByModId}
+          excludeModIds={new Set(equippedElsewhere.mods)}
+          excludeRivenIds={new Set(equippedElsewhere.rivens)}
           onSelect={item => {
             onSetSlot(picker.slotPosition, {
               mod_id: item.riven_id ? null : item.mod_id,

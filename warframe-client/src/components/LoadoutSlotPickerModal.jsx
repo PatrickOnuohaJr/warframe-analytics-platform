@@ -39,6 +39,8 @@ export default function LoadoutSlotPickerModal({
   onCreateRiven,
   onEditRiven,
   usageByModId,
+  excludeModIds,
+  excludeRivenIds,
 }) {
   const [dragging, setDragging] = useState(false);
   const [search, setSearch] = useState('');
@@ -58,27 +60,34 @@ export default function LoadoutSlotPickerModal({
   const showAuraChip = auraCatalog.length > 0 && !isAuraSlot;
   const groups = statGroupsFor(category);
 
+  // Mods/Rivens already equipped in other slots of this piece are not offered
+  // again (you can't run two of the same mod). The slot being edited keeps its
+  // own mod so it stays visible.
   const results = useMemo(() => {
+    const isEquipped = m => (m.mod_id != null ? excludeModIds?.has(m.mod_id) : excludeRivenIds?.has(m.riven_id));
     const q = search.trim().toLowerCase();
     if (view === 'augments') {
       return augmentCatalog
+        .filter(m => !isEquipped(m))
         .filter(m => !q || m.name.toLowerCase().includes(q))
         .map(m => ({ ...m, disabledLabel: ownedByModId.has(m.mod_id) ? null : 'Not owned' }));
     }
     if (view === 'aura') {
       return auraCatalog
+        .filter(m => !isEquipped(m))
         .filter(m => !q || m.name.toLowerCase().includes(q))
         .map(m => ({ ...m, disabledLabel: 'Aura slot only' }))
         .sort((a, b) => a.name.localeCompare(b.name));
     }
     // Name order first, then a stable most-used-first pass on top.
     const byName = mods
+      .filter(m => !isEquipped(m))
       .filter(m => !q || m.name.toLowerCase().includes(q))
       .filter(m => view !== 'exilus' || m.is_exilus)
       .filter(m => !statFilter || statGroups(m).includes(statFilter))
       .sort((a, b) => a.name.localeCompare(b.name));
     return sortByUsage(byName, usageByModId);
-  }, [mods, search, statFilter, view, augmentCatalog, auraCatalog, ownedByModId, usageByModId]);
+  }, [mods, search, statFilter, view, augmentCatalog, auraCatalog, ownedByModId, usageByModId, excludeModIds, excludeRivenIds]);
 
   return (
     <ModalShell onClose={onClose} accent={COLOR.gold} maxWidth="max-w-lg" zIndex={70} passThrough={dragging}>

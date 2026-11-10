@@ -1,4 +1,6 @@
-import { useState, Fragment } from 'react'
+import { useState } from 'react'
+import MainNav from './components/MainNav'
+import { NAV_ITEMS } from './constants/navItems'
 import FrameCard from './components/FrameCard'
 import ShardEditModal from './components/ShardEditModal'
 import BuildDetailOverlay from './components/BuildDetailOverlay'
@@ -33,16 +35,6 @@ const SHARD_BUCKETS = [
   ['conceptual', 'Conceptual'],
 ]
 
-const NAV_ITEMS = [
-  { id: 'home', label: 'Home' },
-  { id: 'codex', label: 'Codex' },
-  { id: 'arsenal-search', label: 'Search' },
-  { id: 'arcanes', label: 'Arcanes' },
-  { id: 'archon-shards', label: 'Archon Shards' },
-  { id: 'armory', label: 'Armory' },
-  { id: 'mods', label: 'Mods' },
-  { id: 'requiem', label: 'Requiem' },
-]
 
 function getSchools(frames) {
   return [
@@ -135,6 +127,37 @@ export default function App() {
   const [physiqueFilter, setPhysiqueFilter] = useState('all')
   const [archetypeFilter, setArchetypeFilter] = useState('all')
   const [showAddFrame, setShowAddFrame] = useState(false)
+  // Set when the user leaves an open build via the top nav (e.g. to add a mod
+  // on the Mods page): { frame, page, tab }. Shows "Return to <build>" on the
+  // page they went to, and restores the page + build tab they came from.
+  const [returnTo, setReturnTo] = useState(null)
+  const [detailTab, setDetailTab] = useState('identity')
+
+  // Opening any build fresh forgets a pending return and starts on Identity.
+  function openFrame(frame) {
+    setReturnTo(null)
+    setDetailTab('identity')
+    setDetailFrame(frame)
+  }
+
+  // Plain page change from the masthead (no build open).
+  function goToPage(id) {
+    setActivePage(id)
+  }
+
+  // Nav click from inside a build: park the build, show the page.
+  function leaveBuildTo(id) {
+    setReturnTo({ frame: detailFrame, page: activePage, tab: detailTab })
+    setDetailFrame(null)
+    setActivePage(id)
+  }
+
+  function returnToBuild() {
+    setActivePage(returnTo.page)
+    setDetailFrame(returnTo.frame)
+    setDetailTab(returnTo.tab)
+    setReturnTo(null)
+  }
 
 
     function handleShardFilterChange(value) {
@@ -253,31 +276,7 @@ const filteredFrames =
             Personal Cultivation Codex
           </p>
 
-          <div
-            className="flex items-center justify-center gap-6 mt-7 pb-5 border-b"
-            style={{ borderColor: BORDER }}
-          >
-            {NAV_ITEMS.map((item, i) => (
-              <Fragment key={item.id}>
-                {i > 0 && (
-                  <span style={{ color: BORDER, fontSize: '11px' }}>·</span>
-                )}
-                <button
-                  onClick={() => setActivePage(item.id)}
-                  className="text-[11px] font-bold uppercase tracking-[0.2em] pb-2"
-                  style={{
-                    color: activePage === item.id ? GOLD : MUTED,
-                    border: 'none',
-                    borderBottom: `2px solid ${activePage === item.id ? GOLD : 'transparent'}`,
-                    background: 'transparent',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {item.label}
-                </button>
-              </Fragment>
-            ))}
-          </div>
+          <MainNav className="mt-7" activePage={activePage} onNavigate={goToPage} />
         </div>
 
           {/* Build-status filter -- toggle buttons like the archetype ones below
@@ -383,10 +382,20 @@ const filteredFrames =
     )}
       </div>
 
+      {returnTo && !detailFrame && (
+        <button
+          onClick={returnToBuild}
+          className="mb-6 text-sm uppercase tracking-[0.25em] transition-colors hover:text-[#E8E4DC]"
+          style={{ color: MUTED, background: 'transparent', border: 'none', cursor: 'pointer' }}
+        >
+          ← Return to {returnTo.frame.warframe_name}
+        </button>
+      )}
+
       {activePage === 'home' ? (
       <HomePage
         frames={frames}
-        onOpenFrame={(frame) => setDetailFrame(frame)}
+        onOpenFrame={openFrame}
         onOpenTracker={() => setActivePage('archon-shards')}
         onOpenCodex={() => setActivePage('codex')}
       />
@@ -402,7 +411,7 @@ const filteredFrames =
             <FrameCard
               key={frame.my_frame_id}
               frame={frame}
-              onEdit={() => setDetailFrame(frame)}
+              onEdit={() => openFrame(frame)}
             />
           ))}
         </div>
@@ -414,7 +423,7 @@ const filteredFrames =
         onBack={() => setActivePage('home')}
         onOpenFrame={(myFrameId) => {
           const frame = frames.find(f => f.my_frame_id === myFrameId);
-          if (frame) setDetailFrame(frame);
+          if (frame) openFrame(frame);
         }}
       />
     ) : activePage === 'armory' ? (
@@ -434,9 +443,12 @@ const filteredFrames =
           frames={frames}
           weapons={weapons}
           abilityCanonicalByName={abilityCanonicalByName}
-          onClose={() =>
-            setDetailFrame(null)
-          }
+          onClose={() => setDetailFrame(null)}
+          activePage={activePage}
+          returnLabel={NAV_ITEMS.find(i => i.id === activePage)?.label ?? 'Codex'}
+          onNavigate={leaveBuildTo}
+          activeTab={detailTab}
+          onTabChange={setDetailTab}
           onEditShards={() => {
             setEditingFrame(
               detailFrame
@@ -467,7 +479,7 @@ const filteredFrames =
           onFrameAdded={(frame) => {
             setShowAddFrame(false)
             refetchFrames()
-            setDetailFrame(frame)
+            openFrame(frame)
           }}
         />
       )}
