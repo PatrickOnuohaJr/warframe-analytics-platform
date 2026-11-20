@@ -110,6 +110,13 @@ FORMULA_OVERRIDES = {
     ("Snow Globe", "armor_multiplier"): "raw_passthrough",
 }
 
+# Display-label fixes where the wiki field is named "strength" but the number
+# is really a damage bonus (the card should say what it does, not which stat
+# scales it). Keyed (ability_name, parameter_key).
+LABEL_OVERRIDES = {
+    ("Roar", "strength"): "Damage Bonus",
+}
+
 # Context-specific overrides for Helminth-subsumed casting, keyed by
 # (ability_name, parameter_key). Verified 2026-08-31 against Nourish's own
 # "| helminth =" wiki prose (not auto-parsed -- that section is free text,
@@ -445,7 +452,7 @@ def build_parameters(ability_name, raw_wikitext, de_energy):
 
             formula_key = FORMULA_OVERRIDES.get((ability_name, parameter_key))
             params.append({
-                "parameter_key": parameter_key, "label": frag["label"], "sort_order": sort_order,
+                "parameter_key": parameter_key, "label": LABEL_OVERRIDES.get((ability_name, parameter_key), frag["label"]), "sort_order": sort_order,
                 "base_value": frag["value"], "unit": frag["unit"],
                 "scales_with": scales_with if not formula_key else None,
                 "formula_key": formula_key, "context": "base", "source": "wiki",
