@@ -1,8 +1,8 @@
 # Equinox and cultivation content import — November 21, 2026
 
 Applied to Supabase through the existing ingestion credential and verified by
-readback. No schema changes or user-run SQL required. Application changes remain
-local/uncommitted, not deployed. Backups of affected rows are retained locally in
+readback. No schema changes or user-run SQL required. Application changes were
+pushed on `main` in `3e126c9`; frontend deployment is not established. Backups of affected rows are retained locally in
 ignored `tmp/equinox/`. Do not commit those personal build snapshots.
 
 ## Live audit and result
