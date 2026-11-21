@@ -1,5 +1,29 @@
 # Cephalon Gu Visual History Catalog
 
+## November 21, 2026 — imported Codex content (capture pending)
+
+Database content update, no layout redesign: Identity doctrines for Viral Rockstar,
+Father Time, The Celestials, Ice Queen, Eternal Sun; Equinox ability cards/forecast
+with both forms and each of the four max-rank augments. Paired desktop/phone
+fixture screenshots remain required. Pre-import row snapshots are saved locally
+in ignored `tmp/equinox/`; reconstruct the exact before state from those snapshots,
+not by clearing or changing live rows. No signed-in visual verification claimed.
+
+
+## November 21, 2026 — polarity mismatch correction (capture pending)
+
+Local regression fixture: `warframe-client/tests/fixtures/polarity.html` (slot),
+and `polarity.html?picker` (picker). Uses the real SlotBox/picker with representative
+Blind Rage rank 10 in Zenurik; 74 capacity and 53 other drain are inferred test
+values, not a verified copy of the saved Equinox Prime build. No database access.
+Expected corrected state: red 20 drain, 1 capacity remaining.
+
+Required pairs: slot and picker at 1440 × 900 and 390 × 844, scroll top.
+Capture attempts failed: local headless browsers produced no images and the
+in-app browser timed out reaching the local Vite server. No before/after images
+are claimed; visual verification remains incomplete. The historical pre-fix state
+is 16 drain in muted text, with 5 capacity remaining in this representative budget.
+
 This catalog is the visual source of truth for the redesign campaign. Its purpose is to preserve a complete, inspectable record of Gu before and after every visual migration.
 
 ## Pairing rule

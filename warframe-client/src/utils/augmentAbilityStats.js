@@ -13,6 +13,38 @@
 // (2026-11-03, Ember Prime at 199% Strength): tooltip 25-50 -> 49.75-99.5 and
 // Overguard cap 10,000 -> 19,900, i.e. both x1.99.
 const AUGMENTS = {
+  // Equinox: wiki pages for these four augments, checked 2026-11-21.
+  // Max-rank potential values, not current combat stacks. Duality damage
+  // and Energy Transfer retention are NOT affected by Ability Strength.
+  'Duality': {
+    ability: 'Metamorphosis',
+    rows: [
+      { parameter_key: 'duality_duration', label: 'Duality specter duration (s)', base_value: 10, unit: 'flat', scales_with: 'duration' },
+      { parameter_key: 'duality_damage', label: 'Duality specter weapon damage', base_value: 300, unit: 'percent', scales_with: 'none' },
+    ],
+  },
+  'Calm & Frenzy': {
+    ability: 'Rest & Rage',
+    rows: [
+      { parameter_key: 'calm_frenzy_radius', label: 'Calm & Frenzy spread radius (m)', base_value: 5, unit: 'flat', scales_with: 'range' },
+      { parameter_key: 'calm_frenzy_retention', label: 'Calm & Frenzy remaining duration retained', base_value: 100, unit: 'percent', scales_with: 'none' },
+    ],
+  },
+  'Peaceful Provocation': {
+    ability: 'Pacify & Provoke',
+    rows: [
+      { parameter_key: 'peaceful_slow', label: 'Pacify slow (fully charged)', base_value: 40, unit: 'percent', scales_with: 'strength' },
+      { parameter_key: 'peaceful_slow_cap', label: 'Pacify slow cap', base_value: 80, unit: 'percent', scales_with: 'none' },
+      { parameter_key: 'peaceful_strength', label: 'Provoke additional Strength (fully charged)', base_value: 15, unit: 'percent', scales_with: 'strength' },
+      { parameter_key: 'peaceful_strength_cap', label: 'Provoke additional Strength cap', base_value: 30, unit: 'percent', scales_with: 'none' },
+    ],
+  },
+  'Energy Transfer': {
+    ability: 'Mend & Maim',
+    rows: [
+      { parameter_key: 'energy_transfer_retention', label: 'Energy Transfer charge conserved', base_value: 100, unit: 'percent', scales_with: 'none' },
+    ],
+  },
   'Healing Flame': {
     ability: 'Fire Blast',
     rows: [

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { effectiveDrain, pieceCapacity, isDiscounted } from '../src/utils/modCapacity.js';
+import { effectiveDrain, pieceCapacity, isDiscounted, isMismatched } from '../src/utils/modCapacity.js';
 import { computeAbilityStats } from '../src/utils/abilityStats.js';
 import { computeModdedWeaponStats } from '../src/utils/weaponStats.js';
 import { computeResilience } from '../src/utils/survivability.js';
@@ -17,6 +17,21 @@ test('regular costs round up and Omni does not discount Umbra', () => {
   assert.equal(effectiveDrain(mod, 5, null), 9);
   assert.equal(isDiscounted({ polarity: 'umbra' }, 'omni'), false);
   assert.equal(isDiscounted(mod, 'omni'), true);
+});
+
+test('Blind Rage in Zenurik costs 20; representative Equinox budget leaves 1', () => {
+  const blindRage = { base_drain: 6, polarity: 'madurai' };
+  const drain = effectiveDrain(blindRage, 10, 'zenurik');
+  assert.equal(drain, 20);
+  assert.equal(74 - 53 - drain, 1);
+  assert.equal(isMismatched(blindRage, 'zenurik'), true);
+  assert.equal(effectiveDrain(blindRage, 10, null), 16);
+  assert.equal(effectiveDrain(blindRage, 10, 'madurai'), 8);
+  assert.equal(effectiveDrain(blindRage, 10, 'omni'), 8);
+  assert.equal(effectiveDrain(blindRage, 1, 'zenurik'), 9);
+  assert.equal(isMismatched(blindRage, null), false);
+  assert.equal(isMismatched({ polarity: null }, 'zenurik'), false);
+  assert.equal(effectiveDrain({ base_drain: 16, polarity: 'umbra' }, 0, 'omni'), 20);
 });
 
 test('ability context overrides one parameter and falls back for others', () => {

@@ -3,6 +3,7 @@ import { POLARITIES } from '../constants/polarities';
 import { COLOR } from '../constants/theme';
 import { DRAG_MIME } from '../utils/slotMoves';
 import { useState } from 'react';
+import { isMismatched } from '../utils/modCapacity';
 
 // Shared mod-slot tile: label, mod name+polarity glyph, cost, inline rank
 // slider, and a polarity-picker row. Used by every equipment piece's mod
@@ -60,7 +61,7 @@ export default function SlotBox({ label, slot, mod, rank, onOpenPicker, onSetPol
         <span className="text-[9px] uppercase tracking-widest" style={{ color: COLOR.mutedInk }}>{label}</span>
         {mod && (
           <span className="flex items-center gap-2">
-            <span className="text-xs font-bold" style={{ color: discounted ? COLOR.success : COLOR.mutedInk }}>
+            <span className="text-xs font-bold" style={{ color: discounted ? COLOR.success : isMismatched(mod, slot.polarity) ? COLOR.danger : COLOR.mutedInk }}>
               {cost}
             </span>
             {/* One-tap clear, so emptying a slot doesn't mean opening the

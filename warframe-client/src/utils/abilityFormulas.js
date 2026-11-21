@@ -11,6 +11,20 @@
 // registry exists is that generic linear scaling is provably wrong for
 // these specific abilities.
 export const ABILITY_FORMULAS = {
+  // wiki.warframe.com/w/Module:Maximization/data, Equinox (2026-11-21).
+  // Pacify's inner-ring enemy damage multiplier is 0.5 / Strength multiplier.
+  equinox_pacify_multiplier: ({ buildStats }) => {
+    if (buildStats?.strength == null || buildStats.strength <= 0) return null;
+    return 0.5 / (buildStats.strength / 100);
+  },
+  // Mend & Maim's continuous drain: base * (2 - Efficiency) / Duration,
+  // minimum 25% of base. Efficiency above 175% can offset low Duration.
+  // wiki.warframe.com/w/Ability_Efficiency#Channeled_Abilities
+  equinox_channel_drain: ({ siblingByKey, buildStats, parameterKey }) => {
+    if (buildStats?.efficiency == null || buildStats.duration == null || buildStats.duration <= 0) return null;
+    const base = siblingByKey[parameterKey]?.base_value;
+    return base == null ? null : base * Math.max(0.25, (2 - buildStats.efficiency / 100) / (buildStats.duration / 100));
+  },
   // Some parameters are pure formula-input constants (Snow Globe's
   // armor_multiplier is the "5x" a compound formula multiplies by, not a
   // stat that independently scales with Ability Strength on its own) --

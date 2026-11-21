@@ -44,7 +44,12 @@ export function isDiscounted(mod, slotPolarity, isAuraSlot = false) {
   return mod.polarity === slotPolarity;
 }
 
-// Regular mods: polarity match halves the cost (rounded up).
+// True for two specified, incompatible polarities. Empty slots are neutral.
+export function isMismatched(mod, slotPolarity, isAuraSlot = false) {
+  return !!slotPolarity && !!mod?.polarity && !isDiscounted(mod, slotPolarity, isAuraSlot);
+}
+
+// Regular mods: match halves cost (rounded up); mismatch adds 25% (rounded up).
 // Aura mods: no polarity set keeps the listed bonus; a match doubles it;
 // a mismatch shrinks it to 80% (wiki's Aura page) -- opposite direction
 // from regular mods, since aura "cost" is already negative (a refund).
@@ -66,7 +71,8 @@ export function effectiveDrain(mod, rank, slotPolarity, isAuraSlot = false, isSt
     return Math.trunc(cost * 0.8);
   }
 
-  return isDiscounted(mod, slotPolarity) ? Math.ceil(cost / 2) : cost;
+  if (isDiscounted(mod, slotPolarity)) return Math.ceil(cost / 2);
+  return cost > 0 && isMismatched(mod, slotPolarity) ? Math.ceil(cost * 1.25) : cost;
 }
 
 // Base capacity is 30 at rank 30, 60 with an Orokin Catalyst/Reactor

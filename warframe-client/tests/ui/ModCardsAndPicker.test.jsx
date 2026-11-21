@@ -21,6 +21,11 @@ function transfer(payload) {
 }
 
 describe('compact mod card', () => {
+  it('shows mismatched Blind Rage drain in red', () => {
+    box({ mod: { name: 'Blind Rage', polarity: 'madurai', max_rank: 10 },
+      slot: { polarity: 'zenurik' }, rank: 10, cost: 20 });
+    expect(screen.getByText('20').style.color).toBe('rgb(230, 57, 70)');
+  });
   it('keeps name and rank on the face; effect text lives in a hover tooltip, not in flow', () => {
     box();
     expect(screen.getAllByText('Teeming Virulence').length).toBeGreaterThan(0);
@@ -55,6 +60,14 @@ describe('compact mod card', () => {
 });
 
 describe('picker usage ordering', () => {
+  it('previews mismatched Blind Rage at 20 in red', () => {
+    render(<LoadoutSlotPickerModal
+      mods={[{ mod_id: 1, name: 'Blind Rage', polarity: 'madurai', base_drain: 6, max_rank: 10 }]}
+      category="Warframe" ownedByModId={new Map([[1, { owned_rank: 10 }]])}
+      slotPolarity="zenurik" onSelect={() => {}} onClear={() => {}} onClose={() => {}} />);
+    const drain = screen.getByText('20');
+    expect(drain.style.color).toBe('rgb(230, 57, 70)');
+  });
   const mods = [
     { mod_id: 1, name: 'Archon Continuity', polarity: 'madurai', max_rank: 5, base_drain: 4, raw_json: {} },
     { mod_id: 2, name: 'Primed Continuity', polarity: 'madurai', max_rank: 10, base_drain: 7, raw_json: {} },

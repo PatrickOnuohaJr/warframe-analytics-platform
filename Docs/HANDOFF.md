@@ -1,5 +1,17 @@
 # Handoff — Cephalon Gu
 
+## Update — November 21, 2026 (Codex: Equinox data + missing cultivation lore)
+
+**Database content is applied and readback-verified; source changes are local/uncommitted, not pushed or deployed.** User requested Equinox information and lore for every Codex build missing it. This authorizes the specific Equinox augment work; the broader all-build augment pass below remains parked.
+
+- Audited live reference data and all 62 `my_frames` rows. Exactly five lacked doctrine: 118 Viral Rockstar (Temple), 119 Father Time (Limbo Prime), 120 The Celestials (Sirius & Orion), 121 Ice Queen (Narin), 122 Eternal Sun (Equinox Prime). Filled all five; final live audit: **62 builds, zero missing lore**. Preserved existing school assignments and all nonempty identity fields.
+- Read both `Docs/Lore/` cultivation PDFs. New original lore follows their existing schools; authored source is `DB/Cultivation/missing_doctrines_20261121.json`. No PDF rewrite. New school choices: Temple -> Phantom Theater Conservatory; Limbo/Equinox -> Cosmic Antimatter Council. Existing Sirius/Orion Cosmic and Narin Tidal assignments preserved.
+- Equinox: all four slot names and four PvE augment catalog mods already existed. Only Metamorphosis had parameter rows (four, Night bonuses only). Imported/upserted 26 curated rank-3 parameters across all four abilities; both forms covered. Passive/behavior notes are in ability_catalog.notes, not a newly built passive UI. No inventory ownership or ranks changed.
+- Local math support: Pacify inverse Strength multiplier; Mend/Maim Efficiency+Duration channel drain; all four max-rank augment parameter sets, including fixed Duality damage/retention values and Peaceful Provocation caps. These need the updated frontend; an older deployed client cannot resolve the two new formula keys. Values are source-checked, **not Patrick's in-game tooltip validation**. Partial-rank augment calculation retains the existing max-rank-only limitation.
+- `DB/Seeds/equinox_data.py` keeps future ability seeding from losing the dual-form data; generic wiki titles now URL-encode ampersands. `export_equinox_update.py` generates the static payload and transactional SQL. `import_equinox_update.mjs` applied DML with backups, exact build guards, missing-only lore patches, and readback checks. No schema migration or manual SQL needed. Rerunnable SQL backup: `DB/Migrations/20261121_equinox_and_missing_doctrines.sql`.
+- Validation: 155 Node tests, 36 UI tests, lint and build pass (existing chunk warning). Python syntax checks pass. Signed-in UI/screenshot verification is still incomplete: browser connectivity failed earlier this session; pre-import row backups remain locally in ignored `tmp/equinox/` for fixture reconstruction. See catalog pending entry.
+- Earlier this chat: polarity mismatch cost/red styling fixed locally (Blind Rage 16 -> 20 in Zenurik); not pushed/deployed either. No CPR requested or performed.
+
 ## Update — November 10, 2026 (Session 030: stance rules, Conclave/Flawed removal, Expert-variant defect)
 
 Pushed `main` at `cf1f568`. 141 Node tests pass; not seen in the signed-in app by Claude; not deployed.

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import ModalShell from './ui/ModalShell';
 import PolaritySymbol from './PolaritySymbol';
 import { COLOR } from '../constants/theme';
-import { effectiveDrain, isDiscounted } from '../utils/modCapacity';
+import { effectiveDrain, isDiscounted, isMismatched } from '../utils/modCapacity';
 import { statGroups, statGroupsFor, effectTextAtRank } from '../utils/modMeta';
 import { sortByUsage } from '../utils/modUsage';
 import { DRAG_MIME } from '../utils/slotMoves';
@@ -184,8 +184,8 @@ export default function LoadoutSlotPickerModal({
           // Rivens carry their own rank inline (owned_rank); real mods
           // still resolve rank from the shared inventory map.
           const rank = mod.owned_rank ?? ownedByModId.get(mod.mod_id)?.owned_rank ?? 0;
-          const cost = effectiveDrain(mod, rank, slotPolarity, false, isStanceSlot);
-          const discounted = isDiscounted(mod, slotPolarity);
+          const cost = effectiveDrain(mod, rank, slotPolarity, isAuraSlot, isStanceSlot);
+          const discounted = isDiscounted(mod, slotPolarity, isAuraSlot);
           const key = mod.mod_id ?? `riven-${mod.riven_id}`;
           const uses = mod.mod_id != null ? usageByModId?.get(mod.mod_id) ?? 0 : 0;
 
@@ -237,7 +237,7 @@ export default function LoadoutSlotPickerModal({
                   </p>
                 )}
                 </div>
-                <span className="text-xs font-bold" style={{ color: discounted ? COLOR.success : COLOR.mutedInk }}>
+                <span className="text-xs font-bold" style={{ color: discounted ? COLOR.success : isMismatched(mod, slotPolarity, isAuraSlot) ? COLOR.danger : COLOR.mutedInk }}>
                   {cost}
                 </span>
               </button>

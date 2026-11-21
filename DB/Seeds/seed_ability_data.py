@@ -57,6 +57,7 @@ import time
 import requests
 from supabase import create_client
 from dotenv import load_dotenv
+from equinox_data import ABILITIES as EQUINOX_ABILITIES, parameters as equinox_parameters
 
 load_dotenv()
 
@@ -357,7 +358,7 @@ def fetch_full_catalog_scope(warframes, names):
             unresolved_frame.append((ability_name, wf_name))
         scope.append({
             "ability_name": ability_name,
-            "wiki_title": ability_name.replace(" ", "_"),
+            "wiki_title": requests.utils.quote(ability_name.replace(" ", "_"), safe="_"),
             "de_frame_key": de_frame_key,  # None is fine -- build_parameters falls back to the wiki's own energy= field
         })
 
@@ -378,6 +379,9 @@ def build_parameters(ability_name, raw_wikitext, de_energy):
     FORMULA_OVERRIDES/SUBSUMED_VARIANT_OVERRIDES before writing. Any field
     that fails to parse is included with base_value=None and printed as
     UNPARSEABLE -- never a best-guess substitute."""
+    if ability_name in EQUINOX_ABILITIES:
+        return equinox_parameters(ability_name)
+
     params = []
     sort_order = 0
 

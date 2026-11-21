@@ -29,3 +29,6 @@ Stress Test F1.xlsx
 .agents/
 .claude/
 skills-lock.json
+
+# Local Codex content-import audit snapshots (includes personal build data)
+tmp/equinox/
